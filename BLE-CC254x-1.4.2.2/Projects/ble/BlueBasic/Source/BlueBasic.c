@@ -278,11 +278,11 @@ void BlueBasic_Init( uint8 task_id )
   // is halted
 #ifdef ENABLE_BLE_CONSOLE
   // See: http://e2e.ti.com/support/wireless_connectivity/f/538/p/169944/668822.aspx#664740
-//  HCI_EXT_ClkDivOnHaltCmd(HCI_EXT_ENABLE_CLK_DIVIDE_ON_HALT);
+  HCI_EXT_ClkDivOnHaltCmd(HCI_EXT_ENABLE_CLK_DIVIDE_ON_HALT);
 #endif
 
   // Overlap enabled
-//  HCI_EXT_OverlappedProcessingCmd(HCI_EXT_ENABLE_OVERLAPPED_PROCESSING);
+  HCI_EXT_OverlappedProcessingCmd(HCI_EXT_ENABLE_OVERLAPPED_PROCESSING);
 
   // Setup a delayed profile startup
   osal_set_event( blueBasic_TaskID, BLUEBASIC_START_DEVICE_EVT );
