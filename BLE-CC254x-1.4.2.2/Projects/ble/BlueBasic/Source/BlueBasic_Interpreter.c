@@ -564,7 +564,7 @@ typedef struct gatt_variable_ref
 {
   unsigned char var;
   gattAttribute_t* attrs;
-  unsigned char* cfg;
+  gattCharCfg_t* cfg;
   LINENUM read;
   LINENUM write;
 } gatt_variable_ref;
@@ -607,6 +607,8 @@ static const gattServiceCBs_t ble_service_callbacks =
   ble_write_callback,
   NULL
 };
+
+static gattCharCfg_t *runtimeProfileCharCfg = NULL;
 
 //
 // File system handles.
@@ -5051,17 +5053,18 @@ done:
 
       if ((attributes[count - 1].pValue[0] & (GATT_PROP_INDICATE|GATT_PROP_NOTIFY)) != 0)
       {
-        unsigned char* conns = heap;
-        CHECK_HEAP_OOM(sizeof(gattCharCfg_t) * linkDBNumConns, qoom);
-        GATTServApp_InitCharCfg(INVALID_CONNHANDLE, (gattCharCfg_t*)conns);
-
+        if (runtimeProfileCharCfg == NULL) {
+          runtimeProfileCharCfg = (gattCharCfg_t*)heap;
+          CHECK_HEAP_OOM(sizeof(gattCharCfg_t) * linkDBNumConns, qoom);
+          GATTServApp_InitCharCfg(INVALID_CONNHANDLE, runtimeProfileCharCfg);
+        }
         count++;
         attributes[count].type.uuid = ble_client_characteristic_config_uuid;
         attributes[count].type.len = 2;
         attributes[count].permissions = GATT_PERMIT_READ | GATT_PERMIT_WRITE;
         attributes[count].handle = 0;
-        *(unsigned char**)&attributes[count].pValue = (unsigned char*)conns;
-        vref->cfg = (unsigned char*)conns;
+        *(unsigned char**)&attributes[count].pValue = (unsigned char*)&runtimeProfileCharCfg;
+        vref->cfg = runtimeProfileCharCfg;
         variable_frame* vframe;
         get_variable_frame(vref->var, &vframe);
         vframe->ble = vref;
@@ -5300,8 +5303,8 @@ static unsigned char ble_write_callback(unsigned short handle, gattAttribute_t* 
 //
 static void ble_notify_assign(gatt_variable_ref* vref)
 {
-  GATTServApp_ProcessCharCfg((gattCharCfg_t*)vref->cfg, (unsigned char*)vref,
-                             0, (gattAttribute_t*)vref->attrs,
+  GATTServApp_ProcessCharCfg(vref->cfg, &(vref->var),
+                             FALSE, vref->attrs,
                              ((unsigned short*)vref->attrs)[-1], INVALID_TASK_ID,
                              ble_read_callback);
 }
