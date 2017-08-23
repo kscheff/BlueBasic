@@ -106,12 +106,3 @@ BLE-CC254x-1.4.2.2/Projects/ble/BlueBasicLoader/Build/Petra/Exe/
 BLE-CC254x-1.4.2.2/Projects/ble/BlueBasicLoader/Build/Petra/Obj/
 BLE-CC254x-1.4.2.2/Projects/ble/BlueBasicLoader/Build/Petra/List/
 
-*.sim
-*.map
-*.pbd
-*.browse
-BLE-CC254x-1.4.0/Projects/ble/BlueBasic/Build/BlueBattery-ImgB/Obj
-BLE-CC254x-1.4.0/Projects/ble/BlueBasic/Build/BlueBattery/Obj
-BLE-CC254x-1.4.0/Projects/ble/BlueBasic/Build/BlueSolar-ImgB/Obj
-BLE-CC254x-1.4.0/Projects/ble/BlueBasic/Build/BlueSolar/Obj
-*.d51
