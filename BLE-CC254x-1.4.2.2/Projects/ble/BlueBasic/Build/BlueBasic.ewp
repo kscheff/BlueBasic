@@ -309,7 +309,7 @@
           <state>HAL_KEY=FALSE</state>
           <state>HAL_ADC=FALSE</state>
           <state>HAL_AES=FALSE</state>
-          <state>GAP_BOND_MGR=TRUE</state>
+          <state>xGAP_BOND_MGR=TRUE</state>
           <state>FEATURE_DEVINFO=TRUE</state>
           <state>TARGET_CC2541=TRUE</state>
           <state>FEATURE_BOOST_CONVERTER=P2_0</state>
@@ -6286,14 +6286,13 @@
     <name>LIB</name>
     <file>
       <name>$PROJ_DIR$\..\..\Libraries\CC2541DB\bin\CC2541_BLE_peri.lib</name>
-      <excluded>
-        <configuration>CC2541-ImgB</configuration>
-      </excluded>
     </file>
     <file>
       <name>$PROJ_DIR$\..\..\Libraries\CC2541DB\bin\CC2541_BLE_peri_observ.lib</name>
       <excluded>
+        <configuration>CC2541</configuration>
         <configuration>CC2540</configuration>
+        <configuration>CC2541-ImgB</configuration>
         <configuration>CC2540-ImgB</configuration>
         <configuration>Petra</configuration>
       </excluded>

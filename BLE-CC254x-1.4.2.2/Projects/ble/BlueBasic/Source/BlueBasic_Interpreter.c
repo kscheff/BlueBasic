@@ -1508,10 +1508,14 @@ static VAR_TYPE expression(unsigned char mode)
                 }
                 if (top >= BLE_PAIRING_MODE && top <= BLE_ERASE_SINGLEBOND)
                 {
+#if GAP_BOND_MGR
                   if (GAPBondMgr_GetParameter(top, (unsigned long*)&queueptr[-1]) != SUCCESS)
                   {
                     goto expr_error;
                   }
+#else
+                  goto expr_error;
+#endif
                 }
                 else
                 {
@@ -3199,10 +3203,14 @@ cmd_btpoke:
       }
       if (param >= _GAPROLE(BLE_PAIRING_MODE) && param <= _GAPROLE(BLE_ERASE_SINGLEBOND))
       {
+#if GAP_BOND_MGR       
         if (GAPBondMgr_SetParameter(param, vframe->header.frame_size - sizeof(variable_frame), ptr) != SUCCESS)
         {
           goto qwhat;
         }
+#else
+        goto qwhat;
+#endif
       }
       else if (GAPRole_SetParameter(param, vframe->header.frame_size - sizeof(variable_frame), ptr) != SUCCESS)
       {
@@ -3219,10 +3227,14 @@ cmd_btpoke:
       }
       if (param >= _GAPROLE(BLE_PAIRING_MODE) && param <= _GAPROLE(BLE_ERASE_SINGLEBOND))
       {
+#if GAP_BOND_MGR
         if (GAPBondMgr_SetParameter(param, val, 0) != SUCCESS)
         {
           goto qwhat;
         }
+#else
+        goto qwhat;
+#endif 
       }
       else if (GAPRole_SetParameter(param, val, 0) != SUCCESS)
       {
