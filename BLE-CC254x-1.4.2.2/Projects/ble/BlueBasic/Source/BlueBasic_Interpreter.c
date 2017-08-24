@@ -39,6 +39,7 @@
 //      The goal is to put a Basic interpreter onto the TI CC254x Bluetooth LE chip.
 
 #include "os.h"
+#include "math.h"
 
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -98,8 +99,7 @@ static const char initmsg[]           = "BlueBasic " BUILD_TIMESTAMP " " kVersio
 static const char initmsg[]           = "BlueBasic " kVersion;
 #endif
 //static const char urlmsg[]            = "http://blog.xojs.org/bluebasic";
-//static const char urlmsg[]            = "https://github.com/kscheff/BlueBasic";
-static const char urlmsg[]            = "https://github.com/kscheff/BlueBasic";
+static const char urlmsg[]            = kMfrName;
 static const char memorymsg[]         = " bytes free.";
 
 #define VAR_TYPE    long int
@@ -214,8 +214,10 @@ enum
   // -----------------------
   // Funciton & operator spacers - to add main keywords later without messing up the numbering below
   //
-  FUNC_SPACE0,
-  FUNC_SPACE1,
+  FUNC_POW,
+  FUNC_TEMP,
+//  FUNC_SPACE0,
+//  FUNC_SPACE1,
   FUNC_SPACE2,
   FUNC_SPACE3,
   
@@ -1380,6 +1382,8 @@ static VAR_TYPE expression(unsigned char mode)
       case KW_PIN_P2:
 #endif
       case BLE_FUNC_BTPEEK:
+      case FUNC_POW:
+      case FUNC_TEMP:
         if (stackptr == stackend)
         {
           goto expr_oom;
@@ -1464,6 +1468,51 @@ static VAR_TYPE expression(unsigned char mode)
               case FUNC_MILLIS:
                 *queueptr++ = (VAR_TYPE)OS_get_millis();
                 break;
+              case FUNC_TEMP:
+                {
+                  VAR_TYPE top;
+                  TR0 = 0x01; // connect temperture sensor to ADC
+                  ATEST = 0x01;
+                  ADCCON3 = 0x0E | 0x30 | 0x00; // temperature sensor, 12-bit, internal voltage reference
+                  while ((ADCCON1 & 0x80) == 0)
+                    ;
+                  top = ADCL;
+                  top |= ADCH << 8;  
+                  ATEST = 0;
+                  TR0 = 0;
+                  // data sheet says 1480 @ 25C
+                  // and 4.5 bits per 1C
+                  // we use the factory data stored in info word 7
+#define INFOPAGE_WORD7 0x781C
+    //now we access the calibration data from the TI factory
+    //according to https://e2e.ti.com/support/wireless_connectivity/f/538/p/396260/1450855#1450855
+    // addr     DWORD   Data    Decription    
+    // 0x781C   7       0x96    3V temperature sensor reading       
+    // 0x781D           0x17    0x17 = 23, test temp RT
+    // 0x781E           ADCH    temperature sensor, Vdd = 3.0v        
+    // 0x781F           ADCL    temperature sensor, Vdd = 3.0v
+    // 0x7820   8       0x32    2V temperature sensor reading
+    // 0x7821           0x17    0x17 = 23, test temp RT        
+    // 0x7822           ADCH    temperature sensor, Vdd = 2.0v
+    // 0x7823           ADCL    temperature sensor, Vdd = 2.0v
+    //
+    // Attention: the RT temperature is not controlled in the factory
+    // TI claims it has a lot to lt variantion depending on the factory temp
+                  uint16 factoryAdc;
+                  uint8  factoryTemp;
+                  if ( *((uint8 *)INFOPAGE_WORD7 + 0) == 0x96 ){
+                    factoryAdc  = *((uint8 *)INFOPAGE_WORD7 + 2)<<8
+                                | *((uint8 *)INFOPAGE_WORD7 + 3);
+                    factoryTemp = *((uint8 *)INFOPAGE_WORD7 + 1);
+                  } else {
+                    // use data sheet values
+                    factoryAdc = 1480<<4;
+                    factoryTemp = 25;
+                  }
+                  //return temperature in degree celsius * 100
+                  *queueptr++ = ((top - factoryAdc) * 100 + 36) / 72 + 100 * factoryTemp;
+                }
+                break;
               default:
                 goto expr_error;
             }
@@ -1544,6 +1593,12 @@ static VAR_TYPE expression(unsigned char mode)
                 break;
             }
           }
+          else if (depth == 2)
+          {
+            double base = (double)(queueptr[-2]) / 0x10000;
+            double exp  = (double)(queueptr[-1]) / 0x10000;
+            (--queueptr)[-1] = (VAR_TYPE)(pow(base, exp) * 0x10000);
+          }            
           else
           {
             goto expr_error;

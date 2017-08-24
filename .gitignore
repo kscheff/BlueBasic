@@ -115,3 +115,7 @@ BLE-CC254x-1.4.0/Projects/ble/BlueBasic/Build/BlueBattery/Obj
 BLE-CC254x-1.4.0/Projects/ble/BlueBasic/Build/BlueSolar-ImgB/Obj
 BLE-CC254x-1.4.0/Projects/ble/BlueBasic/Build/BlueSolar/Obj
 *.d51
+BLE-CC254x-1.4.2.2/Projects/ble/BlueBasic/Build/BlueBattery/Exe
+BLE-CC254x-1.4.2.2/Projects/ble/BlueBasic/Build/BlueBattery/Obj
+BLE-CC254x-1.4.2.2/Projects/ble/BlueBasic/Build/BlueSolar/Exe
+BLE-CC254x-1.4.2.2/Projects/ble/BlueBasic/Build/BlueSolar/Obj

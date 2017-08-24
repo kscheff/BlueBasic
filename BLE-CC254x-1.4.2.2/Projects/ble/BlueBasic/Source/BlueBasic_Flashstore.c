@@ -378,64 +378,82 @@ unsigned int flashstore_freemem(void)
   return free;
 }
 
+#define VAR_TYPE    long int
+extern void printmsg(const char *msg);
+extern void printnum(signed char fieldsize, VAR_TYPE num);
+
 void flashstore_compact(unsigned char len, unsigned char* tempmemstart, unsigned char* tempmemend)
 {
-  // Need at least FLASHSTORE_PAGESIZE
-  if (tempmemend - tempmemstart < FLASHSTORE_PAGESIZE)
-  {
-    return;
-  }
-
+  const unsigned short available = tempmemend - tempmemstart;
+    
   // Find the lowest age page which this will fit in.
   unsigned char pg;
   unsigned char selected = 0;
+  unsigned short occupied;
   flashpage_age age = 0xFFFFFFFF;
   len = FLASHSTORE_PADDEDSIZE(len);
   for (pg = 0; pg < FLASHSTORE_NRPAGES; pg++)
   {
     flashpage_age cage = *(flashpage_age*)FLASHSTORE_PAGEBASE(pg);
-    if (cage < age && orderedpages[pg].waste + orderedpages[pg].free >= len)
+    occupied = FLASHSTORE_PAGESIZE - orderedpages[pg].free - orderedpages[pg].waste;
+    if ((cage < age && FLASHSTORE_PAGESIZE - occupied >= len)
+        && occupied <= available)
     {
       selected = pg;
       age = cage;
     }
   }
+  occupied = FLASHSTORE_PAGESIZE - orderedpages[selected].free - orderedpages[selected].waste;
+  
+  // Need at least FLASHSTORE_PAGESIZE
+  if (occupied > available)
+  {
+    return;
+  }
+  
   if (age != 0xFFFFFFFF)
   {
     // Found enough space for the line, compact the page
     
-    // Copy the page into RAM
+    // Copy required page data into RAM
     unsigned char* ram = tempmemstart;
     unsigned char* flash = (unsigned char*)FLASHSTORE_PAGEBASE(selected);
-    OS_memcpy(ram, flash, FLASHSTORE_PAGESIZE);
-
-    // Erase the page
-    OS_flashstore_erase(FLASHSTORE_FPAGE(flash));
-    OS_flashstore_write(FLASHSTORE_FADDR(flash), (unsigned char*)&lastage, FLASHSTORE_WORDS(sizeof(lastage)));
-    lastage++;
-    orderedpages[selected].waste = 0;
-    orderedpages[selected].free = FLASHSTORE_PAGESIZE - sizeof(flashpage_age);
-
-    // Copy the old lines back in. More efficient ways to do this, but okay for the moment
     unsigned char* ptr;
-    flash += sizeof(flashpage_age);
-    for (ptr = ram + sizeof(flashpage_age); ptr < ram + FLASHSTORE_PAGESIZE; )
+    unsigned short mem_length = 0;    
+    for (ptr = flash + sizeof(flashpage_age); ptr < flash + occupied; ) 
     {
       unsigned short id = *(unsigned short*)ptr;
       unsigned char len = FLASHSTORE_PADDEDSIZE(ptr[sizeof(unsigned short)]);
       if (id == FLASHID_FREE)
       {
+        // the rest of the page is empty
         break;
       }
       else if (id != FLASHID_INVALID)
       {
-        OS_flashstore_write(FLASHSTORE_FADDR(flash), ptr, FLASHSTORE_WORDS(len));
-        orderedpages[selected].free -= len;
-        flash += len;
+        if (mem_length + len <= available)
+        {
+          OS_memcpy(ram, ptr, len);
+          ram += len;
+          mem_length += len;
+        }
+        else
+          return;  // mem_length doesn't fit  
       }
       ptr += len;
     }
+            
+    // Erase the page
+    OS_flashstore_erase(FLASHSTORE_FPAGE(flash));
+    OS_flashstore_write(FLASHSTORE_FADDR(flash), (unsigned char*)&lastage, FLASHSTORE_WORDS(sizeof(lastage)));
+    lastage++;
+    orderedpages[selected].waste = 0;
+    orderedpages[selected].free = FLASHSTORE_PAGESIZE - mem_length - sizeof(flashpage_age);
 
+    // Copy the old lines back in.
+    flash += sizeof(flashpage_age);
+    OS_flashstore_write(FLASHSTORE_FADDR(flash), tempmemstart, FLASHSTORE_WORDS(mem_length));
+    
     // We corrupted memory, so we need to reinitialize
     flashstore_init((unsigned char**)lineindexstart);
   }

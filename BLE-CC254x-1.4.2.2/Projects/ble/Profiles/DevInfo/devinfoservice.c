@@ -179,14 +179,14 @@ static const uint8 devInfoHardwareRev[] = "-";
 // Software Revision String characteristic
 static uint8 devInfoSoftwareRevProps = GATT_PROP_READ;
 #ifdef kVersion
-static const uint8 devInfoSoftwareRev[] = "BlueBasic " kVersion;
+static const uint8 devInfoSoftwareRev[] = kProduct " " kVersion;
 #else
-static const uint8 devInfoSoftwareRev[] = "BlueBasicLoader";
+static const uint8 devInfoSoftwareRev[] = kProduct "Loader";
 #endif
 
 // Manufacturer Name String characteristic
 static uint8 devInfoMfrNameProps = GATT_PROP_READ;
-static const uint8 devInfoMfrName[] = "https://github.com/kscheff/BlueBasic";
+static const uint8 devInfoMfrName[] = kMfrName;
 
 // IEEE 11073-20601 Regulatory Certification Data List characteristic
 static uint8 devInfo11073CertProps = GATT_PROP_READ;

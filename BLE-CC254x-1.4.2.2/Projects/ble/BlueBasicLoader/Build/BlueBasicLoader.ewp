@@ -313,6 +313,7 @@
           <state>TARGET_CC2541=TRUE</state>
           <state>BB_NO_BOND_SUPPORT</state>
           <state>xFEATURE_DEVINFO</state>
+          <state>BLUEBASIC</state>
         </option>
         <option>
           <name>CCPreprocFile</name>
