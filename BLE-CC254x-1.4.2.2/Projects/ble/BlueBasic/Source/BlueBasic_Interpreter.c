@@ -1030,7 +1030,7 @@ static unsigned char* get_variable_frame(char name, variable_frame** frame)
 //
 // Parse the variable name and return a pointer to its memory and its size.
 //
-static unsigned char* parse_variable_address(variable_frame** vframe)
+static unsigned char* parse_variable_address(variable_frame** vframe, unsigned char parse_index)
 {
   ignore_blanks();
 
@@ -1044,13 +1044,15 @@ static unsigned char* parse_variable_address(variable_frame** vframe)
   unsigned char* ptr = get_variable_frame(name, vframe);
   if ((*vframe)->type == VAR_DIM_BYTE)
   {
+    if (!parse_index)
+      return NULL;
     unsigned char* otxtpos = txtpos;
     VAR_TYPE index = expression(EXPR_BRACES);
     if (error_num || index < 0 || index >= (*vframe)->header.frame_size - sizeof(variable_frame))
     {
       txtpos = otxtpos;
       return NULL;
-    }
+    }      
     ptr += index;
   }
   return ptr;
@@ -2329,7 +2331,7 @@ assignment:
     variable_frame* frame;
     unsigned char* ptr;
 
-    ptr = parse_variable_address(&frame);
+    ptr = parse_variable_address(&frame, 1);
     if (*txtpos != OP_EQ || (ptr == NULL && (frame == NULL || frame->type != VAR_DIM_BYTE)))
     {
       goto qwhat;
@@ -3400,7 +3402,7 @@ cmd_read:
           goto qwhat;
         }
         variable_frame* vframe = NULL;
-        unsigned char* ptr = parse_variable_address(&vframe);
+        unsigned char* ptr = parse_variable_address(&vframe, 0);
         if (ptr)
         {
           if (vframe->type == VAR_INT)
@@ -3456,7 +3458,7 @@ cmd_read:
           goto qwhat;
         }
         variable_frame* vframe = NULL;
-        unsigned char* ptr = parse_variable_address(&vframe);
+        unsigned char* ptr = parse_variable_address(&vframe, 0);
         if (ptr)
         {
           if (file->poffset == len)
@@ -3539,7 +3541,7 @@ cmd_write:
           txtpos++;
         }
         variable_frame* vframe = NULL;
-        unsigned char* ptr = parse_variable_address(&vframe);
+        unsigned char* ptr = parse_variable_address(&vframe, 0);
         if (ptr)
         {
           if (vframe->type == VAR_DIM_BYTE)
@@ -3615,7 +3617,7 @@ cmd_write:
           goto qwhat;
         }
         variable_frame* vframe = NULL;
-        unsigned char* ptr = parse_variable_address(&vframe);
+        unsigned char* ptr = parse_variable_address(&vframe, 0);
         if (ptr)
         {
           CHECK_HEAP_OOM(1, qhoom);
@@ -4382,7 +4384,7 @@ static void pin_wire_parse(void)
 
           unsigned char size;
           variable_frame* vframe;
-          unsigned char* vptr = parse_variable_address(&vframe);
+          unsigned char* vptr = parse_variable_address(&vframe, 1);
           if (!vptr)
           {
             goto wire_error;
@@ -4429,7 +4431,7 @@ static void pin_wire_parse(void)
           txtpos++;
         }
         variable_frame* vframe;
-        unsigned char* vptr = parse_variable_address(&vframe);
+        unsigned char* vptr = parse_variable_address(&vframe, 1);
         if (!vptr)
         {
           goto wire_error;
