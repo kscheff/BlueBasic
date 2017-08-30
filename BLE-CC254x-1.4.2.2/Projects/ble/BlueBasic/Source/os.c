@@ -334,20 +334,28 @@ unsigned char OS_serial_open(unsigned char port, unsigned long baud, unsigned ch
   }
  
   // Only support port 0, no-parity, 8-bits, 1 stop bit
-  if (port != 0 || parity != 'N' || bits != 8 || stop != 1 || flow != 'H')
+  if (port != 0 || parity != 'N' || bits != 8 || stop != 1 || (flow != 'H' && flow != 'N'))
   {
     return 3;
   }
 
   config.configured = 1;
   config.baudRate = baud;
-  config.flowControl = 1;
-  config.flowControlThreshold = 64;
+  config.flowControl = flow == 'H' ? HAL_UART_FLOW_ON : HAL_UART_FLOW_OFF;
+  config.flowControlThreshold = flow == 'H' ? 64 : 0;
   config.idleTimeout = 0;
   config.rx.maxBufSize = 128;
   config.tx.maxBufSize = 128;
   config.intEnable = 1;
   config.callBackFunc = _uartCallback;
+
+#ifdef POWER_SAVING  
+  // suggestion taken from here:
+  // http://e2e.ti.com/support/wireless_connectivity/bluetooth_low_energy/f/538/p/431990/1668088#1668088
+  extern uint8 Hal_TaskID;
+  CLEAR_SLEEP_MODE();
+  osal_pwrmgr_task_state(Hal_TaskID, PWRMGR_HOLD);
+#endif
   if (HalUARTOpen(HAL_UART_PORT_0, &config) == HAL_UART_SUCCESS)
   {
     serial[0].onread = onread;
@@ -363,6 +371,17 @@ unsigned char OS_serial_close(unsigned char port)
   serial[0].onread = 0;
   serial[0].onwrite = 0;
   // HalUARTClose(0); - In the hal_uart.h include file, but not actually in the code
+  HalUARTSuspend();
+  P0SEL &= ~0x3c;  // select GPIO mode
+//  P0DIR &= ~0x08;
+//  P0 &= ~0x0c;
+//  P0INP |= 0x0c;   
+#ifdef POWER_SAVING
+#if HAL_UART_DMA
+  extern uint8 Hal_TaskID;
+  osal_pwrmgr_task_state(Hal_TaskID, PWRMGR_CONSERVE);
+#endif
+#endif  
   return 1;
 }
 

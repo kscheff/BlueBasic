@@ -278,8 +278,11 @@ void BlueBasic_Init( uint8 task_id )
   // This reduces active current while radio is active and CC254x MCU
   // is halted
 #ifdef ENABLE_BLE_CONSOLE
+  // do not devide the clock when DMA is configured
+#if !HAL_UART_DMA
   // See: http://e2e.ti.com/support/wireless_connectivity/f/538/p/169944/668822.aspx#664740
   HCI_EXT_ClkDivOnHaltCmd(HCI_EXT_ENABLE_CLK_DIVIDE_ON_HALT);
+#endif
 #endif
 
   // Overlap enabled
@@ -569,13 +572,17 @@ HAL_ISR_FUNCTION(port0Isr, P0INT_VECTOR)
   {
     P0IFG = ~status;
     P0IF = 0;
-    
-#if HAL_UART_DMA == 1
-    extern uint8 Hal_TaskID;
+
+#if HAL_UART_DMA
+//    extern uint8 Hal_TaskID;
     extern volatile uint8 dmaRdyIsr;
     dmaRdyIsr = 1;
-    CLEAR_SLEEP_MODE();
-    osal_pwrmgr_task_state(Hal_TaskID, PWRMGR_HOLD);
+    // disable power management when UART is selected
+//    if (P0SEL & 0x0c)
+//    {
+//      CLEAR_SLEEP_MODE();
+//      osal_pwrmgr_task_state(Hal_TaskID, PWRMGR_HOLD);
+//    }
 #if HAL_UART_TX_BY_ISR
     if (dmaCfg.txHead == dmaCfg.txTail)
     {
