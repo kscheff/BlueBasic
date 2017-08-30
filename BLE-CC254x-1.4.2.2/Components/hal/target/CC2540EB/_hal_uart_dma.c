@@ -509,20 +509,31 @@ static void HalUARTOpenDMA(halUARTCfg_t *config)
                   (config->baudRate == HAL_UART_BR_19200) ||
                   (config->baudRate == HAL_UART_BR_38400) ||
                   (config->baudRate == HAL_UART_BR_57600) ||
-                  (config->baudRate == HAL_UART_BR_115200));
+                  (config->baudRate == HAL_UART_BR_115200) ||
+                  (config->baudRate == HAL_UART_BR_1000));
 
-  if (config->baudRate == HAL_UART_BR_57600 ||
-      config->baudRate == HAL_UART_BR_115200)
+  if (config->baudRate == HAL_UART_BR_1000)
   {
-    UxBAUD = 216;
+    UxBAUD = 6;
   }
   else
   {
-    UxBAUD = 59;
+    if (config->baudRate == HAL_UART_BR_57600 ||
+        config->baudRate == HAL_UART_BR_115200)
+    {
+      UxBAUD = 216;
+    }
+    else
+    {
+      UxBAUD = 59;
+    }
   }
-
+  
   switch (config->baudRate)
   {
+    case HAL_UART_BR_1000:
+      UxGCR = 5;
+      break;
     case HAL_UART_BR_9600:
       UxGCR = 8;
       break;

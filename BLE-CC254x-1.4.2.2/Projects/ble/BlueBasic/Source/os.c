@@ -311,6 +311,9 @@ unsigned char OS_serial_open(unsigned char port, unsigned long baud, unsigned ch
   
   switch (baud)
   {
+    case 1000:
+      baud = HAL_UART_BR_1000;
+      break;
     case 9600:
       baud = HAL_UART_BR_9600;
       break;
