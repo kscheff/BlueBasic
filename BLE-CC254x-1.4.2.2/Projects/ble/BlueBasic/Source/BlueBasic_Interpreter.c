@@ -1096,6 +1096,9 @@ static void clean_memory(void)
   }
   lineptr = NULL;
   
+  // Stop serial interface
+  OS_serial_close(0);
+  
   // Reset variables to 0 and remove all types
   OS_memset(variables_begin, 0, 26 * VAR_SIZE + 4);
   
