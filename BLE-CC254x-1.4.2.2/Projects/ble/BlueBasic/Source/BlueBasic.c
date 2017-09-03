@@ -412,7 +412,7 @@ uint16 BlueBasic_ProcessEvent( uint8 task_id, uint16 events )
   
   if ( events & BLUEBASIC_EVENT_SERIAL )
   {
-    if (serial[0].onread && Hal_UART_RxBufLen(HAL_UART_PORT_0) > 0)
+    if (serial[0].onread && Hal_UART_RxBufLen(HAL_UART_PORT_0) > 15)
     {
       interpreter_run(serial[0].onread, 1);
     }
