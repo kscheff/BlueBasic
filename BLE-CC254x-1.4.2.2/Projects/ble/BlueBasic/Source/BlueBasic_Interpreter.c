@@ -2460,10 +2460,12 @@ print:
 //
 // MEM
 // Print the current free memory.
-//
+// and free heap
 mem:
   printnum(0, flashstore_freemem());
   printmsg(memorymsg);
+  printnum(0, sp - heap);
+  printmsg(" bytes on heap free.");
   goto run_next_statement;
 
 //
