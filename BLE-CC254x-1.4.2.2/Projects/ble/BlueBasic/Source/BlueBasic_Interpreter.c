@@ -1030,7 +1030,7 @@ static unsigned char* get_variable_frame(char name, variable_frame** frame)
 //
 // Parse the variable name and return a pointer to its memory and its size.
 //
-static unsigned char* parse_variable_address(variable_frame** vframe, unsigned char parse_index)
+static unsigned char* parse_variable_address(variable_frame** vframe)
 {
   ignore_blanks();
 
@@ -1044,8 +1044,6 @@ static unsigned char* parse_variable_address(variable_frame** vframe, unsigned c
   unsigned char* ptr = get_variable_frame(name, vframe);
   if ((*vframe)->type == VAR_DIM_BYTE)
   {
-    if (!parse_index)
-      return NULL;
     unsigned char* otxtpos = txtpos;
     VAR_TYPE index = expression(EXPR_BRACES);
     if (error_num || index < 0 || index >= (*vframe)->header.frame_size - sizeof(variable_frame))
@@ -2331,7 +2329,7 @@ assignment:
     variable_frame* frame;
     unsigned char* ptr;
 
-    ptr = parse_variable_address(&frame, 1);
+    ptr = parse_variable_address(&frame);
     if (*txtpos != OP_EQ || (ptr == NULL && (frame == NULL || frame->type != VAR_DIM_BYTE)))
     {
       goto qwhat;
@@ -2850,7 +2848,7 @@ cmd_serial:
 //
 // WIRE ...
 //
-cmd_wire:
+cmd_wire:  
   if (lineptr >= program_end)
   {
     goto qdirect;
@@ -3404,7 +3402,7 @@ cmd_read:
           goto qwhat;
         }
         variable_frame* vframe = NULL;
-        unsigned char* ptr = parse_variable_address(&vframe, 0);
+        unsigned char* ptr = parse_variable_address(&vframe);
         if (ptr)
         {
           if (vframe->type == VAR_INT)
@@ -3419,6 +3417,8 @@ cmd_read:
         else if (vframe)
         {
           // No address, but we have a vframe - this is a full array
+          if (error_num == ERROR_EXPRESSION)
+            error_num = ERROR_OK; // clear parsing error due to missing index braces
           unsigned char alen = vframe->header.frame_size - sizeof(variable_frame);
           for (ptr = (unsigned char*)vframe + sizeof(variable_frame); alen; alen--)
           {
@@ -3460,7 +3460,7 @@ cmd_read:
           goto qwhat;
         }
         variable_frame* vframe = NULL;
-        unsigned char* ptr = parse_variable_address(&vframe, 0);
+        unsigned char* ptr = parse_variable_address(&vframe);
         if (ptr)
         {
           if (file->poffset == len)
@@ -3486,6 +3486,8 @@ cmd_read:
         else if (vframe)
         {
           // No address, but we have a vframe - this is a full array
+          if (error_num == ERROR_EXPRESSION)
+            error_num = ERROR_OK; // clear parsing error due to missing index braces
           unsigned char alen = vframe->header.frame_size - sizeof(variable_frame);
           ptr = (unsigned char*)vframe + sizeof(variable_frame);
           while (alen)
@@ -3543,7 +3545,7 @@ cmd_write:
           txtpos++;
         }
         variable_frame* vframe = NULL;
-        unsigned char* ptr = parse_variable_address(&vframe, 0);
+        unsigned char* ptr = parse_variable_address(&vframe);
         if (ptr)
         {
           if (vframe->type == VAR_DIM_BYTE)
@@ -3558,6 +3560,8 @@ cmd_write:
         else if (vframe)
         {
           // No address, but we have a vframe - this is a full array
+          if (error_num == ERROR_EXPRESSION)
+            error_num = ERROR_OK; // clear parsing error due to missing index braces
           unsigned char alen;
           ptr = (unsigned char*)vframe + sizeof(variable_frame);
           for (alen = vframe->header.frame_size - sizeof(variable_frame); alen; alen--)
@@ -3619,7 +3623,7 @@ cmd_write:
           goto qwhat;
         }
         variable_frame* vframe = NULL;
-        unsigned char* ptr = parse_variable_address(&vframe, 0);
+        unsigned char* ptr = parse_variable_address(&vframe);
         if (ptr)
         {
           CHECK_HEAP_OOM(1, qhoom);
@@ -3635,6 +3639,8 @@ cmd_write:
         else if (vframe)
         {
           // No address, but we have a vframe - this is a full array
+          if (error_num == ERROR_EXPRESSION)
+            error_num = ERROR_OK; // clear parsing error due to missing index braces
           unsigned char alen = vframe->header.frame_size - sizeof(variable_frame);
           CHECK_HEAP_OOM(alen, qhoom);
           OS_memcpy(iptr, ((unsigned char*)vframe) + sizeof(variable_frame), alen);
@@ -4386,7 +4392,7 @@ static void pin_wire_parse(void)
 
           unsigned char size;
           variable_frame* vframe;
-          unsigned char* vptr = parse_variable_address(&vframe, 1);
+          unsigned char* vptr = parse_variable_address(&vframe);
           if (!vptr)
           {
             goto wire_error;
@@ -4433,7 +4439,7 @@ static void pin_wire_parse(void)
           txtpos++;
         }
         variable_frame* vframe;
-        unsigned char* vptr = parse_variable_address(&vframe, 1);
+        unsigned char* vptr = parse_variable_address(&vframe);
         if (!vptr)
         {
           goto wire_error;
