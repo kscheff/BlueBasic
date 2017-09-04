@@ -321,6 +321,7 @@ extern void interpreter_devicefound(unsigned char addtype, unsigned char* addres
 #define BLE_CONN_TIMEOUT        0x0318  //!< Current timeout value.  Read only.  size is uint16.  Range is 100ms to 32 seconds.  Default is 0 (no connection).
 #define BLE_PARAM_UPDATE_REQ    0x0319  //!< Slave Connection Parameter Update Request. Write. Size is uint8. If TRUE then connection parameter update request is sent.
 #define BLE_STATE               0x031A  //!< Reading this parameter will return GAP Peripheral Role State. Read Only. Size is uint8.
+#define BLE_ADV_NONCONN_ENABLED 0x031B  //!< Enable/Disable Non-Connectable Advertising.  Read/Write.  Size is uint8.  Default is FALSE=Disabled.
 
 //
 // GAPBOND

@@ -3280,7 +3280,7 @@ cmd_btpoke:
     // Expects an int
     else
     {
-      val = expression(EXPR_NORMAL);
+      unsigned short val_16 = expression(EXPR_NORMAL);
       if (error_num)
       {
         goto qwhat;
@@ -3288,7 +3288,7 @@ cmd_btpoke:
       if (param >= _GAPROLE(BLE_PAIRING_MODE) && param <= _GAPROLE(BLE_ERASE_SINGLEBOND))
       {
 #if GAP_BOND_MGR
-        if (GAPBondMgr_SetParameter(param, val, 0) != SUCCESS)
+        if (GAPBondMgr_SetParameter(param, 2, &val_16) != SUCCESS)
         {
           goto qwhat;
         }
@@ -3296,9 +3296,19 @@ cmd_btpoke:
         goto qwhat;
 #endif 
       }
-      else if (GAPRole_SetParameter(param, val, 0) != SUCCESS)
+      if (param >= _GAPROLE(BLE_PROFILEROLE) && param <= _GAPROLE(BLE_ADV_NONCONN_ENABLED))
       {
-        goto qwhat;
+        if (GAPRole_SetParameter(param, 2, &val_16) != SUCCESS) 
+        {
+          goto qwhat;
+        }
+      }
+      else
+      {
+        if (GAP_SetParamValue( param, val_16) != SUCCESS)
+        {
+          goto qwhat;
+        }
       }
     }
   }
