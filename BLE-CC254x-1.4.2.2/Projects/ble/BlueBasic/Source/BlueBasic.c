@@ -100,7 +100,20 @@
 //#define  DEFAULT_ADVERTISING_INTERVAL          1636 // 1022.5 ms
 //#define  DEFAULT_ADVERTISING_INTERVAL          2056 // 1285 ms
 
+// initial connection interval in units of 1.25ms
+#define DEFAULT_CONNECTION_INTERVAL_MIN 24
+#define DEFAULT_CONNECTION_INTERVAL_MAX 24
 
+// Minimum connection interval (units of 1.25ms, 80=100ms) if automatic parameter update request is enabled
+#define DEFAULT_DESIRED_MIN_CONN_INTERVAL     24
+// Maximum connection interval (units of 1.25ms, 800=1000ms) if automatic parameter update request is enabled
+#define DEFAULT_DESIRED_MAX_CONN_INTERVAL     48
+// Slave latency to use if automatic parameter update request is enabled
+#define DEFAULT_DESIRED_SLAVE_LATENCY         0
+// Supervision timeout value (units of 10ms, 1000=10s) if automatic parameter update request is enabled
+#define DEFAULT_DESIRED_CONN_TIMEOUT          1000
+// Whether to enable automatic parameter update request when a connection is formed
+#define DEFAULT_ENABLE_UPDATE_REQUEST         TRUE
 
 #define INVALID_CONNHANDLE                    0xFFFF
 
@@ -272,13 +285,69 @@ void BlueBasic_Init( uint8 task_id )
 #ifdef ENABLE_BLE_CONSOLE
   GAPRole_SetParameter( GAPROLE_ADVERT_DATA, sizeof(consoleAdvert), (void*)consoleAdvert );
 #endif
+  
+#if 0  
+  // Setup the GAP Peripheral Role Profile
+  {
+    // Device starts advertising upon initialization
+//    uint8 initial_advertising_enable = TRUE;
+
+    // By setting this to zero, the device will go into the waiting state after
+    // being discoverable for 30.72 second, and will not being advertising again
+    // until the enabler is set back to TRUE
+//    uint16 gapRole_AdvertOffTime = 0;
+    uint8 enable_update_request = DEFAULT_ENABLE_UPDATE_REQUEST;
+    uint16 desired_min_interval = DEFAULT_DESIRED_MIN_CONN_INTERVAL;
+    uint16 desired_max_interval = DEFAULT_DESIRED_MAX_CONN_INTERVAL;
+    uint16 desired_slave_latency = DEFAULT_DESIRED_SLAVE_LATENCY;
+    uint16 desired_conn_timeout = DEFAULT_DESIRED_CONN_TIMEOUT;
+
+    // Set the GAP Role Parameters
+//    GAPRole_SetParameter( GAPROLE_ADVERT_ENABLED, sizeof( uint8 ), &initial_advertising_enable );
+//    GAPRole_SetParameter( GAPROLE_ADVERT_OFF_TIME, sizeof( uint16 ), &gapRole_AdvertOffTime );
+
+//    GAPRole_SetParameter( GAPROLE_SCAN_RSP_DATA, sizeof ( scanRspData ), scanRspData );
+//    GAPRole_SetParameter( GAPROLE_ADVERT_DATA, sizeof( advertData ), advertData );
+
+    GAPRole_SetParameter( GAPROLE_PARAM_UPDATE_ENABLE, sizeof( uint8 ), &enable_update_request );
+    GAPRole_SetParameter( GAPROLE_MIN_CONN_INTERVAL, sizeof( uint16 ), &desired_min_interval );
+    GAPRole_SetParameter( GAPROLE_MAX_CONN_INTERVAL, sizeof( uint16 ), &desired_max_interval );
+    GAPRole_SetParameter( GAPROLE_SLAVE_LATENCY, sizeof( uint16 ), &desired_slave_latency );
+    GAPRole_SetParameter( GAPROLE_TIMEOUT_MULTIPLIER, sizeof( uint16 ), &desired_conn_timeout );
+  }
+#endif
+  
+  // Set the GAP Characteristics
+//  GGS_SetParameter( GGS_DEVICE_NAME_ATT, sizeof(attDeviceName), attDeviceName );
+  
 
   // Set advertising interval
   GAP_SetParamValue( TGAP_LIM_DISC_ADV_INT_MIN, DEFAULT_ADVERTISING_INTERVAL );
   GAP_SetParamValue( TGAP_LIM_DISC_ADV_INT_MAX, DEFAULT_ADVERTISING_INTERVAL );
   GAP_SetParamValue( TGAP_GEN_DISC_ADV_INT_MIN, DEFAULT_ADVERTISING_INTERVAL );
   GAP_SetParamValue( TGAP_GEN_DISC_ADV_INT_MAX, DEFAULT_ADVERTISING_INTERVAL );
+  
+  // Set connection interval, otherwise Android tries 7.5ms and iOS 30ms 
+  GAP_SetParamValue( TGAP_CONN_EST_INT_MIN, DEFAULT_CONNECTION_INTERVAL_MIN);
+  GAP_SetParamValue( TGAP_CONN_EST_INT_MAX, DEFAULT_CONNECTION_INTERVAL_MAX);
 
+#if 0 //GAP_BOND_MGR  
+   // Setup the GAP Bond Manager to require pairing with pin code
+  {
+    uint32 passkey = 0; // passkey "000000"
+    uint8 pairMode = GAPBOND_PAIRING_MODE_WAIT_FOR_REQ;
+    uint8 mitm = TRUE;
+    uint8 ioCap = GAPBOND_IO_CAP_DISPLAY_ONLY;
+    uint8 bonding = TRUE;
+
+    GAPBondMgr_SetParameter( GAPBOND_DEFAULT_PASSCODE, sizeof ( uint32 ), &passkey );
+    GAPBondMgr_SetParameter( GAPBOND_PAIRING_MODE, sizeof ( uint8 ), &pairMode );
+    GAPBondMgr_SetParameter( GAPBOND_MITM_PROTECTION, sizeof ( uint8 ), &mitm );
+    GAPBondMgr_SetParameter( GAPBOND_IO_CAPABILITIES, sizeof ( uint8 ), &ioCap );
+    GAPBondMgr_SetParameter( GAPBOND_BONDING_ENABLED, sizeof ( uint8 ), &bonding );
+  }
+#endif  
+  
   // Initialize GATT attributes
   GGS_AddService( GATT_ALL_SERVICES );            // GAP
   GATTServApp_AddService( GATT_ALL_SERVICES );    // GATT attributes

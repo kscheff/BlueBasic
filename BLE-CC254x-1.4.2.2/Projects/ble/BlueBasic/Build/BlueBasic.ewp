@@ -6049,7 +6049,7 @@
           <state>HAL_KEY=FALSE</state>
           <state>HAL_ADC=FALSE</state>
           <state>HAL_AES=FALSE</state>
-          <state>xGAP_BOND_MGR=TRUE</state>
+          <state>GAP_BOND_MGR=TRUE</state>
           <state>FEATURE_DEVINFO=TRUE</state>
           <state>TARGET_CC2541=TRUE</state>
           <state>xFEATURE_OAD</state>
@@ -7203,7 +7203,7 @@
           <state>HAL_KEY=FALSE</state>
           <state>HAL_ADC=FALSE</state>
           <state>HAL_AES=FALSE</state>
-          <state>xGAP_BOND_MGR=TRUE</state>
+          <state>GAP_BOND_MGR=TRUE</state>
           <state>FEATURE_DEVINFO=TRUE</state>
           <state>TARGET_CC2541=TRUE</state>
           <state>xFEATURE_OAD</state>
