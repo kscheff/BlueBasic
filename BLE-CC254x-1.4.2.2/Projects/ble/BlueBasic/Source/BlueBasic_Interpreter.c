@@ -1693,6 +1693,8 @@ void interpreter_init()
 {
 #ifndef TARGET_CC254X
   assert(LAST_KEYWORD < 256);
+#else
+  static_assert(LAST_KEYWORD < 256, "keyword table too large");
 #endif
   program_start = OS_malloc(kRamSize);
   OS_memset(program_start, 0, kRamSize);
