@@ -1558,10 +1558,10 @@ static VAR_TYPE expression(unsigned char mode)
                 {
                   goto expr_error; // Not supported
                 }
-                if (top >= BLE_PAIRING_MODE && top <= BLE_ERASE_SINGLEBOND)
+                if (_GAPROLE(top) >= _GAPROLE(BLE_PAIRING_MODE) && top <= _GAPROLE(BLE_ERASE_SINGLEBOND))
                 {
 #if GAP_BOND_MGR
-                  if (GAPBondMgr_GetParameter(top, (unsigned long*)&queueptr[-1]) != SUCCESS)
+                  if (GAPBondMgr_GetParameter(_GAPROLE(top), (unsigned long*)&queueptr[-1]) != SUCCESS)
                   {
                     goto expr_error;
                   }
@@ -1571,7 +1571,7 @@ static VAR_TYPE expression(unsigned char mode)
                 }
                 else
                 {
-                  if (GAPRole_GetParameter(top, (unsigned long*)&queueptr[-1]) != SUCCESS)
+                  if (GAPRole_GetParameter(_GAPROLE(top), (unsigned long*)&queueptr[-1]) != SUCCESS)
                   {
                     goto expr_error;
                   }
@@ -3282,7 +3282,9 @@ cmd_btpoke:
     // Expects an int
     else
     {
-      unsigned short val_16 = expression(EXPR_NORMAL);
+      val = expression(EXPR_NORMAL);
+      unsigned char len = _GAPLEN(param);
+      param = _GAPROLE(param);
       if (error_num)
       {
         goto qwhat;
@@ -3290,7 +3292,7 @@ cmd_btpoke:
       if (param >= _GAPROLE(BLE_PAIRING_MODE) && param <= _GAPROLE(BLE_ERASE_SINGLEBOND))
       {
 #if GAP_BOND_MGR
-        if (GAPBondMgr_SetParameter(param, 2, &val_16) != SUCCESS)
+        if (GAPBondMgr_SetParameter(param, len, &val) != SUCCESS)
         {
           goto qwhat;
         }
@@ -3298,16 +3300,18 @@ cmd_btpoke:
         goto qwhat;
 #endif 
       }
-      if (param >= _GAPROLE(BLE_PROFILEROLE) && param <= _GAPROLE(BLE_ADV_NONCONN_ENABLED))
+      else if (_GAPROLE(param) >= _GAPROLE(BLE_PROFILEROLE) && _GAPROLE(param) <= _GAPROLE(BLE_ADV_NONCONN_ENABLED))
       {
-        if (GAPRole_SetParameter(param, 2, &val_16) != SUCCESS) 
+        if (GAPRole_SetParameter(param, len, &val) != SUCCESS) 
         {
           goto qwhat;
         }
       }
       else
       {
-        if (GAP_SetParamValue( param, val_16) != SUCCESS)
+        // for all lower addresses we call GAP directly
+        // always uint16, masking any size with _GAPROLE()
+        if (GAP_SetParamValue( _GAPROLE(param), val) != SUCCESS)
         {
           goto qwhat;
         }

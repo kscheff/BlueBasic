@@ -294,58 +294,71 @@ extern void interpreter_devicefound(unsigned char addtype, unsigned char* addres
 
 #endif /* __APPLE__ */
 
-#define BLE_PROFILEROLE         0x0300  //!< Reading this parameter will return GAP Role type. Read Only. Size is uint8.
+//definitions of field length in bytes to process
+#define _GAP_ARRAY 0x8000
+#define _GAP_NOVAL 0x0000
+#define _GAP_UINT8 0x1000
+#define _GAP_UINT16 0x2000
+#define _GAP_UINT32 0x4000
+
+#define BLE_PROFILEROLE         0x1300  //!< Reading this parameter will return GAP Role type. Read Only. Size is uint8.
 #define BLE_IRK                 0x8301  //!< Identity Resolving Key. Read/Write. Size is uint8[KEYLEN]. Default is all 0, which means that the IRK will be randomly generated.
 #define BLE_SRK                 0x8302  //!< Signature Resolving Key. Read/Write. Size is uint8[KEYLEN]. Default is all 0, which means that the SRK will be randomly generated.
-#define BLE_SIGNCOUNTER         0x0303  //!< Sign Counter. Read/Write. Size is uint32. Default is 0.
+#define BLE_SIGNCOUNTER         0x4303  //!< Sign Counter. Read/Write. Size is uint32. Default is 0.
 #define BLE_BD_ADDR             0x8304  //!< Device's Address. Read Only. Size is uint8[B_ADDR_LEN]. This item is read from the controller.
-#define BLE_ADVERT_ENABLED      0x0305  //!< Enable/Disable Advertising. Read/Write. Size is uint8. Default is TRUE=Enabled.
-#define BLE_ADVERT_OFF_TIME     0x0306  //!< Advertising Off Time for Limited advertisements (in milliseconds). Read/Write. Size is uint16. Default is 30 seconds.
+#define BLE_ADVERT_ENABLED      0x1305  //!< Enable/Disable Advertising. Read/Write. Size is uint8. Default is TRUE=Enabled.
+#define BLE_ADVERT_OFF_TIME     0x2306  //!< Advertising Off Time for Limited advertisements (in milliseconds). Read/Write. Size is uint16. Default is 30 seconds.
 #define BLE_ADVERT_DATA         0x8307  //!< Advertisement Data. Read/Write. Max size is uint8[B_MAX_ADV_LEN].  Default is "02:01:01", which means that it is a Limited Discoverable Advertisement.
 #define BLE_SCAN_RSP_DATA       0x8308  //!< Scan Response Data. Read/Write. Max size is uint8[B_MAX_ADV_LEN]. Defaults to all 0.
-#define BLE_ADV_EVENT_TYPE      0x0309  //!< Advertisement Type. Read/Write. Size is uint8.  Default is GAP_ADTYPE_ADV_IND (defined in GAP.h).
-#define BLE_ADV_DIRECT_TYPE     0x030A  //!< Direct Advertisement Address Type. Read/Write. Size is uint8. Default is ADDRTYPE_PUBLIC (defined in GAP.h).
+#define BLE_ADV_EVENT_TYPE      0x1309  //!< Advertisement Type. Read/Write. Size is uint8.  Default is GAP_ADTYPE_ADV_IND (defined in GAP.h).
+#define BLE_ADV_DIRECT_TYPE     0x130A  //!< Direct Advertisement Address Type. Read/Write. Size is uint8. Default is ADDRTYPE_PUBLIC (defined in GAP.h).
 #define BLE_ADV_DIRECT_ADDR     0x830B  //!< Direct Advertisement Address. Read/Write. Size is uint8[B_ADDR_LEN]. Default is NULL.
-#define BLE_ADV_CHANNEL_MAP     0x030C  //!< Which channels to advertise on. Read/Write Size is uint8. Default is GAP_ADVCHAN_ALL (defined in GAP.h)
-#define BLE_ADV_FILTER_POLICY   0x030D  //!< Filter Policy. Ignored when directed advertising is used. Read/Write. Size is uint8. Default is GAP_FILTER_POLICY_ALL (defined in GAP.h).
-#define BLE_CONNHANDLE          0x030E  //!< Connection Handle. Read Only. Size is uint16.
-#define BLE_RSSI_READ_RATE      0x030F  //!< How often to read the RSSI during a connection. Read/Write. Size is uint16. The value is in milliseconds. Default is 0 = OFF.
-#define BLE_PARAM_UPDATE_ENABLE 0x0310  //!< Slave Connection Parameter Update Enable. Read/Write. Size is uint8. If TRUE then automatic connection parameter update request is sent. Default is FALSE.
-#define BLE_MIN_CONN_INTERVAL   0x0311  //!< Minimum Connection Interval to allow (n * 1.25ms).  Range: 7.5 msec to 4 seconds (0x0006 to 0x0C80). Read/Write. Size is uint16. Default is 7.5 milliseconds (0x0006).
-#define BLE_MAX_CONN_INTERVAL   0x0312  //!< Maximum Connection Interval to allow (n * 1.25ms).  Range: 7.5 msec to 4 seconds (0x0006 to 0x0C80). Read/Write. Size is uint16. Default is 4 seconds (0x0C80).
-#define BLE_SLAVE_LATENCY       0x0313  //!< Update Parameter Slave Latency. Range: 0 - 499. Read/Write. Size is uint16. Default is 0.
-#define BLE_TIMEOUT_MULTIPLIER  0x0314  //!< Update Parameter Timeout Multiplier (n * 10ms). Range: 100ms to 32 seconds (0x000a - 0x0c80). Read/Write. Size is uint16. Default is 1000.
+#define BLE_ADV_CHANNEL_MAP     0x130C  //!< Which channels to advertise on. Read/Write Size is uint8. Default is GAP_ADVCHAN_ALL (defined in GAP.h)
+#define BLE_ADV_FILTER_POLICY   0x130D  //!< Filter Policy. Ignored when directed advertising is used. Read/Write. Size is uint8. Default is GAP_FILTER_POLICY_ALL (defined in GAP.h).
+#define BLE_CONNHANDLE          0x230E  //!< Connection Handle. Read Only. Size is uint16.
+#define BLE_RSSI_READ_RATE      0x230F  //!< How often to read the RSSI during a connection. Read/Write. Size is uint16. The value is in milliseconds. Default is 0 = OFF.
+#define BLE_PARAM_UPDATE_ENABLE 0x1310  //!< Slave Connection Parameter Update Enable. Read/Write. Size is uint8. If TRUE then automatic connection parameter update request is sent. Default is FALSE.
+#define BLE_MIN_CONN_INTERVAL   0x2311  //!< Minimum Connection Interval to allow (n * 1.25ms).  Range: 7.5 msec to 4 seconds (0x0006 to 0x0C80). Read/Write. Size is uint16. Default is 7.5 milliseconds (0x0006).
+#define BLE_MAX_CONN_INTERVAL   0x2312  //!< Maximum Connection Interval to allow (n * 1.25ms).  Range: 7.5 msec to 4 seconds (0x0006 to 0x0C80). Read/Write. Size is uint16. Default is 4 seconds (0x0C80).
+#define BLE_SLAVE_LATENCY       0x2313  //!< Update Parameter Slave Latency. Range: 0 - 499. Read/Write. Size is uint16. Default is 0.
+#define BLE_TIMEOUT_MULTIPLIER  0x2314  //!< Update Parameter Timeout Multiplier (n * 10ms). Range: 100ms to 32 seconds (0x000a - 0x0c80). Read/Write. Size is uint16. Default is 1000.
 #define BLE_CONN_BD_ADDR        0x8315  //!< Address of connected device. Read only. Size is uint8[B_MAX_ADV_LEN]. Set to all zeros when not connected.
-#define BLE_CONN_INTERVAL       0x0316  //!< Current connection interval.  Read only. Size is uint16.  Range is 7.5ms to 4 seconds (0x0006 to 0x0C80).  Default is 0 (no connection).
-#define BLE_CONN_LATENCY        0x0317  //!< Current slave latency.  Read only.  Size is uint16.  Range is 0 to 499. Default is 0 (no slave latency or no connection).
-#define BLE_CONN_TIMEOUT        0x0318  //!< Current timeout value.  Read only.  size is uint16.  Range is 100ms to 32 seconds.  Default is 0 (no connection).
-#define BLE_PARAM_UPDATE_REQ    0x0319  //!< Slave Connection Parameter Update Request. Write. Size is uint8. If TRUE then connection parameter update request is sent.
-#define BLE_STATE               0x031A  //!< Reading this parameter will return GAP Peripheral Role State. Read Only. Size is uint8.
-#define BLE_ADV_NONCONN_ENABLED 0x031B  //!< Enable/Disable Non-Connectable Advertising.  Read/Write.  Size is uint8.  Default is FALSE=Disabled.
+#define BLE_CONN_INTERVAL       0x2316  //!< Current connection interval.  Read only. Size is uint16.  Range is 7.5ms to 4 seconds (0x0006 to 0x0C80).  Default is 0 (no connection).
+#define BLE_CONN_LATENCY        0x2317  //!< Current slave latency.  Read only.  Size is uint16.  Range is 0 to 499. Default is 0 (no slave latency or no connection).
+#define BLE_CONN_TIMEOUT        0x2318  //!< Current timeout value.  Read only.  size is uint16.  Range is 100ms to 32 seconds.  Default is 0 (no connection).
+#define BLE_PARAM_UPDATE_REQ    0x1319  //!< Slave Connection Parameter Update Request. Write. Size is uint8. If TRUE then connection parameter update request is sent.
+#define BLE_STATE               0x131A  //!< Reading this parameter will return GAP Peripheral Role State. Read Only. Size is uint8.
+#define BLE_ADV_NONCONN_ENABLED 0x131B  //!< Enable/Disable Non-Connectable Advertising.  Read/Write.  Size is uint8.  Default is FALSE=Disabled.
 
 //
 // GAPBOND
 //
-#define BLE_PAIRING_MODE        0x0400  //!< Pairing Mode: @ref  BLE_PAIRING_MODE_DEFINES. Read/Write. Size is uint8. Default is BLE_PAIRING_MODE_WAIT_FOR_REQ.
-#define BLE_INITIATE_WAIT       0x0401  //!< Pairing Mode Initiate wait timeout.  This is the time it will wait for a Pairing Request before sending the Slave Initiate Request. Read/Write. Size is uint16. Default is 1000(in milliseconds).
-#define BLE_MITM_PROTECTION     0x0402  //!< Man-In-The-Middle (MITM) basically turns on Passkey protection in the pairing algorithm. Read/Write. Size is uint8. Default is 0(disabled).
-#define BLE_IO_CAPABILITIES     0x0403  //!< I/O capabilities.  Read/Write. Size is uint8. Default is BLE_IO_CAP_DISPLAY_ONLY @ref BLE_IO_CAP_DEFINES.
-#define BLE_OOB_ENABLED         0x0404  //!< OOB data available for pairing algorithm. Read/Write. Size is uint8. Default is 0(disabled).
+#define BLE_PAIRING_MODE        0x1400  //!< Pairing Mode: @ref  BLE_PAIRING_MODE_DEFINES. Read/Write. Size is uint8. Default is BLE_PAIRING_MODE_WAIT_FOR_REQ.
+#define BLE_INITIATE_WAIT       0x2401  //!< Pairing Mode Initiate wait timeout.  This is the time it will wait for a Pairing Request before sending the Slave Initiate Request. Read/Write. Size is uint16. Default is 1000(in milliseconds).
+#define BLE_MITM_PROTECTION     0x1402  //!< Man-In-The-Middle (MITM) basically turns on Passkey protection in the pairing algorithm. Read/Write. Size is uint8. Default is 0(disabled).
+#define BLE_IO_CAPABILITIES     0x1403  //!< I/O capabilities.  Read/Write. Size is uint8. Default is BLE_IO_CAP_DISPLAY_ONLY @ref BLE_IO_CAP_DEFINES.
+#define BLE_OOB_ENABLED         0x1404  //!< OOB data available for pairing algorithm. Read/Write. Size is uint8. Default is 0(disabled).
 #define BLE_OOB_DATA            0x8405  //!< OOB Data. Read/Write. size uint8[16]. Default is all 0's.
-#define BLE_BONDING_ENABLED     0x0406  //!< Request Bonding during the pairing process if enabled.  Read/Write. Size is uint8. Default is 0(disabled).
-#define BLE_KEY_DIST_LIST       0x0407  //!< The key distribution list for bonding.  size is uint8.  @ref BLE_KEY_DIST_DEFINES. Default is sEncKey, sIdKey, mIdKey, mSign enabled.
-#define BLE_DEFAULT_PASSCODE    0x0408  //!< The default passcode for MITM protection. size is uint32. Range is 0 - 999,999. Default is 0.
+#define BLE_BONDING_ENABLED     0x1406  //!< Request Bonding during the pairing process if enabled.  Read/Write. Size is uint8. Default is 0(disabled).
+#define BLE_KEY_DIST_LIST       0x1407  //!< The key distribution list for bonding.  size is uint8.  @ref BLE_KEY_DIST_DEFINES. Default is sEncKey, sIdKey, mIdKey, mSign enabled.
+#define BLE_DEFAULT_PASSCODE    0x4408  //!< The default passcode for MITM protection. size is uint32. Range is 0 - 999,999. Default is 0.
 #define BLE_ERASE_ALLBONDS      0x0409  //!< Erase all of the bonded devices. Write Only. No Size.
-#define BLE_KEYSIZE             0x040C  //!< Key Size used in pairing. Read/Write. size is uint8. Default is 16.
-#define BLE_AUTO_SYNC_WL        0x040D  //!< Clears the White List adds to it each unique address stored by bonds in NV. Read/Write. Size is uint8. Default is FALSE.
-#define BLE_BOND_COUNT          0x040E  //!< Gets the total number of bonds stored in NV. Read Only. Size is uint8. Default is 0 (no bonds).
-#define BLE_BOND_FAIL_ACTION    0x040F  //!< Possible actions Central may take upon an unsuccessful bonding. Write Only. Size is uint8. Default is 0x02 (Terminate link upon unsuccessful bonding).
+#define BLE_KEYSIZE             0x140C  //!< Key Size used in pairing. Read/Write. size is uint8. Default is 16.
+#define BLE_AUTO_SYNC_WL        0x140D  //!< Clears the White List adds to it each unique address stored by bonds in NV. Read/Write. Size is uint8. Default is FALSE.
+#define BLE_BOND_COUNT          0x140E  //!< Gets the total number of bonds stored in NV. Read Only. Size is uint8. Default is 0 (no bonds).
+#define BLE_BOND_FAIL_ACTION    0x140F  //!< Possible actions Central may take upon an unsuccessful bonding. Write Only. Size is uint8. Default is 0x02 (Terminate link upon unsuccessful bonding).
 #define BLE_ERASE_SINGLEBOND    0x8410  //!< Erase a single bonded device. Write only. Must provide address type followed by device address.
 
-#define BLE_RXGAIN              0x0F00
-#define BLE_TXPOWER             0x0F01
+#define BLE_RXGAIN              0x2F00 // length?
+#define BLE_TXPOWER             0x2F01 // length?
 
-#define _GAPROLE(V)   (0x7FFF & (V))
+#define _GAPROLE(V)   (0x0FFF & (V))
+#define _GAPLEN(L)    ((0x7000 & (L))>>12) // length in bytes for the access
+
+
+
+
+
 
 typedef struct
 {
