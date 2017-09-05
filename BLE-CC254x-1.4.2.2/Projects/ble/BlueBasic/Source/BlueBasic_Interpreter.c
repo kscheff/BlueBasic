@@ -311,7 +311,7 @@ enum
 };
 
 // Constant map (so far all constants are <= 16 bits)
-static const VAR_TYPE constantmap[] =
+static const unsigned short constantmap[] =
 {
   1, // TRUE
   0, // FALSE
