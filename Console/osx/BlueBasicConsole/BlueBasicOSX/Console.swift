@@ -82,13 +82,6 @@ class Console: NSObject, NSTextViewDelegate, DeviceDelegate, ConsoleProtocol {
           device.services() {
             list in
             if list[UUIDS.commsServiceUUID] != nil {
-              // first we try to read the System ID from the device Info Service
-              let systemId = list[UUIDS.deviceInfoServiceUUID]!.characteristics[UUIDS.systemIdUUID]!
-              self.device.read(systemId) {
-                data in
-                if data != nil {
-                  print(<#T##items: Any...##Any#>)
-                }
               self.inputCharacteristic = list[UUIDS.commsServiceUUID]!.characteristics[UUIDS.inputCharacteristicUUID]
               self.outputCharacteristic = list[UUIDS.commsServiceUUID]!.characteristics[UUIDS.outputCharacteristicUUID]
               self.current!.read(self.inputCharacteristic!) {
@@ -152,6 +145,7 @@ class Console: NSObject, NSTextViewDelegate, DeviceDelegate, ConsoleProtocol {
   func onNotification(_ success: Bool, uuid: CBUUID, data: Data) {
     switch uuid {
     case UUIDS.inputCharacteristicUUID:
+      print (String(data: data, encoding: .ascii))
       if delegate == nil || delegate!.onNotification(uuid, data: data) {
         let str = NSString(data: data, encoding: String.Encoding.ascii.rawValue)!
         console.replaceCharacters(in: NSMakeRange(console.string!.utf16.count, 0), with: str as String)
