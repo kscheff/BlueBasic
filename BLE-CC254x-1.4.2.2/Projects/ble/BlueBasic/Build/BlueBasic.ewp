@@ -6033,6 +6033,7 @@
           <name>CCDefines</name>
           <state>kProduct="BlueSolar"</state>
           <state>kMfrName="blue-battery.com"</state>
+          <state>BLUESOLAR=TRUE</state>
           <state>INT_HEAP_LEN=4096</state>
           <state>BLUEBASIC_MEM=3072</state>
           <state>BLUEBASIC=TRUE</state>
@@ -7187,6 +7188,7 @@
           <name>CCDefines</name>
           <state>kProduct="BlueBattery"</state>
           <state>kMfrName="blue-battery.com"</state>
+          <state>BLUEBATTERY=TRUE</state>
           <state>INT_HEAP_LEN=4096</state>
           <state>BLUEBASIC_MEM=3072</state>
           <state>BLUEBASIC=TRUE</state>
@@ -8466,7 +8468,7 @@
             </excluded>
           </file>
           <file>
-            <name>$PROJ_DIR$\..\..\..\..\Components\hal\target\CC2540EB\hal_aes.c</name>
+            <name>$PROJ_DIR$\..\..\..\..\COMPONENTS\hal\target\CC2540EB\hal_aes.c</name>
             <excluded>
               <configuration>CC2541</configuration>
               <configuration>CC2540</configuration>
@@ -8508,7 +8510,7 @@
             </excluded>
           </file>
           <file>
-            <name>$PROJ_DIR$\..\..\..\..\Components\hal\target\CC2540EB\hal_lcd.c</name>
+            <name>$PROJ_DIR$\..\..\..\..\COMPONENTS\hal\target\CC2540EB\hal_lcd.c</name>
             <excluded>
               <configuration>CC2541</configuration>
               <configuration>CC2540</configuration>

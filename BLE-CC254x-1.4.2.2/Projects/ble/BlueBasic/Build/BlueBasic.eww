@@ -20,6 +20,17 @@
         <configuration>Petra</configuration>
       </member>
     </batchDefinition>
+    <batchDefinition>
+      <name>BlueBattery &amp; BlueSolar</name>
+      <member>
+        <project>BlueBasic</project>
+        <configuration>BlueBattery</configuration>
+      </member>
+      <member>
+        <project>BlueBasic</project>
+        <configuration>BlueSolar</configuration>
+      </member>
+    </batchDefinition>
   </batchBuild>
 </workspace>
 
