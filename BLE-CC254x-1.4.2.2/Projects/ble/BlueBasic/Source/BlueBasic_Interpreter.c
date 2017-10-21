@@ -1098,6 +1098,11 @@ static void clean_memory(void)
   
   // Stop serial interface
   OS_serial_close(0);
+
+#ifdef HAL_I2C  
+  // Stop i2c interface
+  OS_i2c_close(0);
+#endif
   
   // Reset variables to 0 and remove all types
   OS_memset(variables_begin, 0, 26 * VAR_SIZE + 4);
@@ -3388,7 +3393,8 @@ cmd_open:
 //  Close the numbered file.
 // CLOSE SERIAL
 //  Close the serial port
-//
+// CLOSE I2C
+//  Close the i2c port
 cmd_close:
   {
     if (*txtpos == KW_SERIAL)
@@ -3396,6 +3402,13 @@ cmd_close:
       txtpos++;
       OS_serial_close(0);
     }
+#ifdef HAL_I2C
+    else if (*txtpos == KW_I2C)
+    {
+      txtpos++;
+      OS_i2c_close(0);
+    }
+#endif
     else
     {
       unsigned char id = expression(EXPR_COMMA);
