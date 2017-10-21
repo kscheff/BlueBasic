@@ -119,3 +119,5 @@ BLE-CC254x-1.4.2.2/Projects/ble/BlueBasic/Build/BlueBattery/Exe
 BLE-CC254x-1.4.2.2/Projects/ble/BlueBasic/Build/BlueBattery/Obj
 BLE-CC254x-1.4.2.2/Projects/ble/BlueBasic/Build/BlueSolar/Exe
 BLE-CC254x-1.4.2.2/Projects/ble/BlueBasic/Build/BlueSolar/Obj
+BLE-CC254x-1.4.2.2/Projects/ble/BlueBasic/Build/BlueSteca/Obj
+*.ewt

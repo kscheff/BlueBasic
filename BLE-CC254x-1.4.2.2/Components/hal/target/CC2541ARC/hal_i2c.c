@@ -193,7 +193,13 @@ static uint8 i2cAddrSave, i2cCfgSave;  // Save & restore variables for PM.
 #if HAL_I2C_SLAVE
 static i2cCallback_t i2cCB;
 static volatile i2cLen_t i2cRxIdx, i2cTxIdx;
-static uint8 i2cRxBuf[HAL_I2C_BUF_MAX+1], i2cTxBuf[HAL_I2C_BUF_MAX+1];
+static uint8 i2cRxBuf[HAL_I2C_BUF_MAX+1];
+#ifdef BLUEBASIC
+// currently no write support, so keep it as small as possible
+static uint8 i2cTxBuf[1];
+#else
+static uint8 i2cTxBuf[HAL_I2C_BUF_MAX+1];
+#endif
 #endif
 
 static volatile i2cLen_t i2cRxLen, i2cTxLen;
@@ -644,7 +650,10 @@ HAL_ISR_FUNCTION(halI2CIsr, I2C_VECTOR)
     I2C_CLR_NACK();  // Setup to Ack the next time addressed.
     break;
   }
-
+#ifdef BLUEBASIC
+  extern void bb_port2isr(void);
+  bb_port2isr();
+#endif  
   // Clear the CPU interrupt flag for Port_2 PxIFG has to be cleared before PxIF.
   I2C_PXIFG = 0;
   I2C_IF = 0;

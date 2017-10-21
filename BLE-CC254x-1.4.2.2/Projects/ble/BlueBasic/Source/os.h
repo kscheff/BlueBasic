@@ -232,6 +232,7 @@ extern unsigned char blueBasic_TaskID;
 #define OS_MAX_INTERRUPT          4
 #define BLUEBASIC_EVENT_INTERRUPT 0x0100
 #define BLUEBASIC_EVENT_INTERRUPTS 0x0F00 // Num bits == OS_MAX_INTERRUPT
+#define BLUEBASIC_EVENT_I2C        0x1000
 
 #define OS_AUTORUN_TIMEOUT        5000
 
@@ -246,6 +247,17 @@ typedef struct
   unsigned short onwrite;
 } os_serial_t;
 extern os_serial_t serial[OS_MAX_SERIAL];
+
+#ifdef HAL_I2C
+// I2C
+typedef struct
+{
+  unsigned short onread;
+  unsigned short onwrite;
+  unsigned char available_bytes;
+} os_i2c_t;
+extern os_i2c_t i2c[1];
+#endif
 
 typedef struct
 {
@@ -420,3 +432,8 @@ extern unsigned char OS_serial_close(unsigned char port);
 extern short OS_serial_read(unsigned char port);
 extern unsigned char OS_serial_write(unsigned char port, unsigned char ch);
 extern unsigned char OS_serial_available(unsigned char port, unsigned char ch);
+unsigned char OS_i2c_open(unsigned char address, unsigned short onread, unsigned short onwrite);
+unsigned char OS_i2c_close(unsigned char port);
+short OS_i2c_read(unsigned char port);
+unsigned char OS_i2c_write(unsigned char port, unsigned char ch);
+unsigned char OS_i2c_available(unsigned char port, unsigned char ch);

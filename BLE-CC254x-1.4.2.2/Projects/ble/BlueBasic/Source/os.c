@@ -12,6 +12,7 @@
 #include "OSAL.h"
 #include "OSAL_Clock.h"
 #include "hal_uart.h"
+#include "hal_i2c.h"
 #include "OSAL_PwrMgr.h"
 #ifdef FEATURE_OAD_HEADER
 #include "oad.h"
@@ -53,6 +54,12 @@ struct
 
 // Serial
 os_serial_t serial[OS_MAX_SERIAL];
+
+#ifdef HAL_I2C
+// I2C
+os_i2c_t i2c[1];
+unsigned char prevent_sleep_flags = 0; 
+#endif
 
 enum {
   MODE_STARTUP = 0,
@@ -355,6 +362,9 @@ unsigned char OS_serial_open(unsigned char port, unsigned long baud, unsigned ch
   extern uint8 Hal_TaskID;
   CLEAR_SLEEP_MODE();
   osal_pwrmgr_task_state(Hal_TaskID, PWRMGR_HOLD);
+#ifdef HAL_I2C
+  prevent_sleep_flags |= 0x01;
+#endif
 #endif
   if (HalUARTOpen(HAL_UART_PORT_0, &config) == HAL_UART_SUCCESS)
   {
@@ -379,7 +389,14 @@ unsigned char OS_serial_close(unsigned char port)
 #ifdef POWER_SAVING
 #if HAL_UART_DMA
   extern uint8 Hal_TaskID;
+#ifndef HAL_I2C
   osal_pwrmgr_task_state(Hal_TaskID, PWRMGR_CONSERVE);
+#else
+  prevent_sleep_flags &= 0xFE;
+  if (!prevent_sleep_flags) {
+    osal_pwrmgr_task_state(Hal_TaskID, PWRMGR_CONSERVE);    
+  }
+#endif
 #endif
 #endif  
   return 1;
@@ -407,3 +424,76 @@ unsigned char OS_serial_available(unsigned char port, unsigned char ch)
 {
   return ch == 'R' ? Hal_UART_RxBufLen(HAL_UART_PORT_0) : Hal_UART_TxBufLen(HAL_UART_PORT_0);
 }
+
+#ifdef HAL_I2C
+uint8 _i2cCallback(uint8 cnt)
+{
+  if (cnt) {
+    // some bytes are available to read
+    i2c[0].available_bytes = cnt;
+    osal_set_event(blueBasic_TaskID, BLUEBASIC_EVENT_I2C);
+  } else if (i2c[0].available_bytes == 0) {
+    osal_set_event(blueBasic_TaskID, BLUEBASIC_EVENT_I2C);
+  }
+  return FALSE;
+}
+
+unsigned char OS_i2c_open(unsigned char address, unsigned short onread, unsigned short onwrite)
+{
+  
+#if defined POWER_SAVING 
+  // suggestion taken from here:
+  // http://e2e.ti.com/support/wireless_connectivity/bluetooth_low_energy/f/538/p/431990/1668088#1668088
+  extern uint8 Hal_TaskID;
+  CLEAR_SLEEP_MODE();
+  osal_pwrmgr_task_state(Hal_TaskID, PWRMGR_HOLD);
+  prevent_sleep_flags |= 0x02;
+#endif
+  
+  HalI2CInit(address, _i2cCallback);
+  i2c[0].onread = onread;
+  i2c[0].onwrite = onwrite;
+  i2c[0].available_bytes = 0;
+  return 0;
+}
+
+unsigned char OS_i2c_close(unsigned char port)
+{
+  i2c[0].onread = 0;
+  i2c[0].onwrite = 0;
+  i2c[0].available_bytes = 0;
+#if defined POWER_SAVING
+  extern uint8 Hal_TaskID;
+  prevent_sleep_flags &= 0xFD;
+  if (!prevent_sleep_flags) {
+    osal_pwrmgr_task_state(Hal_TaskID, PWRMGR_CONSERVE);
+  }
+#endif  
+  return 1;
+}
+
+short OS_i2c_read(unsigned char port)
+{
+  unsigned char ch;
+  if (HalI2CRead(1, &ch) == 1)    
+  {
+    i2c[0].available_bytes -= 1;
+    return ch;
+  }
+  else
+  {
+    return -1;
+  }
+}
+
+unsigned char OS_i2c_write(unsigned char port, unsigned char ch)
+{
+  // not supported
+  return 0;
+}
+
+unsigned char OS_i2c_available(unsigned char port, unsigned char ch)
+{
+  return ch == 'R' ? i2c[0].available_bytes : 0;  
+}
+#endif

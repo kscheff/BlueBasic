@@ -1337,6 +1337,22 @@ static VAR_TYPE expression(unsigned char mode)
           }
           *queueptr++ = OS_serial_available(0, ch == KW_READ ? 'R' : 'W');
         }
+#ifdef HAL_I2C
+        else if (ch == KW_I2C)
+        {
+          ch = txtpos[1];
+          if (!(ch == KW_READ || ch == KW_WRITE) || txtpos[2] != ')')
+          {
+            goto expr_error;
+          }
+          txtpos += 3;
+          if (queueptr == queueend)
+          {
+            goto expr_oom;
+          }
+          *queueptr++ = OS_i2c_available(0, ch == KW_READ ? 'R' : 'W');
+        }
+#endif
         else if (ch < 'A' || ch > 'Z' || txtpos[1] != ')')
         {
           goto expr_error;
@@ -3396,7 +3412,7 @@ cmd_close:
 // READ #<0-3>, <variable>[, ...]
 //  Read from the currrent place in the numbered file into the variable
 // READ #SERIAL, <variable>[, ...]
-//
+// READ #I2C, <variable>[, ...]
 cmd_read:
   {
     if (*txtpos++ != '#')
@@ -3447,6 +3463,52 @@ cmd_read:
         }
       }
     }
+#ifdef HAL_I2C
+    else if (*txtpos == KW_I2C)
+    {
+      txtpos++;
+      for (;;)
+      {
+        ignore_blanks();
+        if (*txtpos == NL)
+        {
+          break;
+        }
+        else if (*txtpos++ != ',')
+        {
+          goto qwhat;
+        }
+        variable_frame* vframe = NULL;
+        unsigned char* ptr = parse_variable_address(&vframe);
+        if (ptr)
+        {
+          if (vframe->type == VAR_INT)
+          {
+            *(VAR_TYPE*)ptr = OS_i2c_read(0);
+          }
+          else
+          {
+            *ptr = OS_i2c_read(0);
+          }
+        }
+        else if (vframe)
+        {
+          // No address, but we have a vframe - this is a full array
+          if (error_num == ERROR_EXPRESSION)
+            error_num = ERROR_OK; // clear parsing error due to missing index braces
+          unsigned char alen = vframe->header.frame_size - sizeof(variable_frame);
+          for (ptr = (unsigned char*)vframe + sizeof(variable_frame); alen; alen--)
+          {
+            *ptr++ = OS_i2c_read(0);
+          }
+        }
+        else
+        {
+          goto qwhat;
+        }
+      }
+    }
+#endif
     else
     {
       unsigned char id = expression(EXPR_COMMA);
@@ -3894,7 +3956,9 @@ cmd_spi:
 //  or
 // I2C READ <addr>, <variable>|<array>, ...
 //  note: The CC2541 has i2c hardware which we are not yet using.
-//
+// or
+// I2C SLAVE <addr> [ONREAD GOSUB <linenum>] [ONWRITE GOSUB <linenum>]
+//  note: this uses the CC2541 i2c hardware with fixed pins
 cmd_i2c:
   switch (*txtpos++)
   {
@@ -3935,6 +3999,41 @@ cmd_i2c:
       break;
     }
 
+#ifdef HAL_I2C    
+  case SPI_SLAVE:
+    {
+      unsigned char addr = expression(EXPR_NORMAL);
+      //if (addr > 127 || error_num) {
+      //  goto qwhat;
+      //}
+      LINENUM onread = 0;
+      if (*txtpos == BLE_ONREAD)
+      {
+        txtpos++;
+        if (*txtpos++ != KW_GOSUB)
+        {
+          goto qwhat;
+        }
+        onread = expression(EXPR_NORMAL);
+      }
+      LINENUM onwrite = 0;
+      if (*txtpos == BLE_ONWRITE)
+      {
+        txtpos++;
+        if (*txtpos++ != KW_GOSUB)
+        {
+          goto qwhat;
+        }
+        onwrite = expression(EXPR_NORMAL);
+      }
+      if (OS_i2c_open(addr, onread, onwrite))
+      {
+        goto qwhat;
+      }
+      break;
+    }
+#endif
+    
 #define WIRE_SDA_LOW()    *ptr++ = WIRE_PIN_OUTPUT | i2cSda;
 #define WIRE_SCL_LOW()    *ptr++ = WIRE_PIN_OUTPUT | i2cScl;
 #define WIRE_SDA_HIGH()   *ptr++ = WIRE_PIN_INPUT | i2cSda;

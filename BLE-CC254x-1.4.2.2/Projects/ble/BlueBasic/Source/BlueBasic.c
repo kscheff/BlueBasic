@@ -504,6 +504,21 @@ uint16 BlueBasic_ProcessEvent( uint8 task_id, uint16 events )
 
     return (events ^ BLUEBASIC_EVENT_SERIAL);
   }
+
+  if ( events & BLUEBASIC_EVENT_I2C )
+  {
+    if (i2c[0].onread && i2c[0].available_bytes)
+    {
+      interpreter_run(i2c[0].onread, 1);
+    }
+    // when read buffer is empty it must have been a write...
+    if (i2c[0].onwrite && i2c[0].available_bytes == 0)
+    {
+      interpreter_run(i2c[0].onwrite, 1);
+    }
+    return (events ^ BLUEBASIC_EVENT_I2C);
+  }
+
   
   // Discard unknown events
   return 0;
@@ -710,13 +725,21 @@ HAL_ISR_FUNCTION(port1Isr, P1INT_VECTOR)
   HAL_EXIT_ISR();
 }
 
+#ifdef HAL_I2C    
+// port2Isr conflicts with the i2c interrupt handler from hal_i2c
+// so we simply modify it as a function call.
+// the hal_i2c isr function should call here to support port 2 interrupts
+void bb_port2isr(void)
+#else
 HAL_ISR_FUNCTION(port2Isr, P2INT_VECTOR)
+#endif
 {
   unsigned char status;
   unsigned char i;
 
+#ifndef HAL_I2C
   HAL_ENTER_ISR();
-
+#endif
   status = P2IFG;
   status &= P2IEN;
   if (status)
@@ -732,9 +755,11 @@ HAL_ISR_FUNCTION(port2Isr, P2INT_VECTOR)
       }
     }
   }
-
+#ifndef HAL_I2C
   HAL_EXIT_ISR();
+#endif
 }
 
+         
 /*********************************************************************
 *********************************************************************/

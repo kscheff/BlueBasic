@@ -293,6 +293,8 @@
         </option>
         <option>
           <name>CCDefines</name>
+          <state>kProduct="BlueBasic"</state>
+          <state>kMfrName="blue-battery.com"</state>
           <state>INT_HEAP_LEN=4096</state>
           <state>BLUEBASIC_MEM=3072</state>
           <state>HALNODEBUG</state>
