@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+
+<workspace>
+  <project>
+    <path>$WS_DIR$\BlueBasic.ewp</path>
+  </project>
+  <batchBuild>
+    <batchDefinition>
+      <name>All</name>
+      <member>
+        <project>BlueBasic</project>
+        <configuration>CC2540-ImgB</configuration>
+      </member>
+      <member>
+        <project>BlueBasic</project>
+        <configuration>CC2541-ImgB</configuration>
+      </member>
+      <member>
+        <project>BlueBasic</project>
+        <configuration>Petra</configuration>
+      </member>
+    </batchDefinition>
+    <batchDefinition>
+      <name>BlueBattery &amp; BlueSolar</name>
+      <member>
+        <project>BlueBasic</project>
+        <configuration>BlueBattery</configuration>
+      </member>
+      <member>
+        <project>BlueBasic</project>
+        <configuration>BlueSolar</configuration>
+      </member>
+    </batchDefinition>
+  </batchBuild>
+</workspace>
+
+

@@ -1,0 +1,15 @@
+5 //
+6 // scan BLE devices
+7 //
+8 // // SCAN <time> LIMITED|GENERAL [ACTIVE] [DUPLICATES] ONDISCOVER GOSUB <linenum>
+10 SCAN 30000 GENERAL LIMITED ONDISCOVER GOSUB 200
+20 PRINT "Scanning for BLE devices..."
+40 FOR I = 1 TO 30000 STEP 2000
+50 DELAY 2000
+60 PRINT "waiting ..."
+70 NEXT I
+80 PRINT "finished."
+90 RETURN
+200 PRINT "Device: addtype=",A," rssi=",R," eventtype=",E," addr: ",B(0),",",B(1),",",B(2),",",B(3),",",B(4),",",B(5),",",B(6),",",B(7)
+210 RETURN
+
