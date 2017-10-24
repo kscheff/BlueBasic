@@ -9750,7 +9750,7 @@
         <group>
           <name>Includes</name>
           <file>
-            <name>$PROJ_DIR$\..\..\..\..\Components\hal\target\CC2541ARC\hal_i2c.h</name>
+            <name>$PROJ_DIR$\..\..\..\..\COMPONENTS\hal\target\CC2541ARC\hal_i2c.h</name>
           </file>
         </group>
       </group>

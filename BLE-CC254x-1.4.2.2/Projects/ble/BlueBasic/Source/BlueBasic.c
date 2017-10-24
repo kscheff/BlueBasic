@@ -505,6 +505,7 @@ uint16 BlueBasic_ProcessEvent( uint8 task_id, uint16 events )
     return (events ^ BLUEBASIC_EVENT_SERIAL);
   }
 
+#ifdef HAL_I2C         
   if ( events & BLUEBASIC_EVENT_I2C )
   {
     if (i2c[0].onread && i2c[0].available_bytes)
@@ -518,7 +519,7 @@ uint16 BlueBasic_ProcessEvent( uint8 task_id, uint16 events )
     }
     return (events ^ BLUEBASIC_EVENT_I2C);
   }
-
+#endif
   
   // Discard unknown events
   return 0;
