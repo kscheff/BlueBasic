@@ -12,7 +12,9 @@
 #include "OSAL.h"
 #include "OSAL_Clock.h"
 #include "hal_uart.h"
+#ifdef HAL_I2C
 #include "hal_i2c.h"
+#endif
 #include "OSAL_PwrMgr.h"
 #ifdef FEATURE_OAD_HEADER
 #include "oad.h"
