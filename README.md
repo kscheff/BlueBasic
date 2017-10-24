@@ -7,8 +7,12 @@ Therefore this forked updates a few not working things.
 Main differences:
 - BlueBasic Console supports now OSX 10.12 Sierra and iOS 10 build with xCode 8.1
 - update to IAR 9.30.3 compiler settings
-- extended paramter to support ANALOG REFERENCE, AVDD
+- extended parameter to support ANALOG REFERENCE, AVDD
 - bugfixes for memory corruption (important for data logging applications)
+- added math exp() function
+- fixed writing & reading arrays from flash
+- update to newest BLE 1.4.2.2 stack 
+- added I2C Slave read for CC2541 chip
 
 BASIC interpreter for CC2540 and CC2541 Bluetooth LE chips.
 
