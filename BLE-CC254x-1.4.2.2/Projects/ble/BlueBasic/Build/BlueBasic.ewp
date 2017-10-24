@@ -8344,6 +8344,7 @@
           <name>CCDefines</name>
           <state>kProduct="BlueSteca"</state>
           <state>kMfrName="blue-battery.com"</state>
+          <state>DEVINFO_PID=0x0500</state>
           <state>BLUESOLAR=TRUE</state>
           <state>INT_HEAP_LEN=4096</state>
           <state>BLUEBASIC_MEM=3072</state>

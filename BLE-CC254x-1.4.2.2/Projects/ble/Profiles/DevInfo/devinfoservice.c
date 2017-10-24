@@ -198,13 +198,21 @@ static const uint8 devInfo11073Cert[] =
   'e', 'x', 'p', 'e', 'r', 'i', 'm', 'e', 'n', 't', 'a', 'l'
 };
 
+#ifndef DEVINFO_VID
+#define DEVINFO_VID 0x000D
+#endif
+
+#ifndef DEVINFO_PID
+#define DEVINFO_PID 0x0000
+#endif
+
 // System ID characteristic
 static uint8 devInfoPnpIdProps = GATT_PROP_READ;
 static uint8 devInfoPnpId[DEVINFO_PNP_ID_LEN] =
 {
   1,                                      // Vendor ID source (1=Bluetooth SIG)
-  LO_UINT16(0x000D), HI_UINT16(0x000D),   // Vendor ID (Texas Instruments)
-  LO_UINT16(0x0000), HI_UINT16(0x0000),   // Product ID (vendor-specific)
+  LO_UINT16(DEVINFO_VID), HI_UINT16(DEVINFO_VID),   // Vendor ID (Texas Instruments)
+  LO_UINT16(DEVINFO_PID), HI_UINT16(DEVINFO_PID),   // Product ID (vendor-specific)
   LO_UINT16(0x0110), HI_UINT16(0x0110)    // Product version (JJ.M.N)
 };
 
