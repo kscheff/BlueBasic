@@ -3585,7 +3585,7 @@ cmd_read:
           {
             if (file->poffset == len)
             {
-              unsigned char* special = flashstore_findspecial(FS_MAKE_FILE_SPECIAL(file->filename, ++file->record));
+              special = flashstore_findspecial(FS_MAKE_FILE_SPECIAL(file->filename, ++file->record));
               if (!special)
               {
                 goto qeof;
