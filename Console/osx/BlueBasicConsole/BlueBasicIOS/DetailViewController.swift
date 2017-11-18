@@ -228,7 +228,7 @@ class DetailViewController: UIViewController, UITextViewDelegate, DeviceDelegate
     }
   }
   
-  func disconnect(_ onDisconnect: CompletionHandler? = nil) {
+  @objc func disconnect(_ onDisconnect: CompletionHandler? = nil) {
     if let old = current {
       current = nil
       delegate = nil
@@ -261,7 +261,7 @@ class DetailViewController: UIViewController, UITextViewDelegate, DeviceDelegate
     }
     let str = textArray.joined(separator: "\n")
     
-    for ch in str.characters {
+    for ch in str {
       pending.append(ch)
       if ch == "\n" || pending.utf16.count > 19 {
         if let buf = pending.data(using: String.Encoding.ascii, allowLossyConversion: false) {
@@ -310,7 +310,7 @@ class DetailViewController: UIViewController, UITextViewDelegate, DeviceDelegate
         return false
       }
     } else if range.location == console.text.utf16.count - 1 && pending.utf16.count > 0 {
-      pending.remove(at: pending.characters.index(before: pending.endIndex))
+      pending.remove(at: pending.index(before: pending.endIndex))
       return true
     } else {
       return false
@@ -323,7 +323,7 @@ class DetailViewController: UIViewController, UITextViewDelegate, DeviceDelegate
     }
   }
 
-  func upgrade() {
+  @objc func upgrade() {
     if autoUpgrade != nil {
       let alert = UIAlertController(title: "Upgrade?", message: "Do you want to upgrade the device firmware?", preferredStyle: .alert)
       alert.addAction(UIAlertAction(title: "OK", style: .destructive, handler: {
@@ -343,7 +343,7 @@ class DetailViewController: UIViewController, UITextViewDelegate, DeviceDelegate
   }
 
   
-  func keyboardDidShow(_ notification: Notification) {
+  @objc func keyboardDidShow(_ notification: Notification) {
     if keyboardOpen == nil {
       let info = notification.userInfo?[UIKeyboardFrameEndUserInfoKey] as! NSValue
       let size = info.cgRectValue.size
@@ -359,7 +359,7 @@ class DetailViewController: UIViewController, UITextViewDelegate, DeviceDelegate
     }
   }
   
-  func keyboardDidHide(_ notification: Notification) {
+  @objc func keyboardDidHide(_ notification: Notification) {
     if keyboardOpen != nil {
       self.console.frame.size.height = self.keyboardOpen!.size.height
       self.keyboardOpen = nil
