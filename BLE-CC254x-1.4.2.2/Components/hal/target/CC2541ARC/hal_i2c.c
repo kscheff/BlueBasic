@@ -160,10 +160,15 @@ typedef enum {
 )
 
 // Stop clock-stretching and then read when it arrives.
+// KS: ugly workaround: since this routines sometimes idels forever,
+// there is a timeout counter which is in the range of 5ms
+// this violates the I2C standard, since there is no such timeout specified.
 #define SLV_READ(_X_) st (          \
   I2CCFG &= ~I2C_SI;                \
+  timeout = 0x400;                  \
   while (((I2CCFG & I2C_SI) == 0)   \
-    &&    (I2CSTAT != slvStopped)); \
+    &&    (I2CSTAT != slvStopped)   \
+    && timeout--);                  \
   (_X_) = I2CDATA;                  \
 )
 
@@ -194,6 +199,7 @@ static uint8 i2cAddrSave, i2cCfgSave;  // Save & restore variables for PM.
 static i2cCallback_t i2cCB;
 static volatile i2cLen_t i2cRxIdx, i2cTxIdx;
 static uint8 i2cRxBuf[HAL_I2C_BUF_MAX+1];
+static uint16 timeout;
 #ifdef BLUEBASIC
 // currently no write support, so keep it as small as possible
 static uint8 i2cTxBuf[1];
@@ -388,6 +394,11 @@ static i2cLen_t i2cSlvRx(void)
 
   do {
     SLV_READ(ch);
+    
+    if (timeout == 0) {
+      I2C_SET_NACK();
+      return idx;
+    }
 
     if ((I2CSTAT == slvDataAckR) || (I2CSTAT == slvDataNackR))
     {
@@ -474,7 +485,10 @@ static i2cLen_t i2cSlvTx(void)
  */
 void HalI2CInit(uint8 address, i2cCallback_t i2cCallback)
 {
+  volatile uint8 dummy;
   i2cCB = i2cCallback;
+  i2cRxLen = 0;
+  i2cTxLen = 0;
   HAL_ASSERT(i2cCB);
 
   I2C_WRAPPER_DISABLE();
@@ -483,6 +497,7 @@ void HalI2CInit(uint8 address, i2cCallback_t i2cCallback)
   // Clear the CPU interrupt flag for Port_2 PxIFG has to be cleared before PxIF.
   I2C_PXIFG = 0;
   I2C_IF = 0;
+  dummy = I2CDATA; //clear receive register
   I2C_INT_ENABLE();
 }
 
@@ -600,11 +615,10 @@ HAL_ISR_FUNCTION(halI2CIsr, I2C_VECTOR)
 #endif
 {
   HAL_ENTER_ISR();
-
   switch (I2CSTAT)
   {
   case slvAddrAckR:
-    if (i2cRxLen == 0)
+   if (i2cRxLen == 0)
     {
       i2cSlvRx();  // Block, receiving bytes from the Master.
     }
@@ -657,7 +671,6 @@ HAL_ISR_FUNCTION(halI2CIsr, I2C_VECTOR)
   // Clear the CPU interrupt flag for Port_2 PxIFG has to be cleared before PxIF.
   I2C_PXIFG = 0;
   I2C_IF = 0;
-
   HAL_EXIT_ISR();
 }
 #endif

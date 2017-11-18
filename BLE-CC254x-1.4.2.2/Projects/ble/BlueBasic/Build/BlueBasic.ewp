@@ -8346,6 +8346,7 @@
           <state>kMfrName="blue-battery.com"</state>
           <state>DEVINFO_PID=0x0500</state>
           <state>BLUESOLAR=TRUE</state>
+          <state>BLUESTECA=TRUE</state>
           <state>INT_HEAP_LEN=4096</state>
           <state>BLUEBASIC_MEM=3072</state>
           <state>BLUEBASIC=TRUE</state>
@@ -8353,11 +8354,11 @@
           <state>OSAL_CBTIMER_NUM_TASKS=1</state>
           <state>HAL_AES_DMA=TRUE</state>
           <state>HAL_DMA=TRUE</state>
-          <state>HAL_UART=TRUE</state>
-          <state>HAL_UART_DMA=1</state>
+          <state>xHAL_UART=TRUE</state>
+          <state>xHAL_UART_DMA=1</state>
           <state>HAL_I2C=TRUE</state>
           <state>HAL_I2C_SLAVE</state>
-          <state>HAL_I2C_BUF_MAX=16</state>
+          <state>HAL_I2C_BUF_MAX=7</state>
           <state>POWER_SAVING</state>
           <state>xPLUS_BROADCASTER</state>
           <state>HAL_LCD=FALSE</state>

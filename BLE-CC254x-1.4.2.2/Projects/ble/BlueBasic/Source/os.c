@@ -461,6 +461,9 @@ unsigned char OS_i2c_open(unsigned char address, unsigned short onread, unsigned
 
 unsigned char OS_i2c_close(unsigned char port)
 {
+  // see errata: http://www.ti.com/lit/er/swrz049/swrz049.pdf
+  // disable I2C pins to prevent glitch
+  I2CWC |= 0x8c;
   i2c[0].onread = 0;
   i2c[0].onwrite = 0;
   i2c[0].available_bytes = 0;
