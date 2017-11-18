@@ -614,7 +614,9 @@ void HalI2CPoll(void)
 HAL_ISR_FUNCTION(halI2CIsr, I2C_VECTOR)
 #endif
 {
-  HAL_ENTER_ISR();
+  halIntState_t intState;
+//  HAL_ENTER_ISR();
+  HAL_ENTER_CRITICAL_SECTION(intState);
   switch (I2CSTAT)
   {
   case slvAddrAckR:
@@ -664,6 +666,7 @@ HAL_ISR_FUNCTION(halI2CIsr, I2C_VECTOR)
     I2C_CLR_NACK();  // Setup to Ack the next time addressed.
     break;
   }
+  HAL_EXIT_CRITICAL_SECTION(intState);
 #ifdef BLUEBASIC
   extern void bb_port2isr(void);
   bb_port2isr();
@@ -671,7 +674,7 @@ HAL_ISR_FUNCTION(halI2CIsr, I2C_VECTOR)
   // Clear the CPU interrupt flag for Port_2 PxIFG has to be cleared before PxIF.
   I2C_PXIFG = 0;
   I2C_IF = 0;
-  HAL_EXIT_ISR();
+//  HAL_EXIT_ISR();
 }
 #endif
 
