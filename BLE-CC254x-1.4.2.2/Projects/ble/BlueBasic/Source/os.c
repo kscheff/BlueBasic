@@ -297,7 +297,10 @@ void OS_flashstore_init(void)
   }
 }
 
+#if defined(BLUEBATTERY) || defined (BLUESOLAR)
 #define PROCESS_SERIAL_DATA
+#endif
+
 #ifndef PROCESS_SERIAL_DATA
 
 static void _uartCallback(uint8 port, uint8 event)
@@ -323,6 +326,7 @@ static void _uartCallback(uint8 port, uint8 event)
 
 static unsigned char sbuf[16];
 static uint8 sbuf_read_pos = 16;
+static char sflow = 0;
 
 static void _uartCallback(uint8 port, uint8 event)
 {
@@ -339,22 +343,31 @@ static void _uartCallback(uint8 port, uint8 event)
   if (port == HAL_UART_PORT_0 && sbuf_read_pos == 16 &&
       (serial[0].onread && (len >= 16) /* || serial[0].onwrite) */ ))
   {
-    HalUARTRead(HAL_UART_PORT_0, &sbuf[0], 1);
-    if (sbuf[0] == 0xAA)
+    if (sflow == 'V')
     {
-      uint8 parity = 0;
-      uint8 cnt;
-      HalUARTRead(HAL_UART_PORT_0, &sbuf[1], 15);
-      for (cnt=1; cnt < 15; )
+      HalUARTRead(HAL_UART_PORT_0, &sbuf[0], 1);
+      if (sbuf[0] == 0xAA)
       {
-        parity ^= sbuf[cnt++];
+        uint8 parity = 0;
+        uint8 cnt;
+        HalUARTRead(HAL_UART_PORT_0, &sbuf[1], 15);
+        for (cnt=1; cnt < 15; )
+        {
+          parity ^= sbuf[cnt++];
+        }
+        //only send serial data when frame has no parity error
+        if (parity == sbuf[15])
+        {
+          sbuf_read_pos = 0;
+          osal_set_event(blueBasic_TaskID, BLUEBASIC_EVENT_SERIAL);
+        }
       }
-      //only send serial data when frame has no parity error
-      if (parity == sbuf[15])
-      {
-        sbuf_read_pos = 0;
-        osal_set_event(blueBasic_TaskID, BLUEBASIC_EVENT_SERIAL);
-      }
+    }
+    else
+    {
+      HalUARTRead(HAL_UART_PORT_0, &sbuf[0], 16);
+      sbuf_read_pos = 0;
+      osal_set_event(blueBasic_TaskID, BLUEBASIC_EVENT_SERIAL);
     }
   }
 }
@@ -390,7 +403,13 @@ unsigned char OS_serial_open(unsigned char port, unsigned long baud, unsigned ch
   }
  
   // Only support port 0, no-parity, 8-bits, 1 stop bit
+#ifndef PROCESS_SERIAL_DATA 
   if (port != 0 || parity != 'N' || bits != 8 || stop != 1 || (flow != 'H' && flow != 'N'))
+#else
+  // additional option 'V' means preprocessing needs to be enabled
+  sflow = flow;
+  if (port != 0 || parity != 'N' || bits != 8 || stop != 1 || (flow != 'H' && flow != 'N' && flow != 'V'))
+#endif
   {
     return 3;
   }
