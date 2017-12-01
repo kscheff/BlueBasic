@@ -3454,7 +3454,7 @@ cmd_read:
           {
             *(VAR_TYPE*)ptr = OS_serial_read(0);
           }
-          else
+          else if (vframe->type == VAR_DIM_BYTE)
           {
             *ptr = OS_serial_read(0);
           }
