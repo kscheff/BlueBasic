@@ -297,6 +297,9 @@ void OS_flashstore_init(void)
   }
 }
 
+#define PROCESS_SERIAL_DATA
+#ifndef PROCESS_SERIAL_DATA
+
 static void _uartCallback(uint8 port, uint8 event)
 {
 #ifdef HAL_UART_RX_WAKEUP
@@ -307,11 +310,55 @@ static void _uartCallback(uint8 port, uint8 event)
     return;
   }
 #endif
-  if (port == HAL_UART_PORT_0 && (serial[0].onread || serial[0].onwrite))
+  uint8 len = Hal_UART_RxBufLen(HAL_UART_PORT_0);
+
+  if (port == HAL_UART_PORT_0 &&
+      (serial[0].onread && (len >= 16) /* || serial[0].onwrite) */ ))
   {
     osal_set_event(blueBasic_TaskID, BLUEBASIC_EVENT_SERIAL);
   }
 }
+
+#else
+
+static unsigned char sbuf[16];
+static uint8 sbuf_read_pos = 16;
+
+static void _uartCallback(uint8 port, uint8 event)
+{
+#ifdef HAL_UART_RX_WAKEUP
+  // UART woken up. This happens in the interrupt handler so we really
+  // don't want to do anything else.
+  if (event == HAL_UART_RX_WAKEUP)
+  {
+    return;
+  }
+#endif
+  uint8 len = Hal_UART_RxBufLen(HAL_UART_PORT_0);
+
+  if (port == HAL_UART_PORT_0 && sbuf_read_pos == 16 &&
+      (serial[0].onread && (len >= 16) /* || serial[0].onwrite) */ ))
+  {
+    HalUARTRead(HAL_UART_PORT_0, &sbuf[0], 1);
+    if (sbuf[0] == 0xAA)
+    {
+      uint8 parity = 0;
+      uint8 cnt;
+      HalUARTRead(HAL_UART_PORT_0, &sbuf[1], 15);
+      for (cnt=1; cnt < 15; )
+      {
+        parity ^= sbuf[cnt++];
+      }
+      //only send serial data when frame has no parity error
+      if (parity == sbuf[15])
+      {
+        sbuf_read_pos = 0;
+        osal_set_event(blueBasic_TaskID, BLUEBASIC_EVENT_SERIAL);
+      }
+    }
+  }
+}
+#endif
 
 
 unsigned char OS_serial_open(unsigned char port, unsigned long baud, unsigned char parity, unsigned char bits, unsigned char stop, unsigned char flow, unsigned short onread, unsigned short onwrite)
@@ -372,6 +419,9 @@ unsigned char OS_serial_open(unsigned char port, unsigned long baud, unsigned ch
   {
     serial[0].onread = onread;
     serial[0].onwrite = onwrite;
+#ifdef PROCESS_SERIAL_DATA
+    sbuf_read_pos = 16;
+#endif
     return 0;
   }
  
@@ -382,6 +432,9 @@ unsigned char OS_serial_close(unsigned char port)
 {
   serial[0].onread = 0;
   serial[0].onwrite = 0;
+#ifdef PROCESS_SERIAL_DATA
+    sbuf_read_pos = 16;
+#endif  
   // HalUARTClose(0); - In the hal_uart.h include file, but not actually in the code
   HalUARTSuspend();
   P0SEL &= ~0x3c;  // select GPIO mode
@@ -404,6 +457,7 @@ unsigned char OS_serial_close(unsigned char port)
   return 1;
 }
 
+#ifndef PROCESS_SERIAL_DATA
 short OS_serial_read(unsigned char port)
 {
   unsigned char ch;
@@ -416,16 +470,37 @@ short OS_serial_read(unsigned char port)
     return -1;
   }
 }
+#else
+short OS_serial_read(unsigned char port)
+{
+  if (sbuf_read_pos < 16)
+  {
+    return sbuf[sbuf_read_pos++];
+  }
+  else
+  {
+    return -1;
+  }
+}
+#endif
+
 
 unsigned char OS_serial_write(unsigned char port, unsigned char ch)
 {
   return HalUARTWrite(HAL_UART_PORT_0, &ch, 1) == 1 ? 1 : 0;
 }
 
+#ifndef PROCESS_SERIAL_DATA
 unsigned char OS_serial_available(unsigned char port, unsigned char ch)
 {
   return ch == 'R' ? Hal_UART_RxBufLen(HAL_UART_PORT_0) : Hal_UART_TxBufLen(HAL_UART_PORT_0);
 }
+#else
+unsigned char OS_serial_available(unsigned char port, unsigned char ch)
+{
+  return ch == 'R' ? (16 - sbuf_read_pos) : Hal_UART_TxBufLen(HAL_UART_PORT_0);
+}
+#endif
 
 #ifdef HAL_I2C
 uint8 _i2cCallback(uint8 cnt)
