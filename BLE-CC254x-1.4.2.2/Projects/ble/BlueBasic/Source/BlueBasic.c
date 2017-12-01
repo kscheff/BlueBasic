@@ -492,20 +492,14 @@ uint16 BlueBasic_ProcessEvent( uint8 task_id, uint16 events )
   
   if ( events & BLUEBASIC_EVENT_SERIAL )
   {
-#if BLUESOLAR || BLUEBATTERY
-    uint8 len = Hal_UART_RxBufLen(HAL_UART_PORT_0);
-    if (serial[0].onread && len & 0xf0 && !(len & 0x0f) )
-#else
-    if ((serial[0].onread && Hal_UART_RxBufLen(HAL_UART_PORT_0))
-#endif     
+    if (serial[0].onread && OS_serial_available(0, 'R') > 15)
     {
       interpreter_run(serial[0].onread, 1);
     }
-    if (serial[0].onwrite && Hal_UART_TxBufLen(HAL_UART_PORT_0) > 0)
+    if (serial[0].onwrite && OS_serial_available(0, 'W') > 0)
     {
       interpreter_run(serial[0].onwrite, 1);
     }
-
     return (events ^ BLUEBASIC_EVENT_SERIAL);
   }
 
