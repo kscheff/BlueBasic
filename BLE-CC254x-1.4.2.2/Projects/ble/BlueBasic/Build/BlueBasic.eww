@@ -21,7 +21,7 @@
       </member>
     </batchDefinition>
     <batchDefinition>
-      <name>BlueBattery &amp; BlueSolar</name>
+      <name>BlueBattery &amp; BlueSolar &amp; BlueSteca</name>
       <member>
         <project>BlueBasic</project>
         <configuration>BlueBattery</configuration>
@@ -29,6 +29,10 @@
       <member>
         <project>BlueBasic</project>
         <configuration>BlueSolar</configuration>
+      </member>
+      <member>
+        <project>BlueBasic</project>
+        <configuration>BlueSteca</configuration>
       </member>
     </batchDefinition>
   </batchBuild>
