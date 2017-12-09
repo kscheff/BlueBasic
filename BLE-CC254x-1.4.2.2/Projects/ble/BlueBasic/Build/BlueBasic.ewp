@@ -6044,7 +6044,7 @@
           <state>HAL_UART=TRUE</state>
           <state>HAL_UART_DMA=1</state>
           <state>HAL_UART_DMA_RX_MAX=32</state>
-          <state>HAL_UART_DMA_TX_MAX=0</state>
+          <state>HAL_UART_DMA_TX_MAX=32</state>
           <state>POWER_SAVING</state>
           <state>xPLUS_BROADCASTER</state>
           <state>HAL_LCD=FALSE</state>
@@ -7202,7 +7202,7 @@
           <state>HAL_UART=TRUE</state>
           <state>HAL_UART_DMA=1</state>
           <state>HAL_UART_DMA_RX_MAX=32</state>
-          <state>HAL_UART_DMA_TX_MAX=0</state>
+          <state>HAL_UART_DMA_TX_MAX=32</state>
           <state>POWER_SAVING</state>
           <state>xPLUS_BROADCASTER</state>
           <state>HAL_LCD=FALSE</state>
