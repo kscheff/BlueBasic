@@ -333,47 +333,56 @@ static void _uartCallback(uint8 port, uint8 event)
 #ifdef HAL_UART_RX_WAKEUP
   // UART woken up. This happens in the interrupt handler so we really
   // don't want to do anything else.
-  if (event == HAL_UART_RX_WAKEUP)
+  if (event == HAL_UART_RX_WAKEUP )
   {
     return;
   }
 #endif
-  uint8 len = Hal_UART_RxBufLen(HAL_UART_PORT_0);
-
-  if (port == HAL_UART_PORT_0 && sbuf_read_pos == 16 &&
-      (serial[0].onread && (len >= 16) /* || serial[0].onwrite) */ ))
+  if (port != HAL_UART_PORT_0)
+    return;
+  if (event & (HAL_UART_RX_ABOUT_FULL | HAL_UART_RX_FULL)
+      && serial[0].onread
+        && sbuf_read_pos == 16 )
   {
-    if (sflow == 'V')
+    uint8 len = Hal_UART_RxBufLen(HAL_UART_PORT_0);
+    if ( len >= 16 )
     {
-      HalUARTRead(HAL_UART_PORT_0, &sbuf[0], 1);
-      if (sbuf[0] == 0xAA)
+      if (sflow == 'V')
       {
-        uint8 parity = 0;
-        uint8 cnt;
-        HalUARTRead(HAL_UART_PORT_0, &sbuf[1], 15);
-        for (cnt=1; cnt < 15; )
+        HalUARTRead(HAL_UART_PORT_0, &sbuf[0], 1);
+        if (sbuf[0] == 0xAA)
         {
-          parity ^= sbuf[cnt++];
-        }
-        //only send serial data when frame has no parity error
-        if (parity == sbuf[15])
-        {
-          sbuf_read_pos = 0;
-          osal_set_event(blueBasic_TaskID, BLUEBASIC_EVENT_SERIAL);
+          uint8 parity = 0;
+          uint8 cnt;
+          HalUARTRead(HAL_UART_PORT_0, &sbuf[1], 15);
+          for (cnt=1; cnt < 15; )
+          {
+            parity ^= sbuf[cnt++];
+          }
+          //only send serial data when frame has no parity error
+          if (parity == sbuf[15])
+          {
+            sbuf_read_pos = 0;
+            osal_set_event(blueBasic_TaskID, BLUEBASIC_EVENT_SERIAL);
+          }
         }
       }
-    }
-    else
+      else
+      {
+        HalUARTRead(HAL_UART_PORT_0, &sbuf[0], 16);
+        sbuf_read_pos = 0;
+        osal_set_event(blueBasic_TaskID, BLUEBASIC_EVENT_SERIAL);
+      }
+    } else if (event & HAL_UART_TX_EMPTY
+               && serial[0].onwrite )
     {
-      HalUARTRead(HAL_UART_PORT_0, &sbuf[0], 16);
-      sbuf_read_pos = 0;
       osal_set_event(blueBasic_TaskID, BLUEBASIC_EVENT_SERIAL);
     }
   }
 }
 #endif
-
-
+  
+  
 unsigned char OS_serial_open(unsigned char port, unsigned long baud, unsigned char parity, unsigned char bits, unsigned char stop, unsigned char flow, unsigned short onread, unsigned short onwrite)
 {
   halUARTCfg_t config;
