@@ -1495,6 +1495,8 @@ static VAR_TYPE expression(unsigned char mode)
               case FUNC_TEMP:
                 {
                   VAR_TYPE top;
+                  halIntState_t intState;
+                  HAL_ENTER_CRITICAL_SECTION(intState);
                   TR0 = 0x01; // connect temperture sensor to ADC
                   ATEST = 0x01;
                   ADCCON3 = 0x0E | 0x30 | 0x00; // temperature sensor, 12-bit, internal voltage reference
@@ -1504,6 +1506,7 @@ static VAR_TYPE expression(unsigned char mode)
                   top |= ADCH << 8;  
                   ATEST = 0;
                   TR0 = 0;
+                  HAL_EXIT_CRITICAL_SECTION(intState);
                   // data sheet says 1480 @ 25C
                   // and 4.5 bits per 1C
                   // we use the factory data stored in info word 7
@@ -4430,6 +4433,8 @@ static VAR_TYPE pin_read(unsigned char major, unsigned char minor)
       if (APCFG & (1 << minor))
       {
         VAR_TYPE val;
+        halIntState_t intState;
+        HAL_ENTER_CRITICAL_SECTION(intState);
         ADCCON3 = minor | analogResolution | analogReference;
 #ifdef SIMULATE_PINS
         ADCCON1 = 0x80;
@@ -4438,6 +4443,7 @@ static VAR_TYPE pin_read(unsigned char major, unsigned char minor)
           ;
         val = ADCL;
         val |= ADCH << 8;
+        HAL_EXIT_CRITICAL_SECTION(intState);        
         return val >> (8 - (analogResolution >> 3));
       }
       return (P0 >> minor) & 1;
