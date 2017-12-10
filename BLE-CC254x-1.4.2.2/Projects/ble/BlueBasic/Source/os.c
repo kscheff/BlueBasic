@@ -443,6 +443,7 @@ unsigned char OS_serial_open(unsigned char port, unsigned long baud, unsigned ch
   prevent_sleep_flags |= 0x01;
 #endif
 #endif
+  P0SEL |= 0x3c;  // select peripheral mode
   if (HalUARTOpen(HAL_UART_PORT_0, &config) == HAL_UART_SUCCESS)
   {
     serial[0].onread = onread;
