@@ -324,8 +324,8 @@ static void _uartCallback(uint8 port, uint8 event)
 
 #else
 
-static unsigned char sbuf[16];
-static uint8 sbuf_read_pos = 16;
+unsigned char sbuf[16];
+uint8 sbuf_read_pos = 16;
 static char sflow = 0;
 
 static void _uartCallback(uint8 port, uint8 event)
@@ -386,26 +386,27 @@ static void _uartCallback(uint8 port, uint8 event)
 unsigned char OS_serial_open(unsigned char port, unsigned long baud, unsigned char parity, unsigned char bits, unsigned char stop, unsigned char flow, unsigned short onread, unsigned short onwrite)
 {
   halUARTCfg_t config;
+  int cbaud;
   
   switch (baud)
   {
     case 1000:
-      baud = HAL_UART_BR_1000;
+      cbaud = HAL_UART_BR_1000;
       break;
     case 9600:
-      baud = HAL_UART_BR_9600;
+      cbaud = HAL_UART_BR_9600;
       break;
     case 19200:
-      baud = HAL_UART_BR_19200;
+      cbaud = HAL_UART_BR_19200;
       break;
     case 38400:
-      baud = HAL_UART_BR_38400;
+      cbaud = HAL_UART_BR_38400;
       break;
     case 57600:
-      baud = HAL_UART_BR_57600;
+      cbaud = HAL_UART_BR_57600;
       break;
     case 115200:
-      baud = HAL_UART_BR_115200;
+      cbaud = HAL_UART_BR_115200;
       break;
     default:
       return 2;
@@ -424,14 +425,16 @@ unsigned char OS_serial_open(unsigned char port, unsigned long baud, unsigned ch
   }
 
   config.configured = 1;
-  config.baudRate = baud;
+  config.baudRate = cbaud;
   config.flowControl = flow == 'H' ? HAL_UART_FLOW_ON : HAL_UART_FLOW_OFF;
   config.flowControlThreshold = flow == 'H' ? 64 : 0;
   config.idleTimeout = 0;
   config.rx.maxBufSize = HAL_UART_DMA_RX_MAX;
   config.tx.maxBufSize = HAL_UART_DMA_TX_MAX;
   config.intEnable = 1;
-  config.callBackFunc = _uartCallback;
+//  config.callBackFunc = _uartCallback;
+  config.callBackFunc = NULL;
+  
 
 #ifdef POWER_SAVING  
   // suggestion taken from here:
@@ -451,9 +454,12 @@ unsigned char OS_serial_open(unsigned char port, unsigned long baud, unsigned ch
 #ifdef PROCESS_SERIAL_DATA
     sbuf_read_pos = 16;
 #endif
+    uint32 periode = 180000UL / baud;
+    if (periode < 10)
+      periode = 10;
+    osal_start_reload_timer(blueBasic_TaskID, BLUEBASIC_EVENT_SERIAL, periode);
     return 0;
   }
- 
   return 1;
 }
 
@@ -461,6 +467,7 @@ unsigned char OS_serial_close(unsigned char port)
 {
   serial[0].onread = 0;
   serial[0].onwrite = 0;
+  osal_stop_timerEx(blueBasic_TaskID, BLUEBASIC_EVENT_SERIAL);
 #ifdef PROCESS_SERIAL_DATA
     sbuf_read_pos = 16;
 #endif  

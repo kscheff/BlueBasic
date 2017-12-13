@@ -492,14 +492,32 @@ uint16 BlueBasic_ProcessEvent( uint8 task_id, uint16 events )
   
   if ( events & BLUEBASIC_EVENT_SERIAL )
   {
-    if (serial[0].onread && OS_serial_available(0, 'R') > 15)
+    extern uint8 sbuf_read_pos;
+    extern unsigned char sbuf[];
+    if (serial[0].onread && sbuf_read_pos == 16 )
     {
-      interpreter_run(serial[0].onread, 1);
-    }
-    if (serial[0].onwrite && OS_serial_available(0, 'W') > 0)
-    {
-      interpreter_run(serial[0].onwrite, 1);
-    }
+      uint8 len = Hal_UART_RxBufLen(HAL_UART_PORT_0);
+      if ( len >= 16 )
+      {
+        HalUARTRead(HAL_UART_PORT_0, &sbuf[0], 1);
+        if (sbuf[0] == 0xAA)
+        {
+          uint8 parity = 0;
+          uint8 cnt;
+          HalUARTRead(HAL_UART_PORT_0, &sbuf[1], 15);
+          for (cnt=1; cnt < 15; )
+          {
+            parity ^= sbuf[cnt++];
+          }
+          //only send serial data when frame has no parity error
+          if (parity == sbuf[15])
+          {
+            sbuf_read_pos = 0;
+            interpreter_run(serial[0].onread, 1);
+          }
+        }
+      }
+    } 
     return (events ^ BLUEBASIC_EVENT_SERIAL);
   }
 
