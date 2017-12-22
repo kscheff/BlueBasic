@@ -205,7 +205,7 @@ extern unsigned char GAPObserverRole_CancelDiscovery(void);
 #else // TARGET_PETRA
 
 #define ENABLE_BLE_CONSOLE      1
-#define ENABLE_FAKE_OAD_PROFILE 1
+#define ENABLE_FAKE_OAD_PROFILE 0
 #define ENABLE_PORT0            1
 #define ENABLE_PORT1            1
 #define ENABLE_PORT2            1
@@ -233,6 +233,8 @@ extern unsigned char blueBasic_TaskID;
 #define BLUEBASIC_EVENT_INTERRUPT 0x0100
 #define BLUEBASIC_EVENT_INTERRUPTS 0x0F00 // Num bits == OS_MAX_INTERRUPT
 #define BLUEBASIC_EVENT_I2C        0x1000
+#define BLUEBASIC_EVENT_YIELD      0x2000
+#define BLUEBASIC_EVENT_CON        0x4000
 
 #define OS_AUTORUN_TIMEOUT        5000
 
@@ -272,6 +274,8 @@ typedef struct
 } os_timer_t;
 extern os_timer_t blueBasic_timers[OS_MAX_TIMER];
 
+extern unsigned short bluebasic_yield_linenum;
+
 #define FLASHSTORE_CPU_BASEADDR ((unsigned char*)0x9000)
 #define FLASHSTORE_DMA_BASEADDR ((unsigned long)0x29000)
 
@@ -294,6 +298,7 @@ extern char OS_prompt_available(void);
 extern void* OS_rmemcpy(void *dst, const void *src, unsigned int len);
 extern void OS_timer_stop(unsigned char id);
 extern char OS_timer_start(unsigned char id, unsigned long timeout, unsigned char repeat, unsigned short lineno);
+extern void OS_yield(unsigned short linenum);
 extern char OS_interrupt_attach(unsigned char pin, unsigned short lineno);
 extern char OS_interrupt_detach(unsigned char pin);
 extern long OS_get_millis(void);
@@ -377,6 +382,8 @@ typedef struct
   unsigned short linenum;
 } os_discover_t;
 extern os_discover_t blueBasic_discover;
+
+extern unsigned short timeSlice;
 
 #define LINKDB_STATUS_UPDATE_RSSI 16
 

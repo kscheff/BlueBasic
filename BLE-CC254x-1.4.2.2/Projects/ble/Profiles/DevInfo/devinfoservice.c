@@ -203,7 +203,7 @@ static const uint8 devInfo11073Cert[] =
 #endif
 
 #ifndef DEVINFO_PID
-#define DEVINFO_PID 0x0400
+#define DEVINFO_PID 0x0000
 #endif
 
 // System ID characteristic

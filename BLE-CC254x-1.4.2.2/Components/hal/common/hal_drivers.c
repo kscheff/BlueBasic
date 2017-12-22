@@ -282,10 +282,21 @@ void Hal_ProcessPoll ()
   /* Allow sleep before the next OSAL event loop */
   ALLOW_SLEEP_MODE();
 #endif
-  
-  /* UART Poll */
+
 #if (defined HAL_UART) && (HAL_UART == TRUE)
+#if defined ( BLUEBATTERY ) || defined ( BLUESOLAR ) && 0
+  {
+    static uint8 count = 0;
+    if (count-- == 0)
+    {
+      HalUARTPoll();
+      count = 8;
+    }
+  }
+#else
+  /* UART Poll */
   HalUARTPoll();
+#endif
 #endif
   
   /* SPI Poll */

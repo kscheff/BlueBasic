@@ -143,7 +143,7 @@ typedef enum
 /**
  * Callback when the connection parameteres are updated.
  */
-typedef void (*gapRolesParamUpdateCB_t)( uint16 connInterval,
+typedef void (gapRolesParamUpdateCB_t)( uint16 connInterval,
                                          uint16 connSlaveLatency,
                                          uint16 connTimeout );
 

@@ -498,6 +498,9 @@ static LINENUM linenum;
 
 static variable_frame normal_variable = { { FRAME_VARIABLE_FLAG, 0 }, VAR_INT, 0, 0, 0, NULL };
 
+static VAR_TYPE yield_time;
+unsigned short timeSlice = 20;
+
 #define VARIABLE_INT_ADDR(F)    (((VAR_TYPE*)variables_begin) + ((F) - 'A'))
 #define VARIABLE_INT_GET(F)     (*VARIABLE_INT_ADDR(F))
 #define VARIABLE_INT_SET(F,V)   (*VARIABLE_INT_ADDR(F) = (V))
@@ -1775,6 +1778,7 @@ void interpreter_loop(void)
 //
 unsigned char interpreter_run(LINENUM gofrom, unsigned char canreturn)
 {
+  yield_time = OS_get_millis();
   error_num = ERROR_OK;
 
   if (gofrom)
@@ -1863,7 +1867,7 @@ unsigned char interpreter_run(LINENUM gofrom, unsigned char canreturn)
     heap = (unsigned char*)program_end;
   }
 
-prompt:;
+prompt:
   OS_prompt_buffer(heap + sizeof(LINENUM), sp);
   return IX_PROMPT;
 
@@ -1888,7 +1892,21 @@ run_next_statement:
   {
     goto print_error_or_ok;
   }
-interperate:
+  // check how long the programs already runs
+  // and yield processing if time is up
+#if 1
+  {
+    if ( (OS_get_millis() - yield_time) >= timeSlice) 
+    {
+      unsigned short line = *(LINENUM*)lineptr[0];
+      OS_yield(line);
+      //printnum(0, line);
+      //printmsg(" YIELD");
+      goto prompt;
+    }
+  }
+#endif  
+  interperate:
   switch (*txtpos++)
   {
     default:
@@ -5578,7 +5596,7 @@ void ble_connection_status(unsigned short connHandle, unsigned char changeType, 
         }
       }
     }
-  }
+  }  
 }
 
 #ifdef TARGET_CC254X

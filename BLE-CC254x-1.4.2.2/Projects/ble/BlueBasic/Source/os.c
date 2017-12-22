@@ -41,6 +41,13 @@ os_interrupt_t blueBasic_interrupts[OS_MAX_INTERRUPT];
 os_timer_t blueBasic_timers[OS_MAX_TIMER];
 os_discover_t blueBasic_discover;
 
+unsigned char sbuf[16];
+uint8 sbuf_read_pos = 16;
+
+#ifdef PROCESS_SERIAL_DATA
+unsigned char sflow;
+#endif
+
 struct program_header
 {
   char autorun;
@@ -62,6 +69,8 @@ os_serial_t serial[OS_MAX_SERIAL];
 os_i2c_t i2c[1];
 unsigned char prevent_sleep_flags = 0; 
 #endif
+
+unsigned short bluebasic_yield_linenum;
 
 enum {
   MODE_STARTUP = 0,
@@ -222,6 +231,12 @@ char OS_timer_start(unsigned char id, unsigned long timeout, unsigned char repea
   return 1;
 }
 
+void OS_yield(unsigned short linenum)
+{
+  bluebasic_yield_linenum = linenum;
+  osal_set_event( blueBasic_TaskID, BLUEBASIC_EVENT_YIELD );
+}
+
 char OS_interrupt_attach(unsigned char pin, unsigned short lineno)
 {
   unsigned char i;
@@ -297,12 +312,10 @@ void OS_flashstore_init(void)
   }
 }
 
-#if defined(BLUEBATTERY) || defined (BLUESOLAR)
-#define PROCESS_SERIAL_DATA
-#endif
 
-#ifndef PROCESS_SERIAL_DATA
+#if UART_USE_CALLBACK
 
+#if !defined(PROCESS_SERIAL_DATA)
 static void _uartCallback(uint8 port, uint8 event)
 {
 #ifdef HAL_UART_RX_WAKEUP
@@ -313,20 +326,28 @@ static void _uartCallback(uint8 port, uint8 event)
     return;
   }
 #endif
-  uint8 len = Hal_UART_RxBufLen(HAL_UART_PORT_0);
-
-  if (port == HAL_UART_PORT_0 &&
-      (serial[0].onread && (len >= 16) /* || serial[0].onwrite) */ ))
+  if (port != HAL_UART_PORT_0)
+    return;
+  if (event & (HAL_UART_RX_ABOUT_FULL | HAL_UART_RX_FULL)
+      && serial[0].onread
+        && sbuf_read_pos == 16 )
+  {
+    uint8 len = Hal_UART_RxBufLen(HAL_UART_PORT_0);
+    if (len >= 16)
+    {
+      HalUARTRead(HAL_UART_PORT_0, &sbuf[0], 16);
+      sbuf_read_pos = 0;
+      osal_set_event(blueBasic_TaskID, BLUEBASIC_EVENT_SERIAL);
+    }
+  }
+  else if (event & HAL_UART_TX_EMPTY
+             && serial[0].onwrite )
   {
     osal_set_event(blueBasic_TaskID, BLUEBASIC_EVENT_SERIAL);
   }
 }
 
 #else
-
-unsigned char sbuf[16];
-uint8 sbuf_read_pos = 16;
-static char sflow = 0;
 
 static void _uartCallback(uint8 port, uint8 event)
 {
@@ -381,6 +402,8 @@ static void _uartCallback(uint8 port, uint8 event)
   }
 }
 #endif
+
+#endif
   
   
 unsigned char OS_serial_open(unsigned char port, unsigned long baud, unsigned char parity, unsigned char bits, unsigned char stop, unsigned char flow, unsigned short onread, unsigned short onwrite)
@@ -432,16 +455,18 @@ unsigned char OS_serial_open(unsigned char port, unsigned long baud, unsigned ch
   config.rx.maxBufSize = HAL_UART_DMA_RX_MAX;
   config.tx.maxBufSize = HAL_UART_DMA_TX_MAX;
   config.intEnable = 1;
-//  config.callBackFunc = _uartCallback;
+#if UART_USE_CALLBACK  
+  config.callBackFunc = _uartCallback;
+#else
   config.callBackFunc = NULL;
-  
+#endif  
 
 #ifdef POWER_SAVING  
   // suggestion taken from here:
   // http://e2e.ti.com/support/wireless_connectivity/bluetooth_low_energy/f/538/p/431990/1668088#1668088
   extern uint8 Hal_TaskID;
-  CLEAR_SLEEP_MODE();
-  osal_pwrmgr_task_state(Hal_TaskID, PWRMGR_HOLD);
+//  CLEAR_SLEEP_MODE();
+//  osal_pwrmgr_task_state(Hal_TaskID, PWRMGR_HOLD);
 #ifdef HAL_I2C
   prevent_sleep_flags |= 0x01;
 #endif
@@ -454,10 +479,12 @@ unsigned char OS_serial_open(unsigned char port, unsigned long baud, unsigned ch
 #ifdef PROCESS_SERIAL_DATA
     sbuf_read_pos = 16;
 #endif
+#if !(UART_USE_CALLBACK)  
     uint32 periode = 180000UL / baud;
     if (periode < 10)
       periode = 10;
     osal_start_reload_timer(blueBasic_TaskID, BLUEBASIC_EVENT_SERIAL, periode);
+#endif
     return 0;
   }
   return 1;
@@ -467,7 +494,9 @@ unsigned char OS_serial_close(unsigned char port)
 {
   serial[0].onread = 0;
   serial[0].onwrite = 0;
+#if !(UART_USE_CALLBACK)  
   osal_stop_timerEx(blueBasic_TaskID, BLUEBASIC_EVENT_SERIAL);
+#endif
 #ifdef PROCESS_SERIAL_DATA
     sbuf_read_pos = 16;
 #endif  

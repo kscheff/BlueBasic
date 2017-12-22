@@ -101,10 +101,10 @@
 //#define  DEFAULT_ADVERTISING_INTERVAL          2056 // 1285 ms
 
 // initial connection interval in units of 1.25ms
-#define DEFAULT_CONNECTION_INTERVAL_MIN 24  //30ms
-#define DEFAULT_CONNECTION_INTERVAL_MAX 40  //50ms
+#define DEFAULT_CONNECTION_INTERVAL_MIN 40  //30ms
+#define DEFAULT_CONNECTION_INTERVAL_MAX 52  //45ms
 #define DEFAULT_CONNECTION_LATENCY 0
-#define DEFAULT_CONNECTION_TIMEOUT 200
+#define DEFAULT_CONNECTION_TIMEOUT 600
 
 // Minimum connection interval (units of 1.25ms, 80=100ms) if automatic parameter update request is enabled
 #define DEFAULT_DESIRED_MIN_CONN_INTERVAL     DEFAULT_CONNECTION_INTERVAL_MIN
@@ -132,6 +132,10 @@ uint8 blueBasic_TaskID;   // Task ID for internal task/event processing
  * EXTERNAL VARIABLES
  */
 
+extern uint8 sbuf_read_pos;
+extern unsigned char sbuf[];
+extern unsigned char sflow;
+
 /*********************************************************************
  * EXTERNAL FUNCTIONS
  */
@@ -154,9 +158,20 @@ static CONST uint8 inputUUID[] = { 0xB2, 0x07, 0xCF, 0x1D, 0x47, 0x2F, 0x49, 0x3
 static CONST uint8 inputProps = GATT_PROP_READ|GATT_PROP_NOTIFY;
 static CONST uint8 outputUUID[] = { 0x6D, 0x7E, 0xE5, 0x7D, 0xFB, 0x7A, 0x4B, 0xF7, 0xB2, 0x1C, 0x92, 0xFE, 0x3C, 0x9B, 0xAF, 0xD6 };
 static CONST uint8 outputProps = GATT_PROP_WRITE;
-static gattCharCfg_t *consoleProfileCharCfg = NULL;
+static gattCharCfg_t *consoleProfileCharCfg1 = NULL;
+static gattCharCfg_t *consoleProfileCharCfg2 = NULL;
+
+#define SERVICE_CHANGE 0
+
+#if SERVICE_CHANGE
+static CONST uint8 serviceProps = GATT_PROP_READ | GATT_PROP_INDICATE;
+static gattCharCfg_t serviceChanged = {0};
+static CONST uint8 serviceHandles[] = {1, 0, 0xff, 0xff}; 
+static gattCharCfg_t *serviceChangedCharCfg = &serviceChanged;
+#endif
 
 unsigned char ble_console_enabled;
+unsigned char block_during_con;
 
 static struct
 {
@@ -166,14 +181,31 @@ static struct
   uint8* writeout;
 } io;
 
+static CONST unsigned char consoleInputDesc[] = "Console in";
+static CONST unsigned char consoleOutputDesc[] = "Console out";
+
+#define GATT_PERMIT_RW GATT_PERMIT_READ|GATT_PERMIT_WRITE
+
 static gattAttribute_t consoleProfile[] =
 {
-  { { ATT_BT_UUID_SIZE, primaryServiceUUID },   GATT_PERMIT_READ,                       0, (uint8*)&consoleProfileService },
-  { { ATT_BT_UUID_SIZE, characterUUID },        GATT_PERMIT_READ,                       0, (uint8*)&inputProps },
-  { { ATT_UUID_SIZE, inputUUID },               GATT_PERMIT_READ|GATT_PERMIT_WRITE,     0, io.write },
-  { { ATT_BT_UUID_SIZE, clientCharCfgUUID },    GATT_PERMIT_READ|GATT_PERMIT_WRITE,     0, (uint8*)&consoleProfileCharCfg },
-  { { ATT_BT_UUID_SIZE, characterUUID },        GATT_PERMIT_READ,                       0, (uint8*)&outputProps },
-  { { ATT_UUID_SIZE, outputUUID },              GATT_PERMIT_READ|GATT_PERMIT_WRITE,     0, NULL },
+  // Primary Service
+  { { ATT_BT_UUID_SIZE, primaryServiceUUID },   GATT_PERMIT_READ,   0, (uint8*)&consoleProfileService },
+  // Console Input Characteristics
+  { { ATT_BT_UUID_SIZE, characterUUID },        GATT_PERMIT_READ,   0, (uint8*)&inputProps },
+  { { ATT_UUID_SIZE, inputUUID },               GATT_PERMIT_RW,     0, io.write },
+  { { ATT_BT_UUID_SIZE, clientCharCfgUUID },    GATT_PERMIT_RW,     0, (uint8*)&consoleProfileCharCfg1 },
+  { { ATT_BT_UUID_SIZE, charUserDescUUID },     GATT_PERMIT_READ,   0, (uint8*)consoleInputDesc },
+  // Console Output Charactersitics
+  { { ATT_BT_UUID_SIZE, characterUUID },        GATT_PERMIT_READ,   0, (uint8*)&outputProps },
+  { { ATT_UUID_SIZE, outputUUID },              GATT_PERMIT_WRITE,  0, NULL },
+  { { ATT_BT_UUID_SIZE, clientCharCfgUUID },    GATT_PERMIT_RW,     0, (uint8*) &consoleProfileCharCfg2 },
+  { { ATT_BT_UUID_SIZE, charUserDescUUID },     GATT_PERMIT_READ,   0, (uint8*)consoleOutputDesc },
+#if SERVICE_CHANGE  
+  // Generic Attribute Service
+  { { ATT_BT_UUID_SIZE, gattServiceUUID},       GATT_PERMIT_READ,   0, (uint8*)&serviceProps },
+  { { ATT_BT_UUID_SIZE, serviceChangedUUID},    GATT_PERMIT_READ,   0, (uint8*)&serviceHandles },
+  { { ATT_BT_UUID_SIZE, clientCharCfgUUID},     GATT_PERMIT_RW,     0, (uint8*)&serviceChanged }
+#endif
 };
 
 static bStatus_t consoleProfile_ReadAttrCB(uint16 connHandle, gattAttribute_t *pAttr, uint8 *pValue, uint8 *pLen, uint16 offset, uint8 maxLen, uint8 method);
@@ -189,13 +221,23 @@ static CONST gattServiceCBs_t consoleProfileCB =
 static CONST uint8 consoleAdvert[] =
 {
   0x02, GAP_ADTYPE_FLAGS, GAP_ADTYPE_FLAGS_LIMITED|GAP_ADTYPE_FLAGS_BREDR_NOT_SUPPORTED,
+#if 0
   0x11, GAP_ADTYPE_128BIT_MORE, CONSOLE_PROFILE_SERV_UUID,
+#else
+  // connection interval range
+  0x05,   // length of this data
+  GAP_ADTYPE_SLAVE_CONN_INTERVAL_RANGE,
+  LO_UINT16( DEFAULT_CONNECTION_INTERVAL_MIN ),
+  HI_UINT16( DEFAULT_CONNECTION_INTERVAL_MIN ),
+  LO_UINT16( DEFAULT_CONNECTION_INTERVAL_MAX ),
+  HI_UINT16( DEFAULT_CONNECTION_INTERVAL_MAX ),
+#endif    
   0x09, GAP_ADTYPE_LOCAL_NAME_COMPLETE, 'B', 'A', 'S', 'I', 'C', '#', '?', '?'
 };
 
 #endif
 
-#ifdef ENABLE_FAKE_OAD_PROFILE
+#if ENABLE_FAKE_OAD_PROFILE
 
 static CONST uint8 oadProfileServiceUUID[] = { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xB0, 0x00, 0x40, 0x51, 0x04, 0xC0, 0xFF, 0x00, 0xF0 };
 static CONST uint8 oadIdentUUID[] = { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xB0, 0x00, 0x40, 0x51, 0x04, 0xC1, 0xFF, 0x00, 0xF0 };
@@ -245,10 +287,16 @@ static CONST gapObserverRoleCB_t blueBasic_ObserverCBs =
 static void blueBasic_HandleConnStatusCB(uint16 connHandle, uint8 changeType);
 static void blueBasic_RSSIUpdate(int8 rssi);
 
+static void bluebasic_ParamUpdateCB( uint16 connInterval,
+                                         uint16 connSlaveLatency,
+                                         uint16 connTimeout );
+static void bluebasic_StateNotificationCB( gaprole_States_t newState );
+
+
 // GAP Role Callbacks
 static CONST gapRolesCBs_t blueBasic_PeripheralCBs =
 {
-  NULL,                           // Profile State Change Callbacks
+  bluebasic_StateNotificationCB,  // Profile State Change Callbacks
   blueBasic_RSSIUpdate,           // When a valid RSSI is read from controller
 };
 
@@ -288,7 +336,7 @@ void BlueBasic_Init( uint8 task_id )
   GAPRole_SetParameter( GAPROLE_ADVERT_DATA, sizeof(consoleAdvert), (void*)consoleAdvert );
 #endif
   
-#if 0
+#if 1
   // Setup the GAP Peripheral Role Profile
   {
     uint8 enable_update_request = DEFAULT_ENABLE_UPDATE_REQUEST;
@@ -339,7 +387,7 @@ void BlueBasic_Init( uint8 task_id )
   // Initialize GATT attributes
   GGS_AddService( GATT_ALL_SERVICES );            // GAP
   GATTServApp_AddService( GATT_ALL_SERVICES );    // GATT attributes
-#ifdef ENABLE_FAKE_OAD_PROFILE 
+#if ENABLE_FAKE_OAD_PROFILE 
   GATTServApp_RegisterService(oadProfile, GATT_NUM_ATTRS(oadProfile),
                               GATT_MAX_ENCRYPT_KEY_SIZE, NULL);
 #endif
@@ -418,14 +466,20 @@ uint16 BlueBasic_ProcessEvent( uint8 task_id, uint16 events )
 #endif
     // Start monitoring links
     VOID linkDB_Register( blueBasic_HandleConnStatusCB );
-
+    
+    // Start monitoring parameters updates
+    GAPRole_RegisterAppCBs( bluebasic_ParamUpdateCB);
+    
 #ifdef ENABLE_BLE_CONSOLE
     // Allocate Client Characteristic Configuration table
-    consoleProfileCharCfg = (gattCharCfg_t *)osal_mem_alloc( sizeof(gattCharCfg_t)
-                                                            * linkDBNumConns);  
-    if (consoleProfileCharCfg != NULL)
+    consoleProfileCharCfg1 = (gattCharCfg_t *)osal_mem_alloc( sizeof(gattCharCfg_t)
+                                                            * linkDBNumConns * 2);  
+    if (consoleProfileCharCfg1 != NULL)
     {
-      GATTServApp_InitCharCfg(INVALID_CONNHANDLE, consoleProfileCharCfg);
+      consoleProfileCharCfg2 = consoleProfileCharCfg1 
+        + sizeof(gattCharCfg_t) * linkDBNumConns; 
+      GATTServApp_InitCharCfg(INVALID_CONNHANDLE, consoleProfileCharCfg1);
+      GATTServApp_InitCharCfg(INVALID_CONNHANDLE, consoleProfileCharCfg2);
       GATTServApp_RegisterService(consoleProfile, GATT_NUM_ATTRS(consoleProfile),
                                   GATT_MAX_ENCRYPT_KEY_SIZE, &consoleProfileCB);
     }
@@ -445,7 +499,7 @@ uint16 BlueBasic_ProcessEvent( uint8 task_id, uint16 events )
     while (io.writein != io.writeout)
     {
       uint8* save = io.writeout;
-      if (GATTServApp_ProcessCharCfg(consoleProfileCharCfg, io.write,
+      if (GATTServApp_ProcessCharCfg(consoleProfileCharCfg1, io.write,
                                      FALSE, consoleProfile,
                                      GATT_NUM_ATTRS(consoleProfile), INVALID_TASK_ID,
                                      consoleProfile_ReadAttrCB) != SUCCESS)
@@ -465,6 +519,49 @@ uint16 BlueBasic_ProcessEvent( uint8 task_id, uint16 events )
     interpreter_loop();
     return (events ^ BLUEBASIC_INPUT_AVAILABLE);
   }
+
+  // fix for Android to successfully read the GATT table
+  // this event inidcates that the initial connection
+  // has passed and the descriptor should have been read already
+  // so we can set the time slice longer so the inzterpreter can run longer
+  if ( events & BLUEBASIC_EVENT_CON )
+  {
+    timeSlice = 20;
+    P1 &= 0xFE;
+    block_during_con = 0;
+    // we clear the event and continue
+    events ^= BLUEBASIC_EVENT_CON;
+  }
+
+  if ( block_during_con )
+    return 0;
+
+#if 0  
+  // yield has higher priority than the rest of the events
+  // as long as a yield is pending no further events are allowed
+  if ( events & BLUEBASIC_EVENT_YIELD )
+  {
+    unsigned short ln = bluebasic_yield_linenum;
+    bluebasic_yield_linenum = 0;
+    interpreter_run(ln, 0);
+    return (events ^ BLUEBASIC_EVENT_YIELD);
+  }
+  else 
+  {
+    if ( bluebasic_yield_linenum != 0 )
+      return events;
+  }
+#endif
+    
+  // in case of a valid line number a yield is pending
+  // so we clear the line number and let the interpreter run
+  // the actual event is only issued to spin the message loop and will be discared
+  if (bluebasic_yield_linenum)
+  {
+    unsigned short ln = bluebasic_yield_linenum;
+    bluebasic_yield_linenum = 0;
+    interpreter_run(ln, 0);    
+  }
   
   if ( events & BLUEBASIC_EVENT_INTERRUPTS )
   {
@@ -477,7 +574,8 @@ uint16 BlueBasic_ProcessEvent( uint8 task_id, uint16 events )
     }
     return (events ^ (events & BLUEBASIC_EVENT_INTERRUPTS));
   }
-    
+
+#if 1
   if ( events & BLUEBASIC_EVENT_TIMERS )
   {
     for (i = 0; i < OS_MAX_TIMER; i++)
@@ -489,32 +587,73 @@ uint16 BlueBasic_ProcessEvent( uint8 task_id, uint16 events )
     }
     return (events ^ (events & BLUEBASIC_EVENT_TIMERS));
   }
+#endif
+    
+#if 0   
+  // experimental to give DELAY prio so no timer can fire in between
+  // to avoid potential memory leagage on the the heap
+  if ( events & BLUEBASIC_EVENT_TIMERS )
+  {
+    // first execute DELAY 
+    if ( events & (BLUEBASIC_EVENT_TIMER << DELAY_TIMER) )
+    {
+      if ( blueBasic_timers[DELAY_TIMER].linenum )
+      {
+        interpreter_run(blueBasic_timers[DELAY_TIMER].linenum, 0);
+        blueBasic_timers[DELAY_TIMER].linenum = 0;
+      }
+      return (events ^ (BLUEBASIC_EVENT_TIMER << DELAY_TIMER));
+    }
+    // only execute timers when DELAY is not pending anymore
+    if (blueBasic_timers[DELAY_TIMER].linenum == 0) 
+    {
+      for (i = 0; i < OS_MAX_TIMER; i++)
+      {
+        if (blueBasic_timers[i].linenum && (events & (BLUEBASIC_EVENT_TIMER << i)))
+        {
+          interpreter_run(blueBasic_timers[i].linenum, i == DELAY_TIMER ? 0 : 1);
+          return (events ^ (BLUEBASIC_EVENT_TIMER << i));
+        }
+      }
+    }
+//    return (events ^ (events & BLUEBASIC_EVENT_TIMERS));
+  }
+#endif
   
   if ( events & BLUEBASIC_EVENT_SERIAL )
   {
-    extern uint8 sbuf_read_pos;
-    extern unsigned char sbuf[];
     if (serial[0].onread && sbuf_read_pos == 16 )
     {
       uint8 len = Hal_UART_RxBufLen(HAL_UART_PORT_0);
       if ( len >= 16 )
       {
-        HalUARTRead(HAL_UART_PORT_0, &sbuf[0], 1);
-        if (sbuf[0] == 0xAA)
+#ifdef PROCESS_SERIAL_DATA        
+        if (sflow == 'V')
         {
-          uint8 parity = 0;
-          uint8 cnt;
-          HalUARTRead(HAL_UART_PORT_0, &sbuf[1], 15);
-          for (cnt=1; cnt < 15; )
+          HalUARTRead(HAL_UART_PORT_0, &sbuf[0], 1);
+          if (sbuf[0] == 0xAA)
           {
-            parity ^= sbuf[cnt++];
+            uint8 parity = 0;
+            uint8 cnt;
+            HalUARTRead(HAL_UART_PORT_0, &sbuf[1], 15);
+            for (cnt=1; cnt < 15; )
+            {
+              parity ^= sbuf[cnt++];
+            }
+            //only send serial data when frame has no parity error
+            if (parity == sbuf[15])
+            {
+              sbuf_read_pos = 0;
+              interpreter_run(serial[0].onread, 1);
+            }
           }
-          //only send serial data when frame has no parity error
-          if (parity == sbuf[15])
-          {
-            sbuf_read_pos = 0;
-            interpreter_run(serial[0].onread, 1);
-          }
+        }
+        else
+#endif
+        {
+          HalUARTRead(HAL_UART_PORT_0, &sbuf[0], 16);
+          sbuf_read_pos = 0;
+          interpreter_run(serial[0].onread, 1);
         }
       }
     } 
@@ -550,11 +689,11 @@ static void blueBasic_HandleConnStatusCB(uint16 connHandle, uint8 changeType)
 #ifdef ENABLE_BLE_CONSOLE
   if (changeType == LINKDB_STATUS_UPDATE_REMOVED || (changeType == LINKDB_STATUS_UPDATE_STATEFLAGS && !linkDB_Up(connHandle)))
   {
-    GATTServApp_InitCharCfg(connHandle, consoleProfileCharCfg);
+    GATTServApp_InitCharCfg(connHandle, consoleProfileCharCfg1);
     uint8 i;
     for (i = 0; i < linkDBNumConns; i++)
     {
-      if (consoleProfileCharCfg[i].value == 1)
+      if (consoleProfileCharCfg1[i].value == 1)
       {
         goto done;
       }
@@ -597,6 +736,54 @@ uint8 ble_console_write(uint8 ch)
   }
   return 1;
 }
+
+static void bluebasic_ParamUpdateCB( uint16 connInterval,
+                                         uint16 connSlaveLatency,
+                                         uint16 connTimeout )
+{
+  //timeSlice = ((connInterval == 0) ? 20 : ((connInterval < 24) ? 0 : connInterval));
+}
+
+static void bluebasic_StateNotificationCB( gaprole_States_t newState )
+{
+  P1DIR |= 1;
+  switch ( newState )
+  {
+  case GAPROLE_STARTED:
+    //P1 &= 0xFE;
+    timeSlice = 101;
+    block_during_con = 0;
+    break;
+    
+  case GAPROLE_ADVERTISING:
+    //P1 &= 0xFE;
+    //timeSlice = 102;
+    block_during_con = 0;
+    break;
+    
+  case GAPROLE_CONNECTED:
+    {
+      //unsigned short connInterval = 0;
+      //GAPRole_GetParameter(GAPROLE_CONN_INTERVAL, &connInterval);
+      timeSlice = 0;
+      P1 |= 1;
+//      block_during_con = 1;
+      osal_start_timerEx(blueBasic_TaskID, BLUEBASIC_EVENT_CON, 4000);
+    }
+    break;
+    
+  case GAPROLE_WAITING:
+    // Link terminated
+    P1 &= 0xFE;
+    timeSlice = 103;
+    block_during_con = 0;
+    break;
+    
+  default:
+    break;
+  }
+}
+
 
 #if ( HOST_CONFIG & OBSERVER_CFG )
 static uint8 blueBasic_deviceFound( gapObserverRoleEvent_t *pEvent )
@@ -649,7 +836,7 @@ static bStatus_t consoleProfile_WriteAttrCB(uint16 connHandle, gattAttribute_t *
     // Setup console if we're connected, otherwise disable
     for (i = 0; i < linkDBNumConns; i++)
     {
-      if (consoleProfileCharCfg[i].value == 1)
+      if (consoleProfileCharCfg1[i].value == 1)
       {
         io.writein = io.write;
         io.writeout = io.write;
