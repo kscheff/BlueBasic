@@ -526,8 +526,8 @@ uint16 BlueBasic_ProcessEvent( uint8 task_id, uint16 events )
   // so we can set the time slice longer so the inzterpreter can run longer
   if ( events & BLUEBASIC_EVENT_CON )
   {
-    timeSlice = 20;
-    P1 &= 0xFE;
+    timeSlice = 21;
+//    P1 &= 0xFE;
     block_during_con = 0;
     // we clear the event and continue
     events ^= BLUEBASIC_EVENT_CON;
@@ -734,7 +734,7 @@ static void bluebasic_ParamUpdateCB( uint16 connInterval,
 
 static void bluebasic_StateNotificationCB( gaprole_States_t newState )
 {
-  P1DIR |= 1;
+//  P1DIR |= 1;
   switch ( newState )
   {
   case GAPROLE_STARTED:
@@ -745,7 +745,7 @@ static void bluebasic_StateNotificationCB( gaprole_States_t newState )
     
   case GAPROLE_ADVERTISING:
     //P1 &= 0xFE;
-    //timeSlice = 102;
+    timeSlice = 102;
     block_during_con = 0;
     break;
     
@@ -753,8 +753,8 @@ static void bluebasic_StateNotificationCB( gaprole_States_t newState )
     {
       //unsigned short connInterval = 0;
       //GAPRole_GetParameter(GAPROLE_CONN_INTERVAL, &connInterval);
-      timeSlice = 0;
-      P1 |= 1;
+      timeSlice = 20;
+//      P1 |= 1;
 //      block_during_con = 1;
       osal_start_timerEx(blueBasic_TaskID, BLUEBASIC_EVENT_CON, 4000);
     }
@@ -762,7 +762,7 @@ static void bluebasic_StateNotificationCB( gaprole_States_t newState )
     
   case GAPROLE_WAITING:
     // Link terminated
-    P1 &= 0xFE;
+//    P1 &= 0xFE;
     timeSlice = 103;
     block_during_con = 0;
     break;
