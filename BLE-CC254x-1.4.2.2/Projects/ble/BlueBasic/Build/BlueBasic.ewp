@@ -7669,7 +7669,7 @@
       <name>BUILDACTION</name>
       <archiveVersion>1</archiveVersion>
       <data>
-        <prebuild>"$PROJ_DIR$\..\..\common\CC2540\timestamp.bat" "$PROJ_DIR$" BlueBatt "$OBJ_DIR$"</prebuild>
+        <prebuild>"$PROJ_DIR$\..\..\common\CC2540\timestamp.bat" "$PROJ_DIR$" BlueBattery "$OBJ_DIR$"</prebuild>
         <postbuild>"$PROJ_DIR$\..\..\common\CC2540\convert-and-merge.bat" "$PROJ_DIR$" CC2541-ImgA  BlueBattery BlueBattery</postbuild>
       </data>
     </settings>
