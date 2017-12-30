@@ -7221,6 +7221,8 @@
           <state>OAD_IMAGE_VERSION=2</state>
           <state>FEATURE_OAD_HEADER=TRUE</state>
           <state>FEATURE_BOOST_CONVERTER=P2_0</state>
+          <state>UART_USE_CALLBACK=0</state>
+          <state>PROCESS_SERIAL_DATA</state>
         </option>
         <option>
           <name>CCPreprocFile</name>
