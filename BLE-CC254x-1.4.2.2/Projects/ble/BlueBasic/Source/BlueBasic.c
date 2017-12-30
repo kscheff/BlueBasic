@@ -535,32 +535,20 @@ uint16 BlueBasic_ProcessEvent( uint8 task_id, uint16 events )
 
   if ( block_during_con )
     return 0;
-
-#if 0  
-  // yield has higher priority than the rest of the events
-  // as long as a yield is pending no further events are allowed
-  if ( events & BLUEBASIC_EVENT_YIELD )
-  {
-    unsigned short ln = bluebasic_yield_linenum;
-    bluebasic_yield_linenum = 0;
-    interpreter_run(ln, 0);
-    return (events ^ BLUEBASIC_EVENT_YIELD);
-  }
-  else 
-  {
-    if ( bluebasic_yield_linenum != 0 )
-      return events;
-  }
-#endif
     
   // in case of a valid line number a yield is pending
   // so we clear the line number and let the interpreter run
-  // the actual event is only issued to spin the message loop and will be discared
   if (bluebasic_yield_linenum)
+    {
+      unsigned short ln = bluebasic_yield_linenum;
+      bluebasic_yield_linenum = 0;
+      interpreter_run(ln, 0);
+    }
+  
+  // return when yield event was present or a new yield is scheduled
+  if ( (events & BLUEBASIC_EVENT_YIELD) || bluebasic_yield_linenum)
   {
-    unsigned short ln = bluebasic_yield_linenum;
-    bluebasic_yield_linenum = 0;
-    interpreter_run(ln, 0);    
+    return (events & ~BLUEBASIC_EVENT_YIELD);
   }
   
   if ( events & BLUEBASIC_EVENT_INTERRUPTS )
