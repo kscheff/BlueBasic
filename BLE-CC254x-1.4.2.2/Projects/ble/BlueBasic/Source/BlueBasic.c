@@ -101,10 +101,10 @@
 //#define  DEFAULT_ADVERTISING_INTERVAL          2056 // 1285 ms
 
 // initial connection interval in units of 1.25ms
-#define DEFAULT_CONNECTION_INTERVAL_MIN 40  //30ms
-#define DEFAULT_CONNECTION_INTERVAL_MAX 52  //45ms
+#define DEFAULT_CONNECTION_INTERVAL_MIN 24  //30ms
+#define DEFAULT_CONNECTION_INTERVAL_MAX 36  //45ms
 #define DEFAULT_CONNECTION_LATENCY 0
-#define DEFAULT_CONNECTION_TIMEOUT 600
+#define DEFAULT_CONNECTION_TIMEOUT 200
 
 // Minimum connection interval (units of 1.25ms, 80=100ms) if automatic parameter update request is enabled
 #define DEFAULT_DESIRED_MIN_CONN_INTERVAL     DEFAULT_CONNECTION_INTERVAL_MIN
@@ -613,7 +613,7 @@ uint16 BlueBasic_ProcessEvent( uint8 task_id, uint16 events )
     if (serial[0].onread && sbuf_read_pos == 16 )
     {
       uint8 len = Hal_UART_RxBufLen(HAL_UART_PORT_0);
-      if ( len >= 16 )
+      for ( ; len >= 16 ; len--)
       {
 #ifdef PROCESS_SERIAL_DATA        
         if (sflow == 'V')
@@ -634,6 +634,7 @@ uint16 BlueBasic_ProcessEvent( uint8 task_id, uint16 events )
               sbuf_read_pos = 0;
               interpreter_run(serial[0].onread, 1);
             }
+            break;
           }
         }
         else
@@ -642,6 +643,7 @@ uint16 BlueBasic_ProcessEvent( uint8 task_id, uint16 events )
           HalUARTRead(HAL_UART_PORT_0, &sbuf[0], 16);
           sbuf_read_pos = 0;
           interpreter_run(serial[0].onread, 1);
+          break;
         }
       }
     } 

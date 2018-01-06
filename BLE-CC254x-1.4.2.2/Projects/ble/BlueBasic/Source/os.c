@@ -471,6 +471,7 @@ unsigned char OS_serial_open(unsigned char port, unsigned long baud, unsigned ch
   prevent_sleep_flags |= 0x01;
 #endif
 #endif
+  HalUARTInit();
   P0SEL |= 0x3c;  // select peripheral mode
   if (HalUARTOpen(HAL_UART_PORT_0, &config) == HAL_UART_SUCCESS)
   {
@@ -480,7 +481,7 @@ unsigned char OS_serial_open(unsigned char port, unsigned long baud, unsigned ch
     sbuf_read_pos = 16;
 #endif
 #if !(UART_USE_CALLBACK)  
-    uint32 periode = 180000UL / baud;
+    uint32 periode = 160000UL / baud;
     if (periode < 10)
       periode = 10;
     osal_start_reload_timer(blueBasic_TaskID, BLUEBASIC_EVENT_SERIAL, periode);
