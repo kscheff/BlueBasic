@@ -101,10 +101,10 @@
 //#define  DEFAULT_ADVERTISING_INTERVAL          2056 // 1285 ms
 
 // initial connection interval in units of 1.25ms
-#define DEFAULT_CONNECTION_INTERVAL_MIN 24  //30ms
-#define DEFAULT_CONNECTION_INTERVAL_MAX 36  //45ms
+#define DEFAULT_CONNECTION_INTERVAL_MIN 80  //30ms
+#define DEFAULT_CONNECTION_INTERVAL_MAX 92  //45ms
 #define DEFAULT_CONNECTION_LATENCY 0
-#define DEFAULT_CONNECTION_TIMEOUT 200
+#define DEFAULT_CONNECTION_TIMEOUT 600
 
 // Minimum connection interval (units of 1.25ms, 80=100ms) if automatic parameter update request is enabled
 #define DEFAULT_DESIRED_MIN_CONN_INTERVAL     DEFAULT_CONNECTION_INTERVAL_MIN
@@ -490,8 +490,6 @@ uint16 BlueBasic_ProcessEvent( uint8 task_id, uint16 events )
 
     return ( events ^ BLUEBASIC_START_DEVICE_EVT );
   }
-
-#define UART_SCAN_TIME 2
   
 #ifdef ENABLE_BLE_CONSOLE
   if ( events & BLUEBASIC_CONNECTION_EVENT )
@@ -542,7 +540,7 @@ uint16 BlueBasic_ProcessEvent( uint8 task_id, uint16 events )
     {
       unsigned short ln = bluebasic_yield_linenum;
       bluebasic_yield_linenum = 0;
-      interpreter_run(ln, 0);
+      interpreter_run(ln, INTERPRETER_CAN_YIELD);
     }
   
   // return when yield event was present or a new yield is scheduled
@@ -557,7 +555,7 @@ uint16 BlueBasic_ProcessEvent( uint8 task_id, uint16 events )
     {
       if (blueBasic_interrupts[i].linenum && (events & (BLUEBASIC_EVENT_INTERRUPT << i)))
       {
-        interpreter_run(blueBasic_interrupts[i].linenum, 1);
+        interpreter_run(blueBasic_interrupts[i].linenum, INTERPRETER_CAN_RETURN | INTERPRETER_CAN_YIELD);
       }
     }
     return (events ^ (events & BLUEBASIC_EVENT_INTERRUPTS));
@@ -570,7 +568,7 @@ uint16 BlueBasic_ProcessEvent( uint8 task_id, uint16 events )
     {
       if (blueBasic_timers[i].linenum && (events & (BLUEBASIC_EVENT_TIMER << i)))
       {
-        interpreter_run(blueBasic_timers[i].linenum, i == DELAY_TIMER ? 0 : 1);
+        interpreter_run(blueBasic_timers[i].linenum, i == DELAY_TIMER ? 0 : INTERPRETER_CAN_RETURN | INTERPRETER_CAN_YIELD);
       }
     }
     return (events ^ (events & BLUEBASIC_EVENT_TIMERS));
@@ -632,7 +630,7 @@ uint16 BlueBasic_ProcessEvent( uint8 task_id, uint16 events )
             if (parity == sbuf[15])
             {
               sbuf_read_pos = 0;
-              interpreter_run(serial[0].onread, 1);
+              interpreter_run(serial[0].onread, INTERPRETER_CAN_RETURN);
             }
             break;
           }
@@ -642,7 +640,7 @@ uint16 BlueBasic_ProcessEvent( uint8 task_id, uint16 events )
         {
           HalUARTRead(HAL_UART_PORT_0, &sbuf[0], 16);
           sbuf_read_pos = 0;
-          interpreter_run(serial[0].onread, 1);
+          interpreter_run(serial[0].onread, INTERPRETER_CAN_RETURN);
           break;
         }
       }
@@ -655,12 +653,12 @@ uint16 BlueBasic_ProcessEvent( uint8 task_id, uint16 events )
   {
     if (i2c[0].onread && i2c[0].available_bytes)
     {
-      interpreter_run(i2c[0].onread, 1);
+      interpreter_run(i2c[0].onread, INTERPRETER_CAN_RETURN);
     }
     // when read buffer is empty it must have been a write...
     if (i2c[0].onwrite && i2c[0].available_bytes == 0)
     {
-      interpreter_run(i2c[0].onwrite, 1);
+      interpreter_run(i2c[0].onwrite, INTERPRETER_CAN_RETURN);
     }
     return (events ^ BLUEBASIC_EVENT_I2C);
   }

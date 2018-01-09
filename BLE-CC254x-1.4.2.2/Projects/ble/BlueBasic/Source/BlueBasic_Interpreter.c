@@ -1778,7 +1778,10 @@ void interpreter_loop(void)
 //
 unsigned char interpreter_run(LINENUM gofrom, unsigned char canreturn)
 {
-  yield_time = OS_get_millis();
+  if (canreturn & INTERPRETER_CAN_YIELD)
+  {
+    yield_time = OS_get_millis();
+  }
   error_num = ERROR_OK;
 
   if (gofrom)
@@ -1786,7 +1789,7 @@ unsigned char interpreter_run(LINENUM gofrom, unsigned char canreturn)
     event_frame *f;
 
     linenum = gofrom;
-    if (canreturn)
+    if (canreturn & INTERPRETER_CAN_RETURN)
     {
       CHECK_SP_OOM(sizeof(event_frame), qoom);
       f = (event_frame *)sp;
@@ -1895,13 +1898,12 @@ run_next_statement:
   // check how long the programs already runs
   // and yield processing if time is up
 #if 1
+  if (canreturn & INTERPRETER_CAN_YIELD)
   {
     if ( (OS_get_millis() - yield_time) >= timeSlice) 
     {
       unsigned short line = *(LINENUM*)lineptr[0];
       OS_yield(line);
-      //printnum(0, line);
-      //printmsg(" YIELD");
       goto prompt;
     }
   }
@@ -5451,7 +5453,7 @@ static unsigned char ble_read_callback(unsigned short handle, gattAttribute_t* a
 
   if (vref->read)
   {
-    interpreter_run(vref->read, 1);
+    interpreter_run(vref->read, INTERPRETER_CAN_RETURN);
   }
 
   v = get_variable_frame(vref->var, &frame);
@@ -5519,7 +5521,7 @@ static unsigned char ble_write_callback(unsigned short handle, gattAttribute_t* 
 
   if (vref->write)
   {
-    interpreter_run(vref->write, 1);
+    interpreter_run(vref->write, INTERPRETER_CAN_RETURN);
   }
 
   if (attr[1].type.uuid == ble_client_characteristic_config_uuid)
@@ -5583,7 +5585,7 @@ void ble_connection_status(unsigned short connHandle, unsigned char changeType, 
         {
           VARIABLE_INT_SET('V', rssi);
         }
-        interpreter_run(vframe->connect, 1);
+        interpreter_run(vframe->connect, INTERPRETER_CAN_RETURN);
       }
       if (changeType == LINKDB_STATUS_UPDATE_REMOVED || (changeType == LINKDB_STATUS_UPDATE_STATEFLAGS && !linkDB_Up(connHandle)))
       {
@@ -5616,7 +5618,7 @@ extern void interpreter_devicefound(unsigned char addtype, unsigned char* addres
     create_dim('V', len, data);
     if (!error_num)
     {
-      interpreter_run(blueBasic_discover.linenum, 1);
+      interpreter_run(blueBasic_discover.linenum, INTERPRETER_CAN_RETURN);
     }
     sp = osp;
   }

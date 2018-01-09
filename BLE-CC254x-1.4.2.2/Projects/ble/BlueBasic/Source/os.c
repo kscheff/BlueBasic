@@ -235,6 +235,12 @@ void OS_yield(unsigned short linenum)
 {
   bluebasic_yield_linenum = linenum;
   osal_set_event( blueBasic_TaskID, BLUEBASIC_EVENT_YIELD );
+#if 0  
+  extern void printnum(signed char fieldsize, long num);
+  extern void printmsg(const char *msg);
+  printnum(0, linenum);
+  printmsg(" YLD");
+#endif
 }
 
 char OS_interrupt_attach(unsigned char pin, unsigned short lineno)

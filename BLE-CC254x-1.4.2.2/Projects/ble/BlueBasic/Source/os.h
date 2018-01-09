@@ -242,6 +242,10 @@ extern unsigned char blueBasic_TaskID;
 
 #define OS_MAX_SERIAL             1
 
+// bit field for interpreter modes
+#define INTERPRETER_CAN_RETURN 1
+#define INTERPRETER_CAN_YIELD  2
+
 // Serial
 typedef struct
 {
