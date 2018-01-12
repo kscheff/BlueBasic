@@ -760,10 +760,10 @@ static void bluebasic_StateNotificationCB( gaprole_States_t newState )
     {
       //unsigned short connInterval = 0;
       //GAPRole_GetParameter(GAPROLE_CONN_INTERVAL, &connInterval);
-      timeSlice = 20;
+      timeSlice = 5;
 //      P1 |= 1;
 //      block_during_con = 1;
-      osal_start_timerEx(blueBasic_TaskID, BLUEBASIC_EVENT_CON, 4000);
+      osal_start_timerEx(blueBasic_TaskID, BLUEBASIC_EVENT_CON, 6000);
     }
     break;
     
