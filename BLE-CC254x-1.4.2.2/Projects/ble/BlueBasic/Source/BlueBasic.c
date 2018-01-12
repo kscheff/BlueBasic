@@ -117,6 +117,9 @@
 // Whether to enable automatic parameter update request when a connection is formed
 #define DEFAULT_ENABLE_UPDATE_REQUEST         TRUE
 
+// Connection Pause Peripheral time value (in seconds)
+#define DEFAULT_CONN_PAUSE_PERIPHERAL         8
+
 #define INVALID_CONNHANDLE                    0xFFFF
 
 /*********************************************************************
@@ -331,12 +334,16 @@ static CONST gapBondCBs_t blueBasic_BondMgrCBs =
 void BlueBasic_Init( uint8 task_id )
 {
   blueBasic_TaskID = task_id;
-
+    
 #ifdef ENABLE_BLE_CONSOLE
   GAPRole_SetParameter( GAPROLE_ADVERT_DATA, sizeof(consoleAdvert), (void*)consoleAdvert );
 #endif
   
 #if 1
+  
+  // Setup the GAP
+  VOID GAP_SetParamValue( TGAP_CONN_PAUSE_PERIPHERAL, DEFAULT_CONN_PAUSE_PERIPHERAL );
+
   // Setup the GAP Peripheral Role Profile
   {
     uint8 enable_update_request = DEFAULT_ENABLE_UPDATE_REQUEST;
