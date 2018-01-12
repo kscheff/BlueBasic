@@ -43,6 +43,7 @@ os_discover_t blueBasic_discover;
 
 unsigned char sbuf[16];
 uint8 sbuf_read_pos = 16;
+uint8 uart_stop_polling = 1;
 
 #ifdef PROCESS_SERIAL_DATA
 unsigned char sflow;
@@ -492,6 +493,7 @@ unsigned char OS_serial_open(unsigned char port, unsigned long baud, unsigned ch
       periode = 10;
     osal_start_reload_timer(blueBasic_TaskID, BLUEBASIC_EVENT_SERIAL, periode);
 #endif
+    uart_stop_polling = 0;
     return 0;
   }
   return 1;
@@ -510,6 +512,7 @@ unsigned char OS_serial_close(unsigned char port)
   // HalUARTClose(0); - In the hal_uart.h include file, but not actually in the code
   HalUARTSuspend();
   P0SEL &= ~0x3c;  // select GPIO mode
+  uart_stop_polling = 1;
 //  P0DIR &= ~0x08;
 //  P0 &= ~0x0c;
 //  P0INP |= 0x0c;   
