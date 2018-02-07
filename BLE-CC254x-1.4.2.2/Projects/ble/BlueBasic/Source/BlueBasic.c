@@ -174,7 +174,6 @@ static gattCharCfg_t *serviceChangedCharCfg = &serviceChanged;
 #endif
 
 unsigned char ble_console_enabled;
-unsigned char block_during_con;
 
 static struct
 {
@@ -265,6 +264,8 @@ static gattAttribute_t oadProfile[] =
 };
 
 #endif
+
+unsigned char block_during_con;
 
 /*********************************************************************
  * LOCAL FUNCTIONS
@@ -406,7 +407,7 @@ void BlueBasic_Init( uint8 task_id )
   // Enable clock divide on halt
   // This reduces active current while radio is active and CC254x MCU
   // is halted
-#ifdef ENABLE_BLE_CONSOLE
+#if ENABLE_BLE_CONSOLE
   // do not devide the clock when DMA is configured
 #if !HAL_UART_DMA
   // See: http://e2e.ti.com/support/wireless_connectivity/f/538/p/169944/668822.aspx#664740
@@ -499,7 +500,7 @@ uint16 BlueBasic_ProcessEvent( uint8 task_id, uint16 events )
     return ( events ^ BLUEBASIC_START_DEVICE_EVT );
   }
   
-#ifdef ENABLE_BLE_CONSOLE
+#if ENABLE_BLE_CONSOLE
   if ( events & BLUEBASIC_CONNECTION_EVENT )
   {
     while (io.writein != io.writeout)
