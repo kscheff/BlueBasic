@@ -101,7 +101,7 @@ const pTaskEventHandlerFn tasksArr[] =
   GAPObserverRole_ProcessEvent,                                     // task 8
 #endif
   GAPRole_ProcessEvent,                                             // task 9
-#ifdef GAP_BOND_MGR
+#if GAP_BOND_MGR
   GAPBondMgr_ProcessEvent,                                          // task 10
 #endif
   GATTServApp_ProcessEvent,                                         // task 11
@@ -166,7 +166,7 @@ void osalInitTasks( void )
 #endif
   GAPRole_Init( taskID++ );
 
-#ifdef GAP_BOND_MGR
+#if GAP_BOND_MGR
   GAPBondMgr_Init( taskID++ );
 #endif
 

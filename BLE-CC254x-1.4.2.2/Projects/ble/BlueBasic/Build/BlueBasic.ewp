@@ -309,7 +309,7 @@
           <state>HAL_KEY=FALSE</state>
           <state>HAL_ADC=FALSE</state>
           <state>HAL_AES=FALSE</state>
-          <state>xGAP_BOND_MGR=TRUE</state>
+          <state>GAP_BOND_MGR=FALSE</state>
           <state>FEATURE_DEVINFO=TRUE</state>
           <state>TARGET_CC2541=TRUE</state>
           <state>FEATURE_BOOST_CONVERTER=P2_0</state>
@@ -1453,7 +1453,7 @@
           <state>HAL_KEY=FALSE</state>
           <state>HAL_ADC=FALSE</state>
           <state>HAL_AES=FALSE</state>
-          <state>GAP_BOND_MGR=TRUE</state>
+          <state>GAP_BOND_MGR=FALSE</state>
           <state>TARGET_CC2540=TRUE</state>
           <state>FEATURE_BOOST_CONVERTER=P2_0</state>
         </option>
@@ -2596,7 +2596,7 @@
           <state>HAL_KEY=FALSE</state>
           <state>HAL_ADC=FALSE</state>
           <state>HAL_AES=FALSE</state>
-          <state>GAP_BOND_MGR=TRUE</state>
+          <state>GAP_BOND_MGR=FALSE</state>
           <state>FEATURE_DEVINFO=TRUE</state>
           <state>TARGET_CC2541=TRUE</state>
           <state>xFEATURE_OAD</state>
@@ -3747,7 +3747,7 @@
           <state>HAL_KEY=FALSE</state>
           <state>HAL_ADC=FALSE</state>
           <state>HAL_AES=FALSE</state>
-          <state>GAP_BOND_MGR=TRUE</state>
+          <state>GAP_BOND_MGR=FALSE</state>
           <state>FEATURE_DEVINFO=TRUE</state>
           <state>TARGET_CC2540=TRUE</state>
           <state>xFEATURE_OAD</state>
@@ -4897,7 +4897,7 @@
           <state>HAL_KEY=FALSE</state>
           <state>HAL_ADC=FALSE</state>
           <state>HAL_AES=FALSE</state>
-          <state>GAP_BOND_MGR=TRUE</state>
+          <state>GAP_BOND_MGR=FALSE</state>
           <state>FEATURE_DEVINFO=TRUE</state>
           <state>TARGET_PETRA=TRUE</state>
           <state>xFEATURE_OAD</state>
@@ -6052,7 +6052,7 @@
           <state>HAL_KEY=FALSE</state>
           <state>HAL_ADC=FALSE</state>
           <state>HAL_AES=FALSE</state>
-          <state>GAP_BOND_MGR=TRUE</state>
+          <state>GAP_BOND_MGR=FALSE</state>
           <state>FEATURE_DEVINFO=TRUE</state>
           <state>TARGET_CC2541=TRUE</state>
           <state>xFEATURE_OAD</state>
@@ -7212,7 +7212,7 @@
           <state>HAL_KEY=FALSE</state>
           <state>HAL_ADC=FALSE</state>
           <state>HAL_AES=FALSE</state>
-          <state>GAP_BOND_MGR=TRUE</state>
+          <state>GAP_BOND_MGR=FALSE</state>
           <state>FEATURE_DEVINFO=TRUE</state>
           <state>TARGET_CC2541=TRUE</state>
           <state>xFEATURE_OAD</state>
@@ -7752,7 +7752,7 @@
         </option>
         <option>
           <name>XclFile</name>
-          <state>F:\github\BlueBasic\BLE-CC254x-1.4.0\Projects\ble\common\cc2540\cc254x_f256_imgB.xcl</state>
+          <state>F:\github\BlueBasic\BLE-CC254x-1.4.2.2\Projects\ble\common\cc2540\cc254x_f256_imgB.xcl</state>
         </option>
         <option>
           <name>XclFileSlave</name>
@@ -8374,7 +8374,7 @@
           <state>HAL_KEY=FALSE</state>
           <state>HAL_ADC=FALSE</state>
           <state>HAL_AES=FALSE</state>
-          <state>GAP_BOND_MGR=TRUE</state>
+          <state>GAP_BOND_MGR=FALSE</state>
           <state>FEATURE_DEVINFO=TRUE</state>
           <state>TARGET_CC2541=TRUE</state>
           <state>xFEATURE_OAD</state>
@@ -9735,7 +9735,7 @@
             <name>$PROJ_DIR$\..\..\..\..\Components\hal\target\CC2540EB\hal_crc.h</name>
           </file>
           <file>
-            <name>$PROJ_DIR$\..\..\..\..\Components\hal\target\CC2540EB\hal_dma.h</name>
+            <name>$PROJ_DIR$\..\..\..\..\COMPONENTS\hal\target\CC2540EB\hal_dma.h</name>
           </file>
           <file>
             <name>$PROJ_DIR$\..\..\..\..\Components\hal\target\CC2540EB\hal_mcu.h</name>
@@ -9864,6 +9864,16 @@
     </file>
     <file>
       <name>$PROJ_DIR$\..\..\Profiles\Roles\gapbondmgr.c</name>
+      <excluded>
+        <configuration>CC2541</configuration>
+        <configuration>CC2540</configuration>
+        <configuration>CC2541-ImgB</configuration>
+        <configuration>CC2540-ImgB</configuration>
+        <configuration>Petra</configuration>
+        <configuration>BlueSolar</configuration>
+        <configuration>BlueBattery</configuration>
+        <configuration>BlueSteca</configuration>
+      </excluded>
     </file>
     <file>
       <name>$PROJ_DIR$\..\..\Profiles\Roles\gapbondmgr.h</name>

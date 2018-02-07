@@ -305,7 +305,7 @@ static CONST gapRolesCBs_t blueBasic_PeripheralCBs =
 };
 
 
-#ifdef GAP_BOND_MGR
+#if GAP_BOND_MGR
 // GAP Bond Manager Callbacks
 static CONST gapBondCBs_t blueBasic_BondMgrCBs =
 {
@@ -375,7 +375,7 @@ void BlueBasic_Init( uint8 task_id )
   GAP_SetParamValue( TGAP_GEN_DISC_ADV_INT_MIN, DEFAULT_ADVERTISING_INTERVAL );
   GAP_SetParamValue( TGAP_GEN_DISC_ADV_INT_MAX, DEFAULT_ADVERTISING_INTERVAL );
   
-#if 0 && GAP_BOND_MGR  
+#if GAP_BOND_MGR  
    // Setup the GAP Bond Manager to require pairing with pin code
   {
     uint32 passkey = 0; // passkey "000000"
@@ -468,7 +468,7 @@ uint16 BlueBasic_ProcessEvent( uint8 task_id, uint16 events )
     // Start the Device
     VOID GAPRole_StartDevice( (gapRolesCBs_t *) &blueBasic_PeripheralCBs );
     
-#ifdef GAP_BOND_MGR
+#if GAP_BOND_MGR
     // Start Bond Manager
     VOID GAPBondMgr_Register( (gapBondCBs_t *) &blueBasic_BondMgrCBs );
 #endif

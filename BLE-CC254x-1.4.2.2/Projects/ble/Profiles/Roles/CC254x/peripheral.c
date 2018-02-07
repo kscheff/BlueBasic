@@ -778,7 +778,7 @@ void GAPRole_Init( uint8 task_id )
   gapRole_AdvChanMap = GAP_ADVCHAN_ALL;
   gapRole_AdvFilterPolicy = GAP_FILTER_POLICY_ALL;
 
-#ifdef GAP_BOND_MGR  
+#if GAP_BOND_MGR  
   // Restore Items from NV
   VOID osal_snv_read( BLE_NVID_IRK, KEYLEN, gapRole_IRK );
   VOID osal_snv_read( BLE_NVID_CSRK, KEYLEN, gapRole_SRK );
@@ -1023,7 +1023,7 @@ static void gapRole_ProcessGAPMsg( gapEventHdr_t *pMsg )
         uint8 systemId[DEVINFO_SYSTEM_ID_LEN];
 #endif
           
-#ifdef GAP_BOND_MGR          
+#if GAP_BOND_MGR          
           // Save off the generated keys
           VOID osal_snv_write( BLE_NVID_IRK, KEYLEN, gapRole_IRK );
           VOID osal_snv_write( BLE_NVID_CSRK, KEYLEN, gapRole_SRK );
@@ -1202,7 +1202,7 @@ static void gapRole_ProcessGAPMsg( gapEventHdr_t *pMsg )
             
             osal_start_timerEx( gapRole_TaskID, START_CONN_UPDATE_EVT, timeout*1000 );
           }
-#ifdef GAP_BOND_MGR
+#if GAP_BOND_MGR
           // Notify the Bond Manager to the connection
           VOID GAPBondMgr_LinkEst( pPkt->devAddrType, pPkt->devAddr, pPkt->connectionHandle, GAP_PROFILE_PERIPHERAL );
 #endif
@@ -1228,7 +1228,7 @@ static void gapRole_ProcessGAPMsg( gapEventHdr_t *pMsg )
       {
         gapTerminateLinkEvent_t *pPkt = (gapTerminateLinkEvent_t *)pMsg;
 
-#ifdef GAP_BOND_MGR
+#if GAP_BOND_MGR
         VOID GAPBondMgr_ProcessGAPMsg( (gapEventHdr_t *)pMsg );
 #endif
         osal_memset( gapRole_ConnectedDevAddr, 0, B_ADDR_LEN );
