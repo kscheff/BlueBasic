@@ -1729,7 +1729,7 @@ void interpreter_init()
   sp = variables_begin;
   program_end = flashstore_init(program_start);
   heap = (unsigned char*)program_end;
-  interpreter_banner();
+  //interpreter_banner();
 }
 
 void interpreter_banner(void)
