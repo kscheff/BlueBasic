@@ -149,7 +149,7 @@ extern void ble_connection_status(uint16 connHandle, uint8 changeType, int8 rssi
  * LOCAL VARIABLES
  */
 
-#ifdef ENABLE_BLE_CONSOLE
+#if ENABLE_BLE_CONSOLE
 
 #include "gatt_uuid.h"
 #include "gap.h"
@@ -335,7 +335,7 @@ void BlueBasic_Init( uint8 task_id )
 {
   blueBasic_TaskID = task_id;
     
-#ifdef ENABLE_BLE_CONSOLE
+#if ENABLE_BLE_CONSOLE
   GAPRole_SetParameter( GAPROLE_ADVERT_DATA, sizeof(consoleAdvert), (void*)consoleAdvert );
 #endif
   
@@ -473,11 +473,12 @@ uint16 BlueBasic_ProcessEvent( uint8 task_id, uint16 events )
 #endif
     // Start monitoring links
     VOID linkDB_Register( blueBasic_HandleConnStatusCB );
+
+#if ENABLE_BLE_CONSOLE
     
     // Start monitoring parameters updates
     GAPRole_RegisterAppCBs( bluebasic_ParamUpdateCB);
     
-#ifdef ENABLE_BLE_CONSOLE
     // Allocate Client Characteristic Configuration table
     consoleProfileCharCfg1 = (gattCharCfg_t *)osal_mem_alloc( sizeof(gattCharCfg_t)
                                                             * linkDBNumConns * 2);  
@@ -681,7 +682,7 @@ static void blueBasic_HandleConnStatusCB(uint16 connHandle, uint8 changeType)
   {
     return;
   }
-#ifdef ENABLE_BLE_CONSOLE
+#if ENABLE_BLE_CONSOLE
   if (changeType == LINKDB_STATUS_UPDATE_REMOVED || (changeType == LINKDB_STATUS_UPDATE_STATEFLAGS && !linkDB_Up(connHandle)))
   {
     GATTServApp_InitCharCfg(connHandle, consoleProfileCharCfg1);
@@ -703,33 +704,6 @@ static void blueBasic_HandleConnStatusCB(uint16 connHandle, uint8 changeType)
 static void blueBasic_RSSIUpdate(int8 rssi)
 {
   ble_connection_status(0, LINKDB_STATUS_UPDATE_RSSI, rssi);
-}
-
-#ifdef ENABLE_BLE_CONSOLE
-
-uint8 ble_console_write(uint8 ch)
-{
-  if (ble_console_enabled)
-  {
-    // write buffer is full, so we run osal to get it empty
-    while (io.writein - io.writeout + 1 == 0 || io.writein - io.writeout + 1 == sizeof(io.write))
-    {
-      osal_run_system();
-    }
-    
-    // write buffer empty, so we flag an event for the following ch 
-    if (io.writein == io.writeout)
-    {
-      osal_set_event( blueBasic_TaskID, BLUEBASIC_CONNECTION_EVENT );
-    }
- 
-    *io.writein++ = ch;
-    if (io.writein == &io.write[sizeof(io.write)])
-    {
-      io.writein = io.write;
-    }
-  }
-  return 1;
 }
 
 static void bluebasic_ParamUpdateCB( uint16 connInterval,
@@ -779,6 +753,32 @@ static void bluebasic_StateNotificationCB( gaprole_States_t newState )
   }
 }
 
+#if ENABLE_BLE_CONSOLE
+
+uint8 ble_console_write(uint8 ch)
+{
+  if (ble_console_enabled)
+  {
+    // write buffer is full, so we run osal to get it empty
+    while (io.writein - io.writeout + 1 == 0 || io.writein - io.writeout + 1 == sizeof(io.write))
+    {
+      osal_run_system();
+    }
+    
+    // write buffer empty, so we flag an event for the following ch 
+    if (io.writein == io.writeout)
+    {
+      osal_set_event( blueBasic_TaskID, BLUEBASIC_CONNECTION_EVENT );
+    }
+ 
+    *io.writein++ = ch;
+    if (io.writein == &io.write[sizeof(io.write)])
+    {
+      io.writein = io.write;
+    }
+  }
+  return 1;
+}
 
 #if ( HOST_CONFIG & OBSERVER_CFG )
 static uint8 blueBasic_deviceFound( gapObserverRoleEvent_t *pEvent )
@@ -823,33 +823,52 @@ static bStatus_t consoleProfile_ReadAttrCB(uint16 connHandle, gattAttribute_t *p
 static bStatus_t consoleProfile_WriteAttrCB(uint16 connHandle, gattAttribute_t *pAttr, uint8 *pValue, uint8 len, uint16 offset, uint8 method)
 {
   unsigned char i;
-  bStatus_t status;
-
-  if (pAttr->type.len == ATT_BT_UUID_SIZE && BUILD_UINT16(pAttr->type.uuid[0], pAttr->type.uuid[1]) == GATT_CLIENT_CHAR_CFG_UUID)
+  bStatus_t status = SUCCESS;
+  
+  if (pAttr->type.len == ATT_BT_UUID_SIZE)
   {
-    status = GATTServApp_ProcessCCCWriteReq(connHandle, pAttr, pValue, len, offset, GATT_CLIENT_CFG_NOTIFY);
-    // Setup console if we're connected, otherwise disable
-    for (i = 0; i < linkDBNumConns; i++)
+    uint16 uuid = BUILD_UINT16( pAttr->type.uuid[0], pAttr->type.uuid[1]);
+    if ( uuid == GATT_CLIENT_CHAR_CFG_UUID)
     {
-      if (consoleProfileCharCfg1[i].value == 1)
+      status = GATTServApp_ProcessCCCWriteReq( connHandle, pAttr, pValue, len,
+                                              offset, GATT_CLIENT_CFG_NOTIFY );
+      // Setup console if we're connected, otherwise disable
+      for (i = 0; i < linkDBNumConns; i++)
       {
-        io.writein = io.write;
-        io.writeout = io.write;
-        ble_console_enabled = 1;
-        OS_timer_stop(DELAY_TIMER);
-        interpreter_banner();
-        goto done;
+        if (consoleProfileCharCfg1[i].value == 1)
+        {
+          io.writein = io.write;
+          io.writeout = io.write;
+          ble_console_enabled = 1;
+          OS_timer_stop(DELAY_TIMER);
+          interpreter_banner();
+          goto done;
+        }
       }
+      ble_console_enabled = 0;
     }
-    ble_console_enabled = 0;
-  done:
-    return status;
+    else
+    {
+      status = ATT_ERR_ATTR_NOT_FOUND; // Should never get here!
+    }
   }
-  for (i = 0; i < len; i++)
+  else
   {
-    OS_type(pValue[i]);
+    // 128-bit UUID
+    if (osal_memcmp(pAttr->type.uuid, outputUUID, ATT_UUID_SIZE))
+    {
+      for (i = 0; i < len; i++)
+      {
+        OS_type(pValue[i]);
+      }  
+    }
+    else
+    {
+      status = ATT_ERR_ATTR_NOT_FOUND; // Should never get here!
+    }
   }
-  return SUCCESS;
+done:
+  return status;
 }
 
 #endif

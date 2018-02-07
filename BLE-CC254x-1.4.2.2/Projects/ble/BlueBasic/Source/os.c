@@ -184,7 +184,9 @@ char OS_prompt_available(void)
 
 void OS_putchar(char ch)
 {
+#if ENABLE_BLE_CONSOLE  
   ble_console_write(ch);
+#endif
 }
 
 void* OS_rmemcpy(void *dst, const void GENERIC *src, unsigned int len)
