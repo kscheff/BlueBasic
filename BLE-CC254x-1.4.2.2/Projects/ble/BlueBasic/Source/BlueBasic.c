@@ -569,7 +569,6 @@ uint16 BlueBasic_ProcessEvent( uint8 task_id, uint16 events )
     return (events ^ (events & BLUEBASIC_EVENT_INTERRUPTS));
   }
 
-#if 1
   if ( events & BLUEBASIC_EVENT_TIMERS )
   {
     for (i = 0; i < OS_MAX_TIMER; i++)
@@ -581,38 +580,6 @@ uint16 BlueBasic_ProcessEvent( uint8 task_id, uint16 events )
     }
     return (events ^ (events & BLUEBASIC_EVENT_TIMERS));
   }
-#endif
-    
-#if 0   
-  // experimental to give DELAY prio so no timer can fire in between
-  // to avoid potential memory leagage on the the heap
-  if ( events & BLUEBASIC_EVENT_TIMERS )
-  {
-    // first execute DELAY 
-    if ( events & (BLUEBASIC_EVENT_TIMER << DELAY_TIMER) )
-    {
-      if ( blueBasic_timers[DELAY_TIMER].linenum )
-      {
-        interpreter_run(blueBasic_timers[DELAY_TIMER].linenum, 0);
-        blueBasic_timers[DELAY_TIMER].linenum = 0;
-      }
-      return (events ^ (BLUEBASIC_EVENT_TIMER << DELAY_TIMER));
-    }
-    // only execute timers when DELAY is not pending anymore
-    if (blueBasic_timers[DELAY_TIMER].linenum == 0) 
-    {
-      for (i = 0; i < OS_MAX_TIMER; i++)
-      {
-        if (blueBasic_timers[i].linenum && (events & (BLUEBASIC_EVENT_TIMER << i)))
-        {
-          interpreter_run(blueBasic_timers[i].linenum, i == DELAY_TIMER ? 0 : 1);
-          return (events ^ (BLUEBASIC_EVENT_TIMER << i));
-        }
-      }
-    }
-//    return (events ^ (events & BLUEBASIC_EVENT_TIMERS));
-  }
-#endif
   
   if ( events & BLUEBASIC_EVENT_SERIAL )
   {
