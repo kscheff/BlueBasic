@@ -289,14 +289,22 @@ void OS_set_millis(long timems)
   osal_setClock(timems / 1000);
 }
 
+__no_init __data uint8 JumpToImageAorB @ 0x09;
+
 void OS_reboot(char flash)
 {
  #ifdef FEATURE_OAD_HEADER
   if (flash)
   {
+#if 0    
     short zero = 0;
     uint16 addr = OAD_IMG_B_PAGE * (HAL_FLASH_PAGE_SIZE / HAL_FLASH_WORD_SIZE);
     HalFlashWrite(addr, (uint8*)&zero, sizeof(zero));
+#else
+    JumpToImageAorB = 0;
+    // Simulate a reset for the Application code by an absolute jump to the expected INTVEC addr.
+    asm("LJMP 0x0830");
+#endif    
   }
 #else
   VOID flash;
