@@ -362,6 +362,7 @@ void main(void)
     else if (crc[1] == 0xFFFF)  // If first run of an image that was physically downloaded.
     {
       crcCheck(BIM_IMG_A_PAGE, crc);
+      HAL_SYSTEM_RESET(); // reboot to check again
     }
   }
 

@@ -8364,6 +8364,8 @@
           <state>HAL_DMA=TRUE</state>
           <state>xHAL_UART=TRUE</state>
           <state>xHAL_UART_DMA=1</state>
+          <state>HAL_UART_DMA_RX_MAX=0</state>
+          <state>HAL_UART_DMA_TX_MAX=0</state>
           <state>HAL_I2C=TRUE</state>
           <state>HAL_I2C_SLAVE</state>
           <state>HAL_I2C_BUF_MAX=7</state>
@@ -9943,6 +9945,12 @@
     </file>
     <file>
       <name>$PROJ_DIR$\..\..\common\cc2540\OnBoard.h</name>
+    </file>
+  </group>
+  <group>
+    <name>XLINK</name>
+    <file>
+      <name>$PROJ_DIR$\..\..\common\cc2540\cc254x_f256_imgB.xcl</name>
     </file>
   </group>
 </project>

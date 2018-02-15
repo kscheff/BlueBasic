@@ -4503,11 +4503,11 @@
         </option>
         <option>
           <name>ChipconRetainPagesCtrl</name>
-          <state>0</state>
+          <state>1</state>
         </option>
         <option>
           <name>ChipconRetainPages</name>
-          <state></state>
+          <state>0-7,86-124</state>
         </option>
         <option>
           <name>ChipconFlashPages</name>

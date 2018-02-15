@@ -1129,6 +1129,9 @@
       <name>$PROJ_DIR$\..\..\..\..\..\Components\hal\include\hal_flash.h</name>
     </file>
   </group>
+  <file>
+    <name>$PROJ_DIR$\..\..\..\..\..\..\BLE-CC254X-1.4.2.2\Projects\ble\util\BIM\cc254x\bim_cc254x.xcl</name>
+  </file>
 </project>
 
 

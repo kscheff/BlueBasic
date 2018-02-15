@@ -10,13 +10,14 @@
 
 extern __data unsigned char* heap;
 extern __data unsigned char* sp;
-
 #define FLASHSTORE_WORDS(LEN)     ((LEN) >> 2)
 
 #ifdef SIMULATE_FLASH
 unsigned char __store[FLASHSTORE_LEN];
 #define FLASHSTORE_CPU_BASEADDR (__store)
 #define FLASHSTORE_DMA_BASEADDR (0)
+#else
+__code const unsigned char _flashstore[4] @ "FLASHSTORE" = {0xff, 0xff, 0xff, 0xff} ;
 #endif
 
 static const unsigned char* flashstore = (unsigned char*)FLASHSTORE_CPU_BASEADDR;
@@ -127,7 +128,8 @@ unsigned char** flashstore_init(unsigned char** startmem)
 
   unsigned char ordered = 0;
   const unsigned char* page;
-  for (page = flashstore; page < &flashstore[FLASHSTORE_LEN]; page += FLASHSTORE_PAGESIZE)
+  unsigned char pnr = FLASHSTORE_NRPAGES;
+  for (page = flashstore; pnr--; page += FLASHSTORE_PAGESIZE)
   {
     orderedpages[ordered].waste = 0;
     if (*(flashpage_age*)page > lastage)
@@ -137,7 +139,8 @@ unsigned char** flashstore_init(unsigned char** startmem)
 
     // Analyse page
     const unsigned char* ptr;
-    for (ptr = page + sizeof(flashpage_age); ptr < page + FLASHSTORE_PAGESIZE; )
+    // the loop need to be kept inside a page, even at the end of the memory bank
+    for (ptr = page + sizeof(flashpage_age); (ptr <= page + (FLASHSTORE_PAGESIZE-1)) && (ptr > page) ; )
     {
       unsigned short id = *(unsigned short*)ptr;
       if (id == FLASHID_FREE)
@@ -307,10 +310,13 @@ unsigned char flashstore_deletespecial(unsigned long specialid)
 unsigned char* flashstore_findspecial(unsigned long specialid)
 {
   const unsigned char* page;
-  for (page = flashstore; page < &flashstore[FLASHSTORE_LEN]; page += FLASHSTORE_PAGESIZE)
+  unsigned char pnr = FLASHSTORE_NRPAGES;
+  for (page = flashstore; pnr--; page += FLASHSTORE_PAGESIZE)
   {
     const unsigned char* ptr;
-    for (ptr = page + sizeof(flashpage_age); ptr < page + FLASHSTORE_PAGESIZE; ptr += FLASHSTORE_PADDEDSIZE(ptr[sizeof(unsigned short)]))
+    for (ptr = page + sizeof(flashpage_age);
+         (ptr <= page + (FLASHSTORE_PAGESIZE-1)) && (ptr > page);
+         ptr += FLASHSTORE_PADDEDSIZE(ptr[sizeof(unsigned short)]))
     {
       unsigned short id = *(unsigned short*)ptr;
       if (id == FLASHID_FREE)
@@ -420,7 +426,7 @@ void flashstore_compact(unsigned char len, unsigned char* tempmemstart, unsigned
     unsigned char* flash = (unsigned char*)FLASHSTORE_PAGEBASE(selected);
     unsigned char* ptr;
     unsigned short mem_length = 0;    
-    for (ptr = flash + sizeof(flashpage_age); ptr < flash + occupied; ) 
+    for (ptr = flash + sizeof(flashpage_age); ptr <= flash + (FLASHSTORE_PAGESIZE-1); ) 
     {
       unsigned short id = *(unsigned short*)ptr;
       unsigned char len = FLASHSTORE_PADDEDSIZE(ptr[sizeof(unsigned short)]);
@@ -484,6 +490,9 @@ static void flashstore_invalidate(unsigned short* mem)
 
 unsigned char osal_snv_read(unsigned char id, unsigned char len, void *pBuf)
 {
+#if !GAP_BOND_MGR
+  return 0;  
+#else
   unsigned char* mem = flashstore_findspecial(FLASHSPECIAL_SNV + id);
   if (mem && mem[FLASHSPECIAL_DATA_LEN] == len)
   {
@@ -494,10 +503,14 @@ unsigned char osal_snv_read(unsigned char id, unsigned char len, void *pBuf)
   {
     return 0;
   }
+#endif  
 }
 
 unsigned char osal_snv_write(unsigned char id, unsigned char len, void *pBuf)
-{      
+{  
+#if !GAP_BOND_MGR
+  return 0;
+#else  
   if (heap + len + FLASHSPECIAL_DATA_OFFSET > sp)
   {
     return 0;
@@ -508,13 +521,14 @@ unsigned char osal_snv_write(unsigned char id, unsigned char len, void *pBuf)
     heap += len + FLASHSPECIAL_DATA_OFFSET;
 
     *(unsigned long*)&item[FLASHSPECIAL_ITEM_ID] = FLASHSPECIAL_SNV + id;
-    item[FLASHSPECIAL_DATA_LEN] = len;
+    item[FLASHSPECIAL_DATA_LEN] = len + FLASHSPECIAL_DATA_OFFSET;
     OS_memcpy(item + FLASHSPECIAL_DATA_OFFSET, pBuf, len);
     unsigned char r = flashstore_addspecial(item);
     
     heap = item;
     return r;
   }
+#endif  
 }
 
 unsigned char osal_snv_compact(unsigned char threshold)

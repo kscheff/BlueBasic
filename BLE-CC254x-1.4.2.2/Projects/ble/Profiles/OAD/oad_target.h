@@ -75,7 +75,8 @@ extern "C"
 #else
 #define OAD_IMG_B_PAGE        63
 #endif
-#define OAD_IMG_B_AREA       (120 - OAD_IMG_A_AREA)
+// the last 4 pages are reserved for the BASIC program
+#define OAD_IMG_B_AREA       (124 - OAD_IMG_A_AREA - 4)
 #endif
 
 #if defined HAL_IMAGE_B

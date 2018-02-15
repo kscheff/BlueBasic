@@ -209,6 +209,7 @@ extern unsigned char GAPObserverRole_CancelDiscovery(void);
 #define ENABLE_PORT0            1
 #define ENABLE_PORT1            1
 #define ENABLE_PORT2            1
+#define ENABLE_YIELD            1
 
 #endif // TARGET_PETRA
 
@@ -282,6 +283,9 @@ extern unsigned short bluebasic_yield_linenum;
 
 #define FLASHSTORE_CPU_BASEADDR ((unsigned char*)0x9000)
 #define FLASHSTORE_DMA_BASEADDR ((unsigned long)0x29000)
+#define FLASHSTORE_NRPAGES    4
+#define FLASHSTORE_PAGESIZE   2048
+#define FLASHSTORE_LEN        (FLASHSTORE_NRPAGES * FLASHSTORE_PAGESIZE)
 
 #define OS_memset(A, B, C)     osal_memset(A, B, C)
 #define OS_memcpy(A, B, C)     osal_memcpy(A, B, C)
@@ -400,10 +404,6 @@ extern void interpreter_timer_event(unsigned short id);
 #define PIN_MAKE(A,I) (((A) << 6) | ((I) << 3))
 #define PIN_MAJOR(P)  ((P) >> 6)
 #define PIN_MINOR(P)  (((P) >> 3) & 7)
-
-#define FLASHSTORE_NRPAGES    4
-#define FLASHSTORE_PAGESIZE   2048
-#define FLASHSTORE_LEN        (FLASHSTORE_NRPAGES * FLASHSTORE_PAGESIZE)
 
 enum
 {

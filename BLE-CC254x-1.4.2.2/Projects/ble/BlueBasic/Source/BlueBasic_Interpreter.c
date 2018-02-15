@@ -498,8 +498,10 @@ static LINENUM linenum;
 
 static variable_frame normal_variable = { { FRAME_VARIABLE_FLAG, 0 }, VAR_INT, 0, 0, 0, NULL };
 
+#if defined ENABLE_YIELD && ENABLE_YIELD
 static VAR_TYPE yield_time;
 unsigned short timeSlice = 20;
+#endif
 
 #define VARIABLE_INT_ADDR(F)    (((VAR_TYPE*)variables_begin) + ((F) - 'A'))
 #define VARIABLE_INT_GET(F)     (*VARIABLE_INT_ADDR(F))
@@ -1778,10 +1780,12 @@ void interpreter_loop(void)
 //
 unsigned char interpreter_run(LINENUM gofrom, unsigned char canreturn)
 {
+#if defined ENABLE_YIELD && ENABLE_YIELD 
   if (canreturn & INTERPRETER_CAN_YIELD)
   {
     yield_time = OS_get_millis();
   }
+#endif  
   error_num = ERROR_OK;
 
   if (gofrom)
@@ -1897,7 +1901,7 @@ run_next_statement:
   }
   // check how long the programs already runs
   // and yield processing if time is up
-#if 1
+#if defined ENABLE_YIELD && ENABLE_YIELD
   if (canreturn & INTERPRETER_CAN_YIELD)
   {
     if ( (OS_get_millis() - yield_time) >= timeSlice) 

@@ -527,6 +527,7 @@ uint16 BlueBasic_ProcessEvent( uint8 task_id, uint16 events )
     return (events ^ BLUEBASIC_INPUT_AVAILABLE);
   }
 
+#if defined ENABLE_YIELD && ENABLE_YIELD  
   // fix for Android to successfully read the GATT table
   // this event inidcates that the initial connection
   // has passed and the descriptor should have been read already
@@ -557,6 +558,7 @@ uint16 BlueBasic_ProcessEvent( uint8 task_id, uint16 events )
   {
     return (events & ~BLUEBASIC_EVENT_YIELD);
   }
+#endif // ENABLE_YIELD
   
   if ( events & BLUEBASIC_EVENT_INTERRUPTS )
   {
@@ -678,11 +680,14 @@ static void bluebasic_ParamUpdateCB( uint16 connInterval,
                                          uint16 connSlaveLatency,
                                          uint16 connTimeout )
 {
+#if defined ENABLE_YIELD && ENABLE_YIELD  
   //timeSlice = ((connInterval == 0) ? 20 : ((connInterval < 24) ? 0 : connInterval));
+#endif// ENABLE_YIELD
 }
 
 static void bluebasic_StateNotificationCB( gaprole_States_t newState )
 {
+#if defined ENABLE_YIELD && ENABLE_YIELD  
 //  P1DIR |= 1;
   switch ( newState )
   {
@@ -719,6 +724,7 @@ static void bluebasic_StateNotificationCB( gaprole_States_t newState )
   default:
     break;
   }
+#endif // ENABLE_YIELD  
 }
 
 #if ENABLE_BLE_CONSOLE
