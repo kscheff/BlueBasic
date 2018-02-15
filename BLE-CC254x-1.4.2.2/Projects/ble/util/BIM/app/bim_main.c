@@ -348,27 +348,28 @@ void main(void)
     /**/
   }
 
-  HalFlashRead(BIM_IMG_A_PAGE, BIM_CRC_OSET, (uint8 *)crc, 4);
+  //HalFlashRead(BIM_IMG_A_PAGE, BIM_CRC_OSET, (uint8 *)crc, 4);
 
-  if ((crc[0] != 0xFFFF) && (crc[0] != 0x0000))
+  //if ((crc[0] != 0xFFFF) && (crc[0] != 0x0000))
   {
-    if (crc[0] == crc[1])
+    //if (crc[0] == crc[1])
     {
       JumpToImageAorB = 0;
       // Simulate a reset for the Application code by an absolute jump to the expected INTVEC addr.
       asm("LJMP 0x0830");
       HAL_SYSTEM_RESET();  // Should not get here.
     }
-    else if (crc[1] == 0xFFFF)  // If first run of an image that was physically downloaded.
+/*    else if (crc[1] == 0xFFFF)  // If first run of an image that was physically downloaded.
     {
       crcCheck(BIM_IMG_A_PAGE, crc);
       HAL_SYSTEM_RESET(); // reboot to check again
-    }
+    } */
   }
-
+/*
   SLEEPCMD |= 0x03;  // PM3, All clock oscillators off, voltage regulator off.
   halSleepExec();
   HAL_SYSTEM_RESET();  // Should not get here.
+*/
 }
 
 /**************************************************************************************************
