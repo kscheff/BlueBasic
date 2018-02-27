@@ -330,6 +330,21 @@ void OS_flashstore_init(void)
 }
 
 
+#ifdef POWER_SAVING
+void OS_enable_sleep(unsigned char enable)
+{
+  extern uint8 Hal_TaskID;
+  if (enable) {
+    osal_pwrmgr_task_state(Hal_TaskID, PWRMGR_CONSERVE);
+  } else {
+    CLEAR_SLEEP_MODE();
+    osal_pwrmgr_task_state(Hal_TaskID, PWRMGR_HOLD);
+  }
+}
+#else
+#define OS_enable_sleep(a)
+#endif
+
 #if UART_USE_CALLBACK
 
 #if !defined(PROCESS_SERIAL_DATA)

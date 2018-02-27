@@ -4365,6 +4365,15 @@ cmd_config:
             case 0:
               break;
 #endif // FEATURE_BOOST_CONVERTER
+            // enable or disable sleep mode
+            // CONFIG POWER, 3  disable sleep
+            // CONFIG POWER, 4  enable sleep
+            case 3:
+              OS_enable_sleep(0);
+              break;
+            case 4:
+              OS_enable_sleep(1);
+              break;
             default:
               goto qwhat;
           }

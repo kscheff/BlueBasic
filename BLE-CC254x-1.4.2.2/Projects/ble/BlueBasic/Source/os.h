@@ -314,6 +314,7 @@ extern void OS_set_millis(long time);
 extern void OS_delaymicroseconds(short micros);
 extern void OS_reboot(char flash);
 extern void OS_flashstore_init(void);
+extern void OS_enable_sleep(unsigned char enable);
 
 extern void interpreter_devicefound(unsigned char addtype, unsigned char* address, signed char rssi, unsigned char eventtype, unsigned char len, unsigned char* data);
 
