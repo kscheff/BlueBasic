@@ -1,43 +1,50 @@
-/**************************************************************************************************
-  Filename:       bim_main.c
-  Revised:        $Date: 2013-08-21 15:13:01 -0700 (Wed, 21 Aug 2013) $
-  Revision:       $Revision: 35060 $
+/******************************************************************************
 
-  Description:
+ @file  bim_main.c
 
-  This module contains the definitions for the main functionality of an Boot Image Manager.
+ @brief This module contains the definitions for the main functionality of an
+        Boot Image Manager.
 
+ Group: WCS, BTS
+ Target Device: CC2540, CC2541
 
-  Copyright 2012 - 2013 Texas Instruments Incorporated. All rights reserved.
+ ******************************************************************************
+ 
+ Copyright (c) 2012-2016, Texas Instruments Incorporated
+ All rights reserved.
 
-  IMPORTANT: Your use of this Software is limited to those specific rights
-  granted under the terms of a software license agreement between the user
-  who downloaded the software, his/her employer (which must be your employer)
-  and Texas Instruments Incorporated (the "License").  You may not use this
-  Software unless you agree to abide by the terms of the License. The License
-  limits your use, and you acknowledge, that the Software may not be modified,
-  copied or distributed unless embedded on a Texas Instruments microcontroller
-  or used solely and exclusively in conjunction with a Texas Instruments radio
-  frequency transceiver, which is integrated into your product.  Other than for
-  the foregoing purpose, you may not use, reproduce, copy, prepare derivative
-  works of, modify, distribute, perform, display or sell this Software and/or
-  its documentation for any purpose.
+ IMPORTANT: Your use of this Software is limited to those specific rights
+ granted under the terms of a software license agreement between the user
+ who downloaded the software, his/her employer (which must be your employer)
+ and Texas Instruments Incorporated (the "License"). You may not use this
+ Software unless you agree to abide by the terms of the License. The License
+ limits your use, and you acknowledge, that the Software may not be modified,
+ copied or distributed unless embedded on a Texas Instruments microcontroller
+ or used solely and exclusively in conjunction with a Texas Instruments radio
+ frequency transceiver, which is integrated into your product. Other than for
+ the foregoing purpose, you may not use, reproduce, copy, prepare derivative
+ works of, modify, distribute, perform, display or sell this Software and/or
+ its documentation for any purpose.
 
-  YOU FURTHER ACKNOWLEDGE AND AGREE THAT THE SOFTWARE AND DOCUMENTATION ARE
-  PROVIDED “AS IS” WITHOUT WARRANTY OF ANY KIND, EITHER EXPRESS OR IMPLIED,
-  INCLUDING WITHOUT LIMITATION, ANY WARRANTY OF MERCHANTABILITY, TITLE,
-  NON-INFRINGEMENT AND FITNESS FOR A PARTICULAR PURPOSE. IN NO EVENT SHALL
-  TEXAS INSTRUMENTS OR ITS LICENSORS BE LIABLE OR OBLIGATED UNDER CONTRACT,
-  NEGLIGENCE, STRICT LIABILITY, CONTRIBUTION, BREACH OF WARRANTY, OR OTHER
-  LEGAL EQUITABLE THEORY ANY DIRECT OR INDIRECT DAMAGES OR EXPENSES
-  INCLUDING BUT NOT LIMITED TO ANY INCIDENTAL, SPECIAL, INDIRECT, PUNITIVE
-  OR CONSEQUENTIAL DAMAGES, LOST PROFITS OR LOST DATA, COST OF PROCUREMENT
-  OF SUBSTITUTE GOODS, TECHNOLOGY, SERVICES, OR ANY CLAIMS BY THIRD PARTIES
-  (INCLUDING BUT NOT LIMITED TO ANY DEFENSE THEREOF), OR OTHER SIMILAR COSTS.
+ YOU FURTHER ACKNOWLEDGE AND AGREE THAT THE SOFTWARE AND DOCUMENTATION ARE
+ PROVIDED “AS IS” WITHOUT WARRANTY OF ANY KIND, EITHER EXPRESS OR IMPLIED,
+ INCLUDING WITHOUT LIMITATION, ANY WARRANTY OF MERCHANTABILITY, TITLE,
+ NON-INFRINGEMENT AND FITNESS FOR A PARTICULAR PURPOSE. IN NO EVENT SHALL
+ TEXAS INSTRUMENTS OR ITS LICENSORS BE LIABLE OR OBLIGATED UNDER CONTRACT,
+ NEGLIGENCE, STRICT LIABILITY, CONTRIBUTION, BREACH OF WARRANTY, OR OTHER
+ LEGAL EQUITABLE THEORY ANY DIRECT OR INDIRECT DAMAGES OR EXPENSES
+ INCLUDING BUT NOT LIMITED TO ANY INCIDENTAL, SPECIAL, INDIRECT, PUNITIVE
+ OR CONSEQUENTIAL DAMAGES, LOST PROFITS OR LOST DATA, COST OF PROCUREMENT
+ OF SUBSTITUTE GOODS, TECHNOLOGY, SERVICES, OR ANY CLAIMS BY THIRD PARTIES
+ (INCLUDING BUT NOT LIMITED TO ANY DEFENSE THEREOF), OR OTHER SIMILAR COSTS.
 
-  Should you have any questions regarding your right to use this Software,
-  contact Texas Instruments Incorporated at www.TI.com.
-**************************************************************************************************/
+ Should you have any questions regarding your right to use this Software,
+ contact Texas Instruments Incorporated at www.TI.com.
+
+ ******************************************************************************
+ Release Name: ble_sdk_1.4.2.2
+ Release Date: 2016-06-09 06:57:10
+ *****************************************************************************/
 
 /* ------------------------------------------------------------------------------------------------
  *                                          Includes
@@ -194,75 +201,6 @@ static uint16 crcCalcDMA(uint8 page)
   return crc;
 }
 
-#if 0
-/**************************************************************************************************
- * @fn          crcCalc
- *
- * @brief       Run the CRC16 Polynomial calculation over the image specified.
- *
- * input parameters
- *
- * @param       page - Flash page on which to beging the CRC calculation.
- *
- * output parameters
- *
- * None.
- *
- * @return      The CRC16 calculated.
- **************************************************************************************************
- */
-static uint16 crcCalc(uint8 page)
-{
-  HalFlashRead(page, 0, pgBuf, HAL_FLASH_PAGE_SIZE);
-
-  const img_hdr_t *pImgHdr = (const img_hdr_t *)(pgBuf + BIM_HDR_OSET);
-
-  uint8 pageBeg = page;
-  uint8 pageEnd = pImgHdr->len / (HAL_FLASH_PAGE_SIZE / HAL_FLASH_WORD_SIZE);
-  uint16 osetEnd = (pImgHdr->len - (pageEnd * (HAL_FLASH_PAGE_SIZE / HAL_FLASH_WORD_SIZE)))
-                                                                   * HAL_FLASH_WORD_SIZE;
-  pageEnd += pageBeg;
-  if (pageBeg == BIM_IMG_A_PAGE)
-  {
-    pageEnd += BIM_IMG_B_AREA;
-  }
-
-  ADCCON1 &= 0xF3;  // CRC configuration of LRSR.
-
-  // CRC seed of 0x0000.
-  RNDL = 0x00;
-  RNDL = 0x00;
-
-  while(1)
-  {
-    for (uint16 oset = 0; oset < HAL_FLASH_PAGE_SIZE; oset++)
-    {
-      if ((page == pageBeg) && (oset == BIM_CRC_OSET))
-      {
-        oset += 3;  // Skip the CRC and shadow.
-      }
-      else if ((page == pageEnd) && (oset == osetEnd))
-      {
-        uint16 crc = RNDH;
-        crc = (crc << 8) | RNDL;
-
-        return crc;
-      }
-      else
-      {
-        RNDH = pgBuf[oset];
-      }
-    }
-
-    if (++page == BIM_IMG_B_PAGE)
-    {
-      page += BIM_IMG_B_AREA;
-    }
-    HalFlashRead(page, 0, pgBuf, HAL_FLASH_PAGE_SIZE);
-  }
-}
-#endif
-
 /**************************************************************************************************
  * @fn          crcCheck
  *
@@ -283,16 +221,6 @@ static void crcCheck(uint8 page, uint16 *crc)
 {
   HAL_BOARD_INIT();
 
-  /* This is in place of calling HalDmaInit() which would require init of the other 4 DMA
-   * descriptors in addition to just Channel 0.
-   */
-  //P0DIR |= 1;
-  //P0_0 = 0;
-  //P0_0 = 1;
-  //P0_0 = 0;
-  //P0_0 = 1;
-  //P0_0 = 0;
-  //P0_0 = 1;
   if (crc[0] == crcCalcDMA(page))
   {
     //P0_0 = 0;
@@ -339,13 +267,8 @@ void main(void)
       asm("LJMP 0x4030");
       HAL_SYSTEM_RESET();  // Should not get here.
     }
-    /* This check is disruptive when an OAD process to Image-A is interrupted - this check must
-     * complete before the still good Image-A is run.
-    else if (crc[1] == 0xFFFF)  // If first run of an image that was physically downloaded.*/
-    {
-      crcCheck(BIM_IMG_B_PAGE, crc);
-    }
-    /**/
+    
+    crcCheck(BIM_IMG_B_PAGE, crc);
   }
 
   //HalFlashRead(BIM_IMG_A_PAGE, BIM_CRC_OSET, (uint8 *)crc, 4);
@@ -421,6 +344,7 @@ void DMAExecCrc(uint8 page, uint16 offset, uint16 len) {
   
   // One whole page (or len) at a time
   HAL_DMA_SET_LEN(dmaCh0_p, len);
+  HAL_DMA_SET_VLEN( dmaCh0_p, HAL_DMA_VLEN_USE_LEN );
   
   // 8-bit, block, no trigger
   HAL_DMA_SET_WORD_SIZE(dmaCh0_p, HAL_DMA_WORDSIZE_BYTE);
