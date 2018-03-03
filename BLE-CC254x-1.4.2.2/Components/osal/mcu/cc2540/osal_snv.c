@@ -441,13 +441,28 @@ static void findOffset(void)
  */
 static uint16 findItem(uint8 pg, uint16 offset, osalSnvId_t id)
 {
+  halIntState_t is;
+  
   offset -= OSAL_NV_WORD_SIZE;
 
+  // Calculate the offset into the containing flash bank as it gets mapped into XDATA.
+  uint8 *ptrBase = (uint8 *)(HAL_FLASH_PAGE_MAP) +
+               ((pg % HAL_FLASH_PAGE_PER_BANK) * HAL_FLASH_PAGE_SIZE);
+  uint8 memctr = MEMCTR;  // Save to restore.
+  pg /= HAL_FLASH_PAGE_PER_BANK;
+  
+ 
   while (offset >= OSAL_NV_PAGE_HDR_SIZE)
   {
     osalNvItemHdr_t hdr;
 
-    HalFlashRead(pg, offset, (uint8 *) &hdr, OSAL_NV_WORD_SIZE);
+    HAL_ENTER_CRITICAL_SECTION(is);
+    //HalFlashRead(pg, offset, (uint8 *) &hdr, OSAL_NV_WORD_SIZE);
+    MEMCTR = (MEMCTR & 0xF8) | pg;
+    for (uint8 i = 0; i < OSAL_NV_WORD_SIZE; ++i)
+      ((uint8*)&hdr)[i] = ptrBase[offset + i];
+    MEMCTR = memctr;
+    HAL_EXIT_CRITICAL_SECTION(is);
 
     if (hdr.id == id)
     {
