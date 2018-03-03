@@ -677,3 +677,81 @@ unsigned char OS_i2c_available(unsigned char port, unsigned char ch)
   return ch == 'R' ? i2c[0].available_bytes : 0;  
 }
 #endif
+
+// read temperature adc
+int16 read_temperature_adc(void)
+{
+  int32 top;
+  halIntState_t intState;
+  
+  HAL_ENTER_CRITICAL_SECTION(intState);
+  TR0 = 0x01; // connect temperture sensor to ADC
+  ATEST = 0x01;
+  ADCCON3 = 0x0E | 0x30 | 0x00; // temperature sensor, 12-bit, internal voltage reference
+  while ((ADCCON1 & 0x80) == 0)
+    ;
+  top = ADCL;
+  top |= ADCH << 8;  
+  ATEST = 0;
+  TR0 = 0;
+  HAL_EXIT_CRITICAL_SECTION(intState);
+    
+  // data sheet says 1480 @ 25C
+  // and 4.5 bits per 1C
+  // we use the factory data stored in info word 7
+#define INFOPAGE_WORD7 0x781C
+  //now we access the calibration data from the TI factory
+  //according to https://e2e.ti.com/support/wireless_connectivity/f/538/p/396260/1450855#1450855
+  // addr     DWORD   Data    Decription    
+  // 0x781C   7       0x96    3V temperature sensor reading       
+  // 0x781D           0x17    0x17 = 23, test temp RT
+  // 0x781E           ADCH    temperature sensor, Vdd = 3.0v        
+  // 0x781F           ADCL    temperature sensor, Vdd = 3.0v
+  // 0x7820   8       0x32    2V temperature sensor reading
+  // 0x7821           0x17    0x17 = 23, test temp RT        
+  // 0x7822           ADCH    temperature sensor, Vdd = 2.0v
+  // 0x7823           ADCL    temperature sensor, Vdd = 2.0v
+  //
+  // Attention: the RT temperature is not controlled in the factory
+  // TI claims it has a lot to lt variantion depending on the factory temp
+  uint16 factoryAdc;
+  uint8  factoryTemp;
+  if ( *((uint8 *)INFOPAGE_WORD7 + 0) == 0x96 )
+  {
+    factoryAdc  = *((uint8 *)INFOPAGE_WORD7 + 2)<<8
+      | *((uint8 *)INFOPAGE_WORD7 + 3);
+    factoryTemp = *((uint8 *)INFOPAGE_WORD7 + 1);
+  }
+  else
+  {
+    // use data sheet values
+    factoryAdc = 1480<<4;
+    factoryTemp = 25;
+  }
+  return ((top - factoryAdc) * 10 + 3) / 7 + 100 * factoryTemp;
+}
+
+// return temperture in °C * 100
+// wait 0: return immediately
+// wait 1: return lowest of last 8 samples
+int16 OS_get_temperature(uint8 wait)
+{
+  // initialize to 20°C
+  static int16 samples[8] = {2000,2000,2000,2000,2000,2000,2000,2000};
+  int16 temp;
+  if (wait)
+  {
+    temp = samples[0] = read_temperature_adc();
+    for (uint8 i = sizeof(samples) - 1 ; --i; )
+    {
+      if (samples[i] < temp)
+        temp = samples[i];
+      samples[i] = samples[i-1];
+    }
+  }
+  else
+  {
+    temp = read_temperature_adc();
+  }
+  return temp;
+}

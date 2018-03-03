@@ -449,3 +449,4 @@ unsigned char OS_i2c_close(unsigned char port);
 short OS_i2c_read(unsigned char port);
 unsigned char OS_i2c_write(unsigned char port, unsigned char ch);
 unsigned char OS_i2c_available(unsigned char port, unsigned char ch);
+int16 OS_get_temperature(uint8 wait);
