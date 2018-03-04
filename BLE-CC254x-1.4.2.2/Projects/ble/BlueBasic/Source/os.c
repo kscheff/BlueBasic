@@ -736,20 +736,18 @@ int16 OS_get_temperature(uint8 wait)
 {
   // initialize to 20°C
   static int16 samples[8] = {2000,2000,2000,2000,2000,2000,2000,2000};
-  int16 temp;
+  int16 temp = read_temperature_adc();
+  //limit temperature reading to -40..125C
+  temp = temp < -4000 ? -4000 : temp > 12500 ? 12500 : temp;
   if (wait)
   {
-    temp = samples[0] = read_temperature_adc();
-    for (uint8 i = sizeof(samples) - 1 ; --i; )
+    samples[0] = temp;
+    for (uint8 i = sizeof(samples) ; --i; )
     {
       if (samples[i] < temp)
         temp = samples[i];
       samples[i] = samples[i-1];
     }
-  }
-  else
-  {
-    temp = read_temperature_adc();
   }
   return temp;
 }
