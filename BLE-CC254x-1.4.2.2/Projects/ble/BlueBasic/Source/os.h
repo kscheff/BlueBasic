@@ -280,6 +280,7 @@ typedef struct
 extern os_timer_t blueBasic_timers[OS_MAX_TIMER];
 
 extern unsigned short bluebasic_yield_linenum;
+extern unsigned char bluebasic_block_execution;
 
 #define FLASHSTORE_CPU_BASEADDR ((unsigned char*)0x9000)
 #define FLASHSTORE_DMA_BASEADDR ((unsigned long)0x29000)

@@ -265,7 +265,7 @@ static gattAttribute_t oadProfile[] =
 
 #endif
 
-unsigned char block_during_con;
+unsigned char bluebasic_block_execution;
 
 /*********************************************************************
  * LOCAL FUNCTIONS
@@ -536,12 +536,12 @@ uint16 BlueBasic_ProcessEvent( uint8 task_id, uint16 events )
   {
     timeSlice = 21;
 //    P1 &= 0xFE;
-    block_during_con = 0;
+    bluebasic_block_execution = 0;
     // we clear the event and continue
     events ^= BLUEBASIC_EVENT_CON;
   }
 
-  if ( block_during_con )
+  if ( bluebasic_block_execution )
     return 0;
     
   // in case of a valid line number a yield is pending
@@ -694,13 +694,13 @@ static void bluebasic_StateNotificationCB( gaprole_States_t newState )
   case GAPROLE_STARTED:
     //P1 &= 0xFE;
     timeSlice = 101;
-    block_during_con = 0;
+    bluebasic_block_execution = 0;
     break;
     
   case GAPROLE_ADVERTISING:
     //P1 &= 0xFE;
     timeSlice = 102;
-    block_during_con = 0;
+    bluebasic_block_execution = 0;
     break;
     
   case GAPROLE_CONNECTED:
@@ -709,7 +709,7 @@ static void bluebasic_StateNotificationCB( gaprole_States_t newState )
       //GAPRole_GetParameter(GAPROLE_CONN_INTERVAL, &connInterval);
       timeSlice = 5;
 //      P1 |= 1;
-//      block_during_con = 1;
+//      bluebasic_block_execution = 1;
       osal_start_timerEx(blueBasic_TaskID, BLUEBASIC_EVENT_CON, 6000);
     }
     break;
@@ -718,7 +718,7 @@ static void bluebasic_StateNotificationCB( gaprole_States_t newState )
     // Link terminated
 //    P1 &= 0xFE;
     timeSlice = 103;
-    block_during_con = 0;
+    bluebasic_block_execution = 0;
     break;
     
   default:

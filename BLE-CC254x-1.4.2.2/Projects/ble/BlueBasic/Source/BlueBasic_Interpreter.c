@@ -5428,6 +5428,7 @@ static unsigned char ble_read_callback(unsigned short handle, gattAttribute_t* a
     return FAILURE;
   }
 
+  // run interpreter only if its the first paket
   if (vref->read && offset == 0)
   {
     interpreter_run(vref->read, INTERPRETER_CAN_RETURN);
@@ -5438,6 +5439,11 @@ static unsigned char ble_read_callback(unsigned short handle, gattAttribute_t* a
   if (frame->type == VAR_DIM_BYTE)
   {
     OS_memcpy(value, v + offset, moffset - offset);
+    unsigned char var_len = frame->header.frame_size - sizeof(variable_frame);
+    // when the DIM array is larger than 20 bytes (max payload)
+    // the read CB will be called with increasing offset until all data is transported
+    // block the interpreter until all data has been transported
+    bluebasic_block_execution = (moffset == var_len) ? 0 : 1;
   }
   else
   {
@@ -5465,6 +5471,7 @@ static unsigned char ble_write_callback(unsigned short handle, gattAttribute_t* 
   unsigned char moffset;
   unsigned char* v;
   variable_frame* frame;
+  unsigned char var_len;
   
   if (attr->type.uuid == ble_client_characteristic_config_uuid)
   {
@@ -5484,6 +5491,10 @@ static unsigned char ble_write_callback(unsigned short handle, gattAttribute_t* 
   if (frame->type == VAR_DIM_BYTE)
   {
     OS_memcpy(v + offset, value, moffset - offset);
+    var_len = frame->header.frame_size - sizeof(variable_frame);
+    // when var_len is > 20 bytes data will be transported in multiple packets
+    // block execution of the interpreter until the last packet has arrived
+    bluebasic_block_execution = (moffset == var_len) ? 0 : 1;
   }
   else
   {
@@ -5491,12 +5502,14 @@ static unsigned char ble_write_callback(unsigned short handle, gattAttribute_t* 
     {
       v[moffset - i - 1] = value[i - offset];
     }
+    var_len = moffset - offset;
   }
 #else
   OS_memcpy(v + offset, value, moffset - offset);
 #endif
-
-  if (vref->write)
+  
+  // run interpreter on last packet only
+  if (vref->write && !bluebasic_block_execution)
   {
     interpreter_run(vref->write, INTERPRETER_CAN_RETURN);
   }
