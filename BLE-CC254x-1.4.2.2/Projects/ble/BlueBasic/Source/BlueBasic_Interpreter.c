@@ -5428,7 +5428,7 @@ static unsigned char ble_read_callback(unsigned short handle, gattAttribute_t* a
     return FAILURE;
   }
 
-  if (vref->read)
+  if (vref->read && offset == 0)
   {
     interpreter_run(vref->read, INTERPRETER_CAN_RETURN);
   }
