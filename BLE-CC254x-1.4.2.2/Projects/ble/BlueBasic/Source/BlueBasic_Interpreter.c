@@ -5471,7 +5471,6 @@ static unsigned char ble_write_callback(unsigned short handle, gattAttribute_t* 
   unsigned char moffset;
   unsigned char* v;
   variable_frame* frame;
-  unsigned char var_len;
   
   if (attr->type.uuid == ble_client_characteristic_config_uuid)
   {
@@ -5491,10 +5490,6 @@ static unsigned char ble_write_callback(unsigned short handle, gattAttribute_t* 
   if (frame->type == VAR_DIM_BYTE)
   {
     OS_memcpy(v + offset, value, moffset - offset);
-    var_len = frame->header.frame_size - sizeof(variable_frame);
-    // when var_len is > 20 bytes data will be transported in multiple packets
-    // block execution of the interpreter until the last packet has arrived
-    bluebasic_block_execution = (moffset == var_len) ? 0 : 1;
   }
   else
   {
@@ -5502,14 +5497,12 @@ static unsigned char ble_write_callback(unsigned short handle, gattAttribute_t* 
     {
       v[moffset - i - 1] = value[i - offset];
     }
-    var_len = moffset - offset;
   }
 #else
   OS_memcpy(v + offset, value, moffset - offset);
 #endif
   
-  // run interpreter on last packet only
-  if (vref->write && !bluebasic_block_execution)
+  if (vref->write)
   {
     interpreter_run(vref->write, INTERPRETER_CAN_RETURN);
   }
