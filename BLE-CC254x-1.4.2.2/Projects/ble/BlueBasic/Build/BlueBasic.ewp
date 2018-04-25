@@ -7223,6 +7223,7 @@
           <state>FEATURE_BOOST_CONVERTER=P2_0</state>
           <state>UART_USE_CALLBACK=0</state>
           <state>PROCESS_SERIAL_DATA</state>
+          <state>xOSALMEM_METRICS=TRUE</state>
         </option>
         <option>
           <name>CCPreprocFile</name>
