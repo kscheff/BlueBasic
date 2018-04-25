@@ -615,8 +615,6 @@ static const gattServiceCBs_t ble_service_callbacks =
   NULL
 };
 
-static gattCharCfg_t *runtimeProfileCharCfg = NULL;
-
 //
 // File system handles.
 //
@@ -5282,17 +5280,15 @@ done:
 
       if ((attributes[count - 1].pValue[0] & (GATT_PROP_INDICATE|GATT_PROP_NOTIFY)) != 0)
       {
-        if (runtimeProfileCharCfg == NULL) {
-          runtimeProfileCharCfg = (gattCharCfg_t*)heap;
-          CHECK_HEAP_OOM(sizeof(gattCharCfg_t) * linkDBNumConns, qoom);
-          GATTServApp_InitCharCfg(INVALID_CONNHANDLE, runtimeProfileCharCfg);
-        }
+        gattCharCfg_t *runtimeProfileCharCfg = (gattCharCfg_t*)heap;
+        CHECK_HEAP_OOM(sizeof(gattCharCfg_t) * linkDBNumConns, qoom);
+        GATTServApp_InitCharCfg(INVALID_CONNHANDLE, runtimeProfileCharCfg);
         count++;
         attributes[count].type.uuid = ble_client_characteristic_config_uuid;
         attributes[count].type.len = 2;
         attributes[count].permissions = GATT_PERMIT_READ | GATT_PERMIT_WRITE;
         attributes[count].handle = 0;
-        *(unsigned char**)&attributes[count].pValue = (unsigned char*)&runtimeProfileCharCfg;
+        *(unsigned char**)&attributes[count].pValue = (unsigned char*)&vref->cfg;
         vref->cfg = runtimeProfileCharCfg;
         variable_frame* vframe;
         get_variable_frame(vref->var, &vframe);
@@ -5439,6 +5435,11 @@ static unsigned char ble_read_callback(unsigned short handle, gattAttribute_t* a
   unsigned char* v;
   variable_frame* frame;
   
+  if (attr->type.uuid == ble_client_characteristic_config_uuid)
+  {
+    return FAILURE;
+  }
+  
   vref = (gatt_variable_ref*)attr->pValue;
   moffset = ble_max_offset(vref, offset, maxlen);
   if (!moffset)
@@ -5545,6 +5546,32 @@ static void ble_notify_assign(gatt_variable_ref* vref)
 }
 
 //
+// init all BLE client characteristic configurations values
+//
+void ble_init_ccc( void )
+{
+  unsigned char* ptr;
+  service_frame* vframe;
+  short i;
+  
+  for (ptr = (unsigned char*)program_end; ptr < heap; ptr += ((frame_header*)ptr)->frame_size)
+  {
+    vframe = (service_frame*)ptr;
+    if (vframe->header.frame_type == FRAME_SERVICE_FLAG)
+    {
+        for (i = ((short*)vframe->attrs)[-1]; i; i--)
+        {
+          if (vframe->attrs[i].type.uuid == ble_client_characteristic_config_uuid)
+          {
+            gattCharCfg_t *conn = *(gattCharCfg_t **)vframe->attrs[i].pValue;
+            GATTServApp_InitCharCfg(INVALID_CONNHANDLE, conn);
+          }
+        }
+    }
+  }
+} 
+
+//
 // BLE connection management. If the ONCONNECT event was specified when a service
 // was created, we forward any connection changes up to the user code.
 //
@@ -5554,7 +5581,6 @@ void ble_connection_status(unsigned short connHandle, unsigned char changeType, 
   service_frame* vframe;
   unsigned char j;
   unsigned char f;
-  short i;
   unsigned char vname;
 
   for (ptr = (unsigned char*)program_end; ptr < heap; ptr += ((frame_header*)ptr)->frame_size)
@@ -5590,17 +5616,23 @@ void ble_connection_status(unsigned short connHandle, unsigned char changeType, 
       }
       if (changeType == LINKDB_STATUS_UPDATE_REMOVED || (changeType == LINKDB_STATUS_UPDATE_STATEFLAGS && !linkDB_Up(connHandle)))
       {
-        for (i = ((short*)vframe->attrs)[-1]; i; i--)
+#if 0
+        for (short i = ((short*)vframe->attrs)[-1]; i; i--)
         {
           if (vframe->attrs[i].type.uuid == ble_client_characteristic_config_uuid)
           {
-            GATTServApp_InitCharCfg(connHandle, (gattCharCfg_t*)vframe->attrs[i].pValue);
+            gattCharCfg_t *conn = *(gattCharCfg_t **)vframe->attrs[i].pValue;
+            GATTServApp_InitCharCfg(connHandle, conn);
           }
         }
+#else
+        ble_init_ccc();
+#endif        
       }
     }
   }  
 }
+
 
 #ifdef TARGET_CC254X
 

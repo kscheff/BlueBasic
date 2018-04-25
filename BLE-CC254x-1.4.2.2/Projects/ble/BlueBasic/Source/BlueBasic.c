@@ -143,7 +143,7 @@ extern unsigned char sflow;
  * EXTERNAL FUNCTIONS
  */
 extern void ble_connection_status(uint16 connHandle, uint8 changeType, int8 rssi);
-
+extern void ble_init_ccc(void);
 
 /*********************************************************************
  * LOCAL VARIABLES
@@ -719,6 +719,7 @@ static void bluebasic_StateNotificationCB( gaprole_States_t newState )
 //    P1 &= 0xFE;
     timeSlice = 103;
     bluebasic_block_execution = 0;
+    ble_init_ccc();
     break;
     
   default:
