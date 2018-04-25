@@ -421,6 +421,8 @@ void BlueBasic_Init( uint8 task_id )
 #if !BLUESTECA
   // Overlap enabled
   HCI_EXT_OverlappedProcessingCmd(HCI_EXT_ENABLE_OVERLAPPED_PROCESSING);
+  // Overlap disable
+//  HCI_EXT_OverlappedProcessingCmd(HCI_EXT_DISABLE_OVERLAPPED_PROCESSING);
 #endif
   // Setup a delayed profile startup
   osal_set_event( blueBasic_TaskID, BLUEBASIC_START_DEVICE_EVT );
