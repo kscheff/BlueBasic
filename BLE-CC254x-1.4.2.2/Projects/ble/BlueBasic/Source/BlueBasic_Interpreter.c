@@ -2476,6 +2476,24 @@ mem:
   printmsg(memorymsg);
   printnum(0, sp - heap);
   printmsg(" bytes on heap free.");
+#if OSALMEM_METRICS
+  extern uint16 blkMax;  // Max cnt of all blocks ever seen at once.
+  extern uint16 blkCnt;  // Current cnt of all blocks.
+  extern uint16 blkFree; // Current cnt of free blocks.
+  extern uint16 memAlo;  // Current total memory allocated.
+  extern uint16 memMax;  // Max total memory ever allocated at once.
+  printmsg("OSAL Memory Metrics:");
+  printnum(0, blkMax);
+  printmsg(" max cnt of all blocks ever seen at once.");
+  printnum(0, blkCnt);
+  printmsg(" current cnt of all blocks.");
+  printnum(0, blkFree);
+  printmsg(" current cnt of free blocks.");
+  printnum(0, memAlo);
+  printmsg(" current total memory allocated.");
+  printnum(0, memMax);
+  printmsg(" max total memory ever allocated at once.");           
+#endif  
   goto run_next_statement;
 
 //

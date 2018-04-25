@@ -195,11 +195,11 @@ static osalMemHdr_t *ff1;  // First free block in the small-block bucket.
 static uint8 osalMemStat;            // Discrete status flags: 0x01 = kicked.
 
 #if OSALMEM_METRICS
-static uint16 blkMax;  // Max cnt of all blocks ever seen at once.
-static uint16 blkCnt;  // Current cnt of all blocks.
-static uint16 blkFree; // Current cnt of free blocks.
-static uint16 memAlo;  // Current total memory allocated.
-static uint16 memMax;  // Max total memory ever allocated at once.
+ uint16 blkMax;  // Max cnt of all blocks ever seen at once.
+ uint16 blkCnt;  // Current cnt of all blocks.
+ uint16 blkFree; // Current cnt of free blocks.
+ uint16 memAlo;  // Current total memory allocated.
+ uint16 memMax;  // Max total memory ever allocated at once.
 #endif
 
 #if OSALMEM_PROFILER
