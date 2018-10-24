@@ -1049,14 +1049,20 @@ static void gapRole_ProcessGAPMsg( gapEventHdr_t *pMsg )
           
           gapRole_state = GAPROLE_STARTED;
 
-          // This should match the original advertising setup in BlueBasic.c:consoleAdvert
-          //if (gapRole_AdvertDataLen == 31 /* && osal_memcmp(&gapRole_AdvertData[23], "BASIC#??", 8) */)
+          // we search for the ?? in the "BASIC#??" and replace it with partial bdAddr as ASCII
           {
-            gapRole_AdvertData[29] = (gapRole_bdAddr[0] >> 4) + (gapRole_bdAddr[0] >= 0xA0 ? 'A' - 0xA : '0');
-            //gapRole_AdvertData[30] = (gapRole_bdAddr[0] & 15) + ((gapRole_bdAddr[0] & 15) >= 0x0A ? 'A' - 0xA : '0');
-            gapRole_AdvertData[30] = (gapRole_bdAddr[0] & 15) + '0';
-            gapRole_AdvertData[30] += gapRole_AdvertData[30] > '9' ? 'A' - 10 : 0;
-            GGS_SetParameter(GGS_DEVICE_NAME_ATT, 8, &gapRole_AdvertData[23]);
+            for (int i=0; i < (sizeof(gapRole_AdvertData) - 1); i++)
+            {
+              if (gapRole_AdvertData[i] == '?' && gapRole_AdvertData[i+1] == '?')
+              {
+                gapRole_AdvertData[i] = (gapRole_bdAddr[0] >> 4) + (gapRole_bdAddr[0] >= 0xA0 ? 'A' - 0xA : '0');
+                //gapRole_AdvertData[30] = (gapRole_bdAddr[0] & 15) + ((gapRole_bdAddr[0] & 15) >= 0x0A ? 'A' - 0xA : '0');
+                gapRole_AdvertData[i+1] = (gapRole_bdAddr[0] & 15) + '0';
+                gapRole_AdvertData[i+1] += gapRole_AdvertData[i+1] > '9' ? 'A' - 10 : 0;
+                GGS_SetParameter(GGS_DEVICE_NAME_ATT, 8, &gapRole_AdvertData[i-6]);
+                break;
+              }
+            }
           }          
           
           // Update the advertising data
