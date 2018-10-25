@@ -1056,9 +1056,7 @@ static void gapRole_ProcessGAPMsg( gapEventHdr_t *pMsg )
               if (gapRole_AdvertData[i] == '?' && gapRole_AdvertData[i+1] == '?')
               {
                 gapRole_AdvertData[i] = (gapRole_bdAddr[0] >> 4) + (gapRole_bdAddr[0] >= 0xA0 ? 'A' - 0xA : '0');
-                //gapRole_AdvertData[30] = (gapRole_bdAddr[0] & 15) + ((gapRole_bdAddr[0] & 15) >= 0x0A ? 'A' - 0xA : '0');
-                gapRole_AdvertData[i+1] = (gapRole_bdAddr[0] & 15) + '0';
-                gapRole_AdvertData[i+1] += gapRole_AdvertData[i+1] > '9' ? 'A' - 10 : 0;
+                gapRole_AdvertData[i+1] = (gapRole_bdAddr[0] & 15) + ((gapRole_bdAddr[0] & 15) >= 0x0A ? 'A' - 0xA : '0');
                 GGS_SetParameter(GGS_DEVICE_NAME_ATT, 8, &gapRole_AdvertData[i-6]);
                 break;
               }
