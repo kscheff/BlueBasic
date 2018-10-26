@@ -282,11 +282,8 @@ extern os_timer_t blueBasic_timers[OS_MAX_TIMER];
 extern unsigned short bluebasic_yield_linenum;
 extern unsigned char bluebasic_block_execution;
 
-#define FLASHSTORE_CPU_BASEADDR ((unsigned char*)0x9000)
-#define FLASHSTORE_DMA_BASEADDR ((unsigned long)0x29000)
-#define FLASHSTORE_NRPAGES    4
-#define FLASHSTORE_PAGESIZE   2048
-#define FLASHSTORE_LEN        (FLASHSTORE_NRPAGES * FLASHSTORE_PAGESIZE)
+#define FLASHSTORE_CPU_BASEADDR ((unsigned char*)0xC000)
+#define FLASHSTORE_DMA_BASEADDR ((unsigned long)0x24000)
 
 #define OS_memset(A, B, C)     osal_memset(A, B, C)
 #define OS_memcpy(A, B, C)     osal_memcpy(A, B, C)
@@ -406,6 +403,10 @@ extern void interpreter_timer_event(unsigned short id);
 #define PIN_MAKE(A,I) (((A) << 6) | ((I) << 3))
 #define PIN_MAJOR(P)  ((P) >> 6)
 #define PIN_MINOR(P)  (((P) >> 3) & 7)
+
+#define FLASHSTORE_NRPAGES    8
+#define FLASHSTORE_PAGESIZE   2048
+#define FLASHSTORE_LEN        (FLASHSTORE_NRPAGES * FLASHSTORE_PAGESIZE)
 
 enum
 {

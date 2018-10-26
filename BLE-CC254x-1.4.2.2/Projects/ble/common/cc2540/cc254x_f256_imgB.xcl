@@ -77,13 +77,16 @@
 -D_BANK3_END=0x3FFFF
 //
 -D_BANK4_BEG=0x48000
--D_BANK4_END=0x4FFFF
+-D_BANK4_END=0x4BFFF
+// 16K for Flashstore 
+-D_FLASHSTORE_BEG=0x4C000      // Bank 4 for flashstore
+-D_FLASHSTORE_END=0x4FFFF
 //
 -D_BANK5_BEG=0x58000           // Pages 0-1 of Bank 5.
 -D_BANK5_END=0x58FFF
-
--D_FLASHSTORE_BEG=0x59000      // Pages 2-5 of Bank 5 for flashstore
--D_FLASHSTORE_END=0x5AFFF
+//old Flashstore location is now unused in order not keep image B size to 148KB
+//-D_FLASHSTORE_BEG=0x59000      // Pages 2-5 of Bank 5 for flashstore
+//-D_FLASHSTORE_END=0x5AFFF
 
 //
 // Register bank setup
@@ -154,8 +157,9 @@
 // First the segment with addresses as used by the program (flash mapped as upper XDATA)
 -P(CONST)XDATA_ROM_C=0x8000-0xFFFF
 //
-// Then the segment with addresses as put in the hex file (flash bank 5).
--P(CODE)XDATA_ROM_C_FLASH=_BANK5_BEG-_BANK5_END
+// Then the segment with addresses as put in the hex file (flash bank 4).
+// This needs to match the bank assigned in __low_level_init() inside hal_startup.c
+-P(CODE)XDATA_ROM_C_FLASH=_BANK4_BEG-_BANK4_END,_FLASHSTORE_BEG-_FLASHSTORE_END
 //
 // Finally link these segments (XDATA_ROM_C_FLASH is the initializer segment for XDATA_ROM_C,
 // we map the flash in the XDATA address range instead of copying the data to RAM)
