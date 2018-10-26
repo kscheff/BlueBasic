@@ -624,6 +624,7 @@ typedef struct
   unsigned char action;
   unsigned short record;
   unsigned char poffset;
+  unsigned short modulo;
 } os_file_t;
 static os_file_t files[FS_NR_FILE_HANDLES];
 
@@ -3349,9 +3350,9 @@ cmd_btpoke:
   goto run_next_statement;
 
 //
-// OPEN <0-3>, READ|TRUNCATE|APPEND "<A-Z>"
+// OPEN <0-3>, READ|TRUNCATE|APPEND "<A-Z>"[, modulo]
 //  Open a numbered file for read, write or append access.
-//
+//  optional modulo paramter wraps read, write record number around
 cmd_open:
   {
     unsigned char id = expression(EXPR_COMMA);
@@ -3365,12 +3366,24 @@ cmd_open:
       file->filename = txtpos[2];
       file->record = 0;
       file->poffset = FLASHSPECIAL_DATA_OFFSET;
+      file->modulo = FLASHSPECIAL_NR_FILE_RECORDS;
     }
     else
     {
       goto qwhat;
     }
-    switch (*txtpos)
+    unsigned char kw = *txtpos;
+    if (txtpos[4] == ',')
+    {
+      txtpos += 5;
+      VAR_TYPE modulo = expression(EXPR_NORMAL);
+      if (error_num || modulo > FLASHSPECIAL_NR_FILE_RECORDS || modulo < 0)
+      {
+        goto qwhat;
+      }
+      file->modulo = (unsigned short) modulo;
+    }  
+    switch (kw)
     {
       case KW_READ: // Read
         file->action = 'R';
@@ -3387,6 +3400,7 @@ cmd_open:
         file->action = 'W';
         for (unsigned long special = FS_MAKE_FILE_SPECIAL(file->filename, 0); flashstore_findspecial(special); special++, file->record++)
           ;
+        file->record %= file->modulo; 
         break;
       }
       default:
@@ -3563,7 +3577,8 @@ cmd_read:
         {
           if (file->poffset == len)
           {
-            special = flashstore_findspecial(FS_MAKE_FILE_SPECIAL(file->filename, ++file->record));
+            file->record = (file->record + 1) % file->modulo;
+            special = flashstore_findspecial(FS_MAKE_FILE_SPECIAL(file->filename, file->record));
             if (!special)
             {
               goto qeof;
@@ -3592,7 +3607,8 @@ cmd_read:
           {
             if (file->poffset == len)
             {
-              special = flashstore_findspecial(FS_MAKE_FILE_SPECIAL(file->filename, ++file->record));
+              file->record = (file->record + 1) % file->modulo;
+              special = flashstore_findspecial(FS_MAKE_FILE_SPECIAL(file->filename, file->record));
               if (!special)
               {
                 goto qeof;
@@ -3698,9 +3714,12 @@ cmd_write:
       {
         goto qtoobig;
       }
-      unsigned long special = FS_MAKE_FILE_SPECIAL(files[id].filename, files[id].record);
-      files[id].record++;
-      
+      unsigned long special = FS_MAKE_FILE_SPECIAL(files[id].filename, files[id].record++);
+      if (files[id].modulo < FLASHSPECIAL_NR_FILE_RECORDS)
+      {
+        files[id].record %= files[id].modulo;
+        flashstore_deletespecial(special);
+      }
       unsigned char* item = heap;
       unsigned char* iptr = item + FLASHSPECIAL_DATA_OFFSET;
       unsigned char ilen = FLASHSPECIAL_DATA_OFFSET;
