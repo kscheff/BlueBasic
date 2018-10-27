@@ -364,6 +364,8 @@ unsigned char** flashstore_deleteall(void)
       orderedpages[pg].waste = 0;
       orderedpages[pg].free = FLASHSTORE_PAGESIZE - sizeof(flashpage_age);
     }
+    // keep OSAL spinning
+    osal_run_system();
   }
 
   lineindexend = lineindexstart;

@@ -3401,7 +3401,10 @@ cmd_open:
       {
         file->action = 'W';
         for (unsigned long special = FS_MAKE_FILE_SPECIAL(file->filename, 0); flashstore_deletespecial(special); special++)
-          ;
+        {
+          // keep OSAL spinning
+          if (special % 16 == 0) osal_run_system();
+        }
         break;
       }
       case FS_APPEND: // Append
