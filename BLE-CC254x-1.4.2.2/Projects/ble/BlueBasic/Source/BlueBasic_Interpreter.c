@@ -3350,7 +3350,7 @@ cmd_btpoke:
   goto run_next_statement;
 
 //
-// OPEN <0-3>, READ|TRUNCATE|APPEND "<A-Z>"[, modulo]
+// OPEN <0-3>, READ|TRUNCATE|APPEND "<A-Z>"[, modulo[, record]]
 //  Open a numbered file for read, write or append access.
 //  optional modulo paramter wraps read, write record number around
 cmd_open:
@@ -3376,12 +3376,21 @@ cmd_open:
     if (txtpos[4] == ',')
     {
       txtpos += 5;
-      VAR_TYPE modulo = expression(EXPR_NORMAL);
-      if (error_num || modulo > FLASHSPECIAL_NR_FILE_RECORDS || modulo < 0)
+      VAR_TYPE value = expression(EXPR_COMMA);
+      if (error_num || value > FLASHSPECIAL_NR_FILE_RECORDS || value < 0)
       {
         goto qwhat;
       }
-      file->modulo = (unsigned short) modulo;
+      file->modulo = (unsigned short) value;
+      if (*txtpos != NL)
+      {
+        value = expression(EXPR_NORMAL);
+        if (error_num || value > file->modulo || value < 0 || kw != KW_READ)
+        {
+          goto qwhat;
+        }
+        file->record = value;
+      }
     }  
     switch (kw)
     {
