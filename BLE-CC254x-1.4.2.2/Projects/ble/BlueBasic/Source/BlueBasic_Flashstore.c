@@ -161,6 +161,7 @@ unsigned char** flashstore_init(unsigned char** startmem)
   
     orderedpages[ordered].free = FLASHSTORE_PAGESIZE - (ptr - page);
     ordered++;
+    osal_run_system();
   }
 
   // We now have a set of program lines, indexed from "startmem" to "mem" which we need to sort
@@ -450,9 +451,10 @@ void flashstore_compact(unsigned char len, unsigned char* tempmemstart, unsigned
       }
       ptr += len;
     }
-            
+    osal_run_system();        
     // Erase the page
     OS_flashstore_erase(FLASHSTORE_FPAGE(flash));
+    osal_run_system();
     OS_flashstore_write(FLASHSTORE_FADDR(flash), (unsigned char*)&lastage, FLASHSTORE_WORDS(sizeof(lastage)));
     lastage++;
     orderedpages[selected].waste = 0;
@@ -461,7 +463,7 @@ void flashstore_compact(unsigned char len, unsigned char* tempmemstart, unsigned
     // Copy the old lines back in.
     flash += sizeof(flashpage_age);
     OS_flashstore_write(FLASHSTORE_FADDR(flash), tempmemstart, FLASHSTORE_WORDS(mem_length));
-    
+    osal_run_system();
     // We corrupted memory, so we need to reinitialize
     flashstore_init((unsigned char**)lineindexstart);
   }
