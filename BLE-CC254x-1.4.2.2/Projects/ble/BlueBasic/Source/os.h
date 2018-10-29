@@ -29,6 +29,8 @@
 
 #define __data
 
+#define BLUEBASIC_MEM 8192
+
 #define SIMULATE_PINS   1
 #define ENABLE_PORT0    1
 #define ENABLE_PORT1    1
@@ -127,6 +129,9 @@ extern void OS_flashstore_erase(unsigned long page);
 #define linkDB_Up(A)                          0
 #define linkDB_State(A, B)                    0
 
+#define GATT_MIN_ENCRYPT_KEY_SIZE          7  //!< GATT Minimum Encryption Key Size
+#define GATT_MAX_ENCRYPT_KEY_SIZE          16 //!< GATT Maximum Encryption Key Size
+
 typedef struct
 {
   unsigned char len;
@@ -154,14 +159,37 @@ typedef struct gattCharCfg
   unsigned char value;
 } gattCharCfg_t;
 
+#define uint8 unsigned char
+#define uint16 unsigned short
+#define int8 char
+#define int16 short
+#define FALSE 0
+#define TRUE 1
+#define linkDBNumConns 1
+#define CONST
+#define bStatus_t unsigned char
+typedef unsigned char (*pfnGATTReadAttrCB_t)( uint16 connHandle, gattAttribute_t *pAttr,
+                                         uint8 *pValue, uint8 *pLen, uint16 offset,
+                                         uint8 maxLen, uint8 method );
+typedef uint16 gapParamIDs_t;
 
-extern unsigned char GATTServApp_RegisterService(gattAttribute_t* attributes, unsigned short count, const void* callbacks);
+typedef unsigned char halIntState_t;
+#define HAL_ENTER_CRITICAL_SECTION(x)
+#define HAL_EXIT_CRITICAL_SECTION(x)
+#define HAL_CRITICAL_STATEMENT(x)       (x;)
+
+#define OS_enable_sleep(x)
+
+extern unsigned char GATTServApp_RegisterService(gattAttribute_t *pAttrs, uint16 numAttrs, uint8 encKeySize, CONST gattServiceCBs_t *pServiceCBs);
 extern unsigned char GATTServApp_DeregisterService(unsigned short handle, void* attr);
 extern unsigned char GATTServApp_InitCharCfg(unsigned short handle, gattCharCfg_t* charcfgtbl);
-extern unsigned char GATTServApp_ProcessCharCfg(gattCharCfg_t* charcfgtbl, void* pval, unsigned char auth, gattAttribute_t* attrs, unsigned short numattrs, unsigned char taskid);
+extern unsigned char GATTServApp_ProcessCharCfg( gattCharCfg_t *charCfgTbl, uint8 *pValue,
+                                            uint8 authenticated, gattAttribute_t *attrTbl,
+                                            uint16 numAttrs, uint8 taskId,
+                                            pfnGATTReadAttrCB_t pfnReadAttrCB );
 extern unsigned char GATTServApp_ProcessCCCWriteReq(unsigned short handle, gattAttribute_t* attr, unsigned char* value, unsigned char len, unsigned short offset, unsigned short validcfg);
-extern unsigned char GAPRole_SetParameter(unsigned short param, unsigned long value, unsigned char len, void* addr);
-extern unsigned char GAPRole_GetParameter(unsigned short param, unsigned long* shortValue, unsigned char len, void* longValue);
+extern unsigned char GAPRole_SetParameter( uint16 param, uint8 len, void *pValue );
+extern unsigned char GAPRole_GetParameter( uint16 param, void *pValue );
 extern unsigned char GAPRole_TerminateConnection(void);
 extern unsigned char GGS_SetParameter(unsigned short param, unsigned char len, void* addr);
 extern unsigned char GAPBondMgr_SetParameter(unsigned short param, unsigned long value, unsigned char len, void* addr);
@@ -170,6 +198,9 @@ extern unsigned char HCI_EXT_SetTxPowerCmd(unsigned char power);
 extern unsigned char HCI_EXT_SetRxGainCmd(unsigned char gain);
 extern unsigned char GAPObserverRole_StartDiscovery(unsigned char mode, unsigned char active, unsigned char whitelist);
 extern unsigned char GAPObserverRole_CancelDiscovery(void);
+extern bStatus_t GAP_SetParamValue( gapParamIDs_t paramID, uint16 paramValue );
+
+#define osal_run_system()
 
 #else /* __APPLE__ --------------------------------------------------------------------------- */
 
@@ -243,10 +274,6 @@ extern unsigned char blueBasic_TaskID;
 
 #define OS_MAX_SERIAL             1
 
-// bit field for interpreter modes
-#define INTERPRETER_CAN_RETURN 1
-#define INTERPRETER_CAN_YIELD  2
-
 // Serial
 typedef struct
 {
@@ -317,6 +344,10 @@ extern void OS_enable_sleep(unsigned char enable);
 extern void interpreter_devicefound(unsigned char addtype, unsigned char* address, signed char rssi, unsigned char eventtype, unsigned char len, unsigned char* data);
 
 #endif /* __APPLE__ */
+
+// bit field for interpreter modes
+#define INTERPRETER_CAN_RETURN 1
+#define INTERPRETER_CAN_YIELD  2
 
 //definitions of field length in bytes to process
 #define _GAP_ARRAY 0x8000

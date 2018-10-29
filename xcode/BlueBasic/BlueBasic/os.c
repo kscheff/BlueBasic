@@ -11,6 +11,9 @@
 #include <signal.h>
 #include "os.h"
 
+// see main.c
+extern char *flash_file;
+
 // Timers
 #define NR_TIMERS ((OS_MAX_TIMER) - 1)
 struct
@@ -120,7 +123,7 @@ char OS_timer_start(unsigned char id, unsigned long timeout, unsigned char repea
 
 // -- BLE placeholders
 
-unsigned char GATTServApp_RegisterService(gattAttribute_t* attributes, unsigned short count, const void* callbacks)
+unsigned char GATTServApp_RegisterService(gattAttribute_t *pAttrs, uint16 numAttrs, uint8 encKeySize, CONST gattServiceCBs_t *pServiceCBs)
 {
   return SUCCESS;
 }
@@ -135,7 +138,10 @@ unsigned char GATTServApp_InitCharCfg(unsigned short handle, gattCharCfg_t* char
   return SUCCESS;
 }
 
-unsigned char GATTServApp_ProcessCharCfg(gattCharCfg_t* charcfgtbl, void* pval, unsigned char auth, gattAttribute_t* attrs, unsigned short numattrs, unsigned char taskid)
+unsigned char GATTServApp_ProcessCharCfg( gattCharCfg_t *charCfgTbl, uint8 *pValue,
+                                                uint8 authenticated, gattAttribute_t *attrTbl,
+                                                uint16 numAttrs, uint8 taskId,
+                                                pfnGATTReadAttrCB_t pfnReadAttrCB )
 {
   return SUCCESS;
 }
@@ -145,20 +151,16 @@ unsigned char GATTServApp_ProcessCCCWriteReq(unsigned short handle, gattAttribut
   return SUCCESS;
 }
 
-unsigned char GAPRole_SetParameter(unsigned short param, unsigned long val, unsigned char len, void* addr)
+unsigned char GAPRole_SetParameter( uint16 param, uint8 len, void *pValue )
 {
   return SUCCESS;
 }
 
-unsigned char GAPRole_GetParameter(unsigned short param, unsigned long* shortValue, unsigned char len, void* longValue)
+unsigned char GAPRole_GetParameter( uint16 param, void *pValue )
 {
-  if (shortValue)
+  if (pValue)
   {
-    *(unsigned short*)shortValue = 0;
-  }
-  else
-  {
-    memset(longValue, 0, len);
+    *(unsigned short*)pValue = 0;
   }
   return SUCCESS;
 }
@@ -211,9 +213,14 @@ unsigned char GAPRole_TerminateConnection(void)
   return SUCCESS;
 }
 
+extern bStatus_t GAP_SetParamValue( gapParamIDs_t paramID, uint16 paramValue )
+{
+  return SUCCESS;
+}
+
 void OS_flashstore_init(void)
 {
-  FILE* fp = fopen("/tmp/flashstore", "r");
+  FILE* fp = fopen(flash_file, "r");
   if (fp)
   {
     fread(__store, FLASHSTORE_LEN, sizeof(char), fp);
@@ -235,7 +242,7 @@ void OS_flashstore_init(void)
 void OS_flashstore_write(unsigned long faddr, unsigned char* value, unsigned char sizeinwords)
 {
   memcpy(&__store[faddr << 2], value, sizeinwords << 2);
-  FILE* fp = fopen("/tmp/flashstore", "w");
+  FILE* fp = fopen(flash_file, "w");
   fwrite(__store, FLASHSTORE_LEN, sizeof(char), fp);
   fclose(fp);
 }
@@ -243,7 +250,7 @@ void OS_flashstore_write(unsigned long faddr, unsigned char* value, unsigned cha
 void OS_flashstore_erase(unsigned long page)
 {
   memset(&__store[page << 11], 0xFF, FLASHSTORE_PAGESIZE);
-  FILE* fp = fopen("/tmp/flashstore", "w");
+  FILE* fp = fopen(flash_file, "w");
   fwrite(__store, FLASHSTORE_LEN, sizeof(char), fp);
   fclose(fp);
 }
@@ -271,4 +278,8 @@ unsigned char OS_serial_write(unsigned char port, unsigned char ch)
 unsigned char OS_serial_available(unsigned char port, unsigned char ch)
 {
   return 0;
+}
+
+int16 OS_get_temperature(uint8 wait) {
+  return 2000;
 }
