@@ -3418,6 +3418,8 @@ cmd_open:
         {
           if (hasOffset && file->record == stop)
             break;
+          // keep OSAL spinning
+          if (special % 16 == 0) osal_run_system();          
         }
         file->record %= file->modulo; 
         break;
