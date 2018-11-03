@@ -3355,6 +3355,7 @@ cmd_btpoke:
 //  optional modulo paramter wraps read, write record number around
 cmd_open:
   {
+    unsigned char hasOffset = FALSE;
     unsigned char id = expression(EXPR_COMMA);
     if (error_num || id >= FS_NR_FILE_HANDLES)
     {
@@ -3385,11 +3386,12 @@ cmd_open:
       if (*txtpos != NL)
       {
         value = expression(EXPR_NORMAL);
-        if (error_num || value > file->modulo || value < 0 || kw != KW_READ)
+        if (error_num || value > file->modulo || value < 0)
         {
           goto qwhat;
         }
         file->record = value;
+        hasOffset = TRUE;
       }
     }  
     switch (kw)
@@ -3400,7 +3402,7 @@ cmd_open:
       case FS_TRUNCATE: // Truncate
       {
         file->action = 'W';
-        for (unsigned long special = FS_MAKE_FILE_SPECIAL(file->filename, 0); flashstore_deletespecial(special); special++)
+        for (unsigned long special = FS_MAKE_FILE_SPECIAL(file->filename, file->record); flashstore_deletespecial(special); special++)
         {
           // keep OSAL spinning
           if (special % 16 == 0) osal_run_system();
@@ -3410,8 +3412,13 @@ cmd_open:
       case FS_APPEND: // Append
       {
         file->action = 'W';
+        unsigned short stop = file->record;
+        file->record = 0;
         for (unsigned long special = FS_MAKE_FILE_SPECIAL(file->filename, 0); flashstore_findspecial(special); special++, file->record++)
-          ;
+        {
+          if (hasOffset && file->record == stop)
+            break;
+        }
         file->record %= file->modulo; 
         break;
       }
