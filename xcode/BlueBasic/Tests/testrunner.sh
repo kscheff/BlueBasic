@@ -10,32 +10,34 @@ BLUEBASIC="$HOME/Library/Developer/Xcode/DerivedData/BlueBasic-*/Build/Products/
 
 for test in $(cat tests)
 do
-  exec < $test.test
-  input=""
-  expected=""
-  while read line
-  do
-    if [ "$line" = '.' ]
-    then
-      input=$expected
-      expected=""
-    else
-      expected="$expected
+if [[ "$test" != !* ]]; then
+    exec < $test.test
+    input=""
+    expected=""
+    while read line
+    do
+      if [ "$line" = '.' ]
+      then
+        input=$expected
+        expected=""
+      else
+        expected="$expected
 $line"
-    fi
-  done
-  expected=${expected:1} # remove first newline
-  rm -f /tmp/flashstore
-  result=$(echo "${input:1}" | $BLUEBASIC | sed '1,4d') # remove startup header
-  if [ "$result" = "$expected" ]
-  then
-    echo "** $test: SUCCESS"
-  else
-    echo "** $test: FAILURE"
-    echo "Result:
+      fi
+    done
+    expected=${expected:1} # remove first newline
+    rm -f /tmp/flashstore
+    result=$(echo "${input:1}" | $BLUEBASIC | sed '1,3d') # remove startup header
+    if [ "$result" = "$expected" ]
+    then
+      echo "** $test: SUCCESS"
+    else
+      echo "** $test: FAILURE"
+      echo "Result:
 '$result'
-Expected:
+  Expected:
 '$expected'"
-    exit 1
+      exit 1
+    fi
   fi
 done
