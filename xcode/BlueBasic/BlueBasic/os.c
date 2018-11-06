@@ -9,6 +9,7 @@
 #include <stdio.h>
 #include <unistd.h>
 #include <signal.h>
+#include <time.h>
 #include "os.h"
 
 // see main.c
@@ -282,4 +283,20 @@ unsigned char OS_serial_available(unsigned char port, unsigned char ch)
 
 int16 OS_get_temperature(uint8 wait) {
   return 2000;
+}
+
+uint32_t OS_get_millis(void) {
+  static uint32_t start_millis = 0xffffffff;
+  struct timespec t;
+  clock_gettime(CLOCK_MONOTONIC, &t);
+  uint32_t millis = t.tv_sec * 1000 + t.tv_nsec / 1000 / 1000;
+  if (start_millis == 0xffffffff) {
+    start_millis = millis;
+  }
+  return millis - start_millis;
+}
+
+void OS_init(void) {
+  // initialize start time
+  OS_get_millis();
 }

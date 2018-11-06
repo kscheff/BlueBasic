@@ -43,7 +43,6 @@
 #define ENABLE_PORT1    1
 #define SIMULATE_FLASH  1
 
-#define OS_init()
 #define OS_memset(A, B, C)    memset(A, B, C)
 #define OS_memcpy(A, B, C)    memcpy(A, B, C)
 #define OS_rmemcpy(A, B, C)   memmove(A, B, C)
@@ -54,7 +53,6 @@
 #define OS_putchar(A)         putchar(A)
 #define OS_breakcheck()       (0)
 #define OS_reboot(F)
-#define OS_get_millis()       (time(0) * 1000)
 #define OS_set_millis(V)      do { } while ((void)(V), 0)
 #define OS_interrupt_attach(A, B) 0
 #define OS_interrupt_detach(A)    0
@@ -67,6 +65,8 @@ extern char OS_timer_start(unsigned char id, unsigned long timeout, unsigned cha
 extern void OS_flashstore_init(void);
 extern void OS_flashstore_write(unsigned long faddr, unsigned char* value, unsigned char sizeinwords);
 extern void OS_flashstore_erase(unsigned long page);
+extern void OS_init(void);
+extern uint32_t OS_get_millis(void);
 
 
 #define OS_MAX_TIMER              2
