@@ -19,6 +19,13 @@
 #define kMfrName "https://github.com/kscheff/BlueBasic"
 #endif
 
+#if !__APPLE__
+#define int32_t long int  // 32 bit on the IAR EW8051
+#define uint32_t unsigned long int
+#define int16_t short     // 16 bit on the IAR EW8051
+#define uint16_t unsigned short
+#endif
+
 #if __APPLE__
 
 #include <stdio.h>

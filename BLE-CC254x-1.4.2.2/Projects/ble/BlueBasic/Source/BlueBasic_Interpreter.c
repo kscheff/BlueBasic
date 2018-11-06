@@ -102,7 +102,8 @@ static const char initmsg[]           = "BlueBasic " kVersion;
 static const char urlmsg[]            = kMfrName;
 static const char memorymsg[]         = " bytes free.";
 
-#define VAR_TYPE    long int
+
+#define VAR_TYPE    int32_t
 #define VAR_SIZE    (sizeof(VAR_TYPE))
 
 
