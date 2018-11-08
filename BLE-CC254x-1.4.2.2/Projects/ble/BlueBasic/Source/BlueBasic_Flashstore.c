@@ -339,11 +339,18 @@ unsigned char* flashstore_findspecial(unsigned long specialid)
 unsigned char** flashstore_deleteline(unsigned short id)
 {
   unsigned short** oldlineptr = flashstore_findclosest(id);
-  if (*oldlineptr != NULL && **oldlineptr == id)
-  {
-    lineindexend--;
-    flashstore_invalidate(*oldlineptr);
-    OS_memcpy(oldlineptr, oldlineptr + 1, sizeof(unsigned short*) * (lineindexend - oldlineptr));
+  if (lineindexstart != lineindexend) {
+    if (*oldlineptr != NULL && **oldlineptr == id)
+    {
+      lineindexend--;
+      flashstore_invalidate(*oldlineptr);
+      if (lineindexend == lineindexstart) {
+        // when this was the only line present we delete it
+        *oldlineptr = 0;
+      } else {
+        OS_memcpy(oldlineptr, oldlineptr + 1, sizeof(unsigned short*) * (lineindexend - oldlineptr));
+      }
+    }
   }
   return (unsigned char**)lineindexend;
 }
