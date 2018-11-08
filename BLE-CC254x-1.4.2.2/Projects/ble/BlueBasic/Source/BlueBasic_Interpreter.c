@@ -1628,10 +1628,12 @@ static VAR_TYPE expression(unsigned char mode)
       case OP_RSHIFT:
       {
         const unsigned char op1precedence = operator_precedence[op - OP_ADD];
-        for (;;)
+        //for (;;)
+        while(stackptr != stack)
         {
           const unsigned char op2 = stackptr[-1].op - OP_ADD;
-          if (stackptr == stack || op2 >= sizeof(operator_precedence) || op1precedence < operator_precedence[op2])
+          //if (stackptr == stack || op2 >= sizeof(operator_precedence) || op1precedence < operator_precedence[op2])
+          if (op2 >= sizeof(operator_precedence) || op1precedence < operator_precedence[op2])
           {
             break;
           }
