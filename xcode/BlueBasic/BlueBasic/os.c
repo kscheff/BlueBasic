@@ -240,7 +240,7 @@ void OS_flashstore_init(void)
   }
 }
 
-void OS_flashstore_write(unsigned long faddr, unsigned char* value, unsigned char sizeinwords)
+void OS_flashstore_write(unsigned long faddr, unsigned char* value, unsigned short sizeinwords)
 {
   memcpy(&__store[faddr << 2], value, sizeinwords << 2);
   FILE* fp = fopen(flash_file, "w");

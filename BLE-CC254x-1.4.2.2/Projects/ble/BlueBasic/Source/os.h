@@ -63,7 +63,7 @@ extern char OS_prompt_available(void);
 extern void OS_timer_stop(unsigned char id);
 extern char OS_timer_start(unsigned char id, unsigned long timeout, unsigned char repeat, unsigned short lineno);
 extern void OS_flashstore_init(void);
-extern void OS_flashstore_write(unsigned long faddr, unsigned char* value, unsigned char sizeinwords);
+extern void OS_flashstore_write(unsigned long faddr, unsigned char* value, unsigned short sizeinwords);
 extern void OS_flashstore_erase(unsigned long page);
 extern void OS_init(void);
 extern uint32_t OS_get_millis(void);
