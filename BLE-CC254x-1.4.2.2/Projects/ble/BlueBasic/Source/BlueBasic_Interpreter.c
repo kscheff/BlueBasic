@@ -156,26 +156,26 @@ enum
   KW_OPEN,
   KW_CLOSE,
   KW_READ,
-  KW_WRITE,
+  KW_WRITE,   // 168
   
   // -----------------------
   // Keyword spacers - to add main keywords later without messing up the numbering below
   //
 
-  KW_SPACE0,
+  KW_SPACE0, // 169
   KW_SPACE1,
   KW_SPACE2,
   KW_SPACE3,
   KW_SPACE4,
   KW_SPACE5,
   KW_SPACE6,
-  KW_SPACE7,
+  KW_SPACE7, // 176
 
   // -----------------------
   // Operators
   //
 
-  OP_ADD,
+  OP_ADD,  // 177
   OP_SUB,
   OP_MUL,
   OP_DIV,
