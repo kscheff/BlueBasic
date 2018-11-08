@@ -436,7 +436,7 @@ void flashstore_compact(unsigned char len, unsigned char* tempmemstart, unsigned
     unsigned char* flash = (unsigned char*)FLASHSTORE_PAGEBASE(selected);
     unsigned char* ptr;
     unsigned short mem_length = 0;    
-    for (ptr = flash + sizeof(flashpage_age); ptr <= flash + (FLASHSTORE_PAGESIZE-1); ) 
+    for (ptr = flash + sizeof(flashpage_age); (ptr <= flash + (FLASHSTORE_PAGESIZE-1)) && (ptr > flash); )
     {
       unsigned short id = *(unsigned short*)ptr;
       unsigned char len = FLASHSTORE_PADDEDSIZE(ptr[sizeof(unsigned short)]);
