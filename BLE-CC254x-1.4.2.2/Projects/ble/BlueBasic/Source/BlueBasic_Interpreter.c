@@ -1821,6 +1821,7 @@ unsigned char interpreter_run(LINENUM gofrom, unsigned char canreturn)
     }
     else
     {
+      SEMAPHORE_FLASH_WAIT();
       unsigned char** newend = flashstore_addline(txtpos);
       if (!newend)
       {
@@ -1830,9 +1831,11 @@ unsigned char interpreter_run(LINENUM gofrom, unsigned char canreturn)
         if (!newend)
         {
           // Still no space
+          SEMAPHORE_FLASH_SIGNAL();
           return IX_OUTOFMEMORY;
         }
       }
+      SEMAPHORE_FLASH_SIGNAL();
       program_end = newend;
     }
     heap = (unsigned char*)program_end;
@@ -5088,12 +5091,15 @@ wire_error:
 
 static unsigned char addspecial_with_compact(unsigned char* item)
 {
+  unsigned char ret = 1;
+  SEMAPHORE_FLASH_WAIT();
   if (!flashstore_addspecial(item))
   {
     flashstore_compact(item[sizeof(unsigned short)], heap, sp);
-    return flashstore_addspecial(item);
+    unsigned char ret = flashstore_addspecial(item);
   }
-  return 1;
+  SEMAPHORE_FLASH_SIGNAL();
+  return ret;
 }
 
 //
@@ -5505,7 +5511,12 @@ static unsigned char ble_read_callback(unsigned short handle, gattAttribute_t* a
     // when the DIM array is larger than 20 bytes (max payload)
     // the read CB will be called with increasing offset until all data is transported
     // block the interpreter until all data has been transported
-    bluebasic_block_execution = (moffset == var_len) ? 0 : 1;
+    //bluebasic_block_execution = (moffset == var_len) ? 0 : 1;
+    if (moffset == var_len) {
+      SEMAPHORE_READ_SIGNAL();
+    } else {
+      SEMAPHORE_READ_WAIT();
+    }
   }
   else
   {

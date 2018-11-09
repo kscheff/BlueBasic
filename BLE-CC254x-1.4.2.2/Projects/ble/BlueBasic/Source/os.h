@@ -209,6 +209,13 @@ extern bStatus_t GAP_SetParamValue( gapParamIDs_t paramID, uint16 paramValue );
 
 #define osal_run_system()
 
+#define SEMAPHORE_READ_WAIT()
+#define SEMAPHORE_READ_SIGNAL()
+#define SEMAPHORE_CONN_WAIT()
+#define SEMAPHORE_CONN_SIGNAL()
+#define SEMAPHORE_FLASH_WAIT()
+#define SEMAPHORE_FLASH_SIGNAL()
+
 #else /* __APPLE__ --------------------------------------------------------------------------- */
 
 #include "OSAL.h"
@@ -328,6 +335,20 @@ extern unsigned char bluebasic_block_execution;
 
 #define OS_flashstore_write(A, V, L)  HalFlashWrite(A, V, L)
 #define OS_flashstore_erase(P)        HalFlashErase(P)
+
+// block execution bits
+// bit 0: block when bluetooth read request blob
+// bit 1: block during ble connection
+// bit 2: block durig flash compact
+extern unsigned char bluebasic_block_execution;
+#define BLUEBASIC_BLOCK_SET(A)   bluebasic_block_execution |= (A)
+#define BLUEBASIC_BLOCK_CLR(A)   bluebasic_block_execution &= ~(A)
+#define SEMAPHORE_READ_WAIT()    BLUEBASIC_BLOCK_SET(0x01)
+#define SEMAPHORE_READ_SIGNAL()  BLUEBASIC_BLOCK_CLR(0x01)
+#define SEMAPHORE_CONN_WAIT()    BLUEBASIC_BLOCK_SET(0x02)
+#define SEMAPHORE_CONN_SIGNAL()  BLUEBASIC_BLOCK_CLR(0x02)
+#define SEMAPHORE_FLASH_WAIT()   BLUEBASIC_BLOCK_SET(0x04)
+#define SEMAPHORE_FLASH_SIGNAL() BLUEBASIC_BLOCK_CLR(0x04)
 
 extern void OS_init(void);
 extern void OS_openserial(void);

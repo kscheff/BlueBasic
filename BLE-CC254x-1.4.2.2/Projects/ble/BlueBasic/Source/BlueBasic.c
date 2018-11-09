@@ -538,7 +538,7 @@ uint16 BlueBasic_ProcessEvent( uint8 task_id, uint16 events )
   {
     timeSlice = 21;
 //    P1 &= 0xFE;
-    bluebasic_block_execution = 0;
+    SEMAPHORE_CONN_SIGNAL();
     // we clear the event and continue
     events ^= BLUEBASIC_EVENT_CON;
   }
@@ -696,13 +696,13 @@ static void bluebasic_StateNotificationCB( gaprole_States_t newState )
   case GAPROLE_STARTED:
     //P1 &= 0xFE;
     timeSlice = 101;
-    bluebasic_block_execution = 0;
+    SEMAPHORE_CONN_SIGNAL();
     break;
     
   case GAPROLE_ADVERTISING:
     //P1 &= 0xFE;
     timeSlice = 102;
-    bluebasic_block_execution = 0;
+    SEMAPHORE_CONN_SIGNAL();
     break;
     
   case GAPROLE_CONNECTED:
@@ -711,7 +711,7 @@ static void bluebasic_StateNotificationCB( gaprole_States_t newState )
       //GAPRole_GetParameter(GAPROLE_CONN_INTERVAL, &connInterval);
       timeSlice = 5;
 //      P1 |= 1;
-//      bluebasic_block_execution = 1;
+//      SEMAPHORE_CONN_WAIT();
       osal_start_timerEx(blueBasic_TaskID, BLUEBASIC_EVENT_CON, 6000);
     }
     break;
@@ -720,7 +720,7 @@ static void bluebasic_StateNotificationCB( gaprole_States_t newState )
     // Link terminated
 //    P1 &= 0xFE;
     timeSlice = 103;
-    bluebasic_block_execution = 0;
+    SEMAPHORE_CONN_SIGNAL();
     ble_init_ccc();
     break;
     
