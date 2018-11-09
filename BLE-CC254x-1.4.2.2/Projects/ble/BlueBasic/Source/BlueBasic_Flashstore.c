@@ -372,8 +372,8 @@ unsigned char** flashstore_deleteall(void)
     {
       const unsigned char* base = FLASHSTORE_PAGEBASE(pg);
       OS_flashstore_erase(FLASHSTORE_FPAGE(base));
-      OS_flashstore_write(FLASHSTORE_FADDR(base), (unsigned char*)&lastage, FLASHSTORE_WORDS(sizeof(lastage)));
       lastage++;
+      OS_flashstore_write(FLASHSTORE_FADDR(base), (unsigned char*)&lastage, FLASHSTORE_WORDS(sizeof(lastage)));
       orderedpages[pg].waste = 0;
       orderedpages[pg].free = FLASHSTORE_PAGESIZE - sizeof(flashpage_age);
     }
@@ -463,8 +463,8 @@ void flashstore_compact(unsigned char len, unsigned char* tempmemstart, unsigned
     // Erase the page
     OS_flashstore_erase(FLASHSTORE_FPAGE(flash));
     osal_run_system();
-    OS_flashstore_write(FLASHSTORE_FADDR(flash), (unsigned char*)&lastage, FLASHSTORE_WORDS(sizeof(lastage)));
     lastage++;
+    OS_flashstore_write(FLASHSTORE_FADDR(flash), (unsigned char*)&lastage, FLASHSTORE_WORDS(sizeof(lastage)));
     orderedpages[selected].waste = 0;
     orderedpages[selected].free = FLASHSTORE_PAGESIZE - mem_length - sizeof(flashpage_age);
 
