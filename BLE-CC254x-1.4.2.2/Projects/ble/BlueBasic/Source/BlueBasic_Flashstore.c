@@ -428,6 +428,7 @@ void flashstore_compact(unsigned char len, unsigned char* tempmemstart, unsigned
     return;
   }
   
+  char corrupted = 0;
   if (age != 0xFFFFFFFF)
   {
     // Found enough space for the line, compact the page
@@ -436,7 +437,8 @@ void flashstore_compact(unsigned char len, unsigned char* tempmemstart, unsigned
     unsigned char* ram = tempmemstart;
     unsigned char* flash = (unsigned char*)FLASHSTORE_PAGEBASE(selected);
     unsigned char* ptr;
-    unsigned short mem_length = 0;    
+    unsigned short mem_length = 0;
+    char deleted = 0;
     for (ptr = flash + sizeof(flashpage_age); (ptr <= flash + (FLASHSTORE_PAGESIZE-1)) && (ptr > flash); )
     {
       unsigned short id = *(unsigned short*)ptr;
@@ -448,6 +450,7 @@ void flashstore_compact(unsigned char len, unsigned char* tempmemstart, unsigned
       }
       else if (id != FLASHID_INVALID)
       {
+        corrupted |= (id != FLASHID_SPECIAL) && deleted;
         if (mem_length + len <= available)
         {
           OS_memcpy(ram, ptr, len);
@@ -456,6 +459,10 @@ void flashstore_compact(unsigned char len, unsigned char* tempmemstart, unsigned
         }
         else
           return;  // mem_length doesn't fit  
+      }
+      else
+      {
+        deleted = 1;
       }
       ptr += len;
     }
@@ -472,8 +479,11 @@ void flashstore_compact(unsigned char len, unsigned char* tempmemstart, unsigned
     flash += sizeof(flashpage_age);
     OS_flashstore_write(FLASHSTORE_FADDR(flash), tempmemstart, FLASHSTORE_WORDS(mem_length));
     osal_run_system();
-    // We corrupted memory, so we need to reinitialize
-    flashstore_init((unsigned char**)lineindexstart);
+    if (corrupted)
+    {
+      // We corrupted memory, so we need to reinitialize
+      flashstore_init((unsigned char**)lineindexstart);
+    }
   }
 }
 
