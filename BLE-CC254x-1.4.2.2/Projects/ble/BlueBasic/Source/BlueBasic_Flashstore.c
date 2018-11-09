@@ -49,6 +49,10 @@ typedef unsigned int flashpage_age;
 #endif
 static flashpage_age lastage = 1;
 
+#define VAR_TYPE    int32_t
+extern void printmsg(const char *msg);
+extern void printnum(signed char fieldsize, VAR_TYPE num);
+
 //
 // Flash item structure:
 //  <id:2><len:1><data:len>
@@ -393,10 +397,6 @@ unsigned int flashstore_freemem(void)
   }
   return free;
 }
-
-#define VAR_TYPE    long int
-extern void printmsg(const char *msg);
-extern void printnum(signed char fieldsize, VAR_TYPE num);
 
 void flashstore_compact(unsigned char len, unsigned char* tempmemstart, unsigned char* tempmemend)
 {
