@@ -106,6 +106,7 @@ static void flashpage_heapsort(void)
 
   for (i = count / 2; i >= 0; i--)
   {
+    osal_run_system();
     siftdown(i, count - 1);
   }
   for (i = count - 1; i >= 0; i--)
@@ -113,6 +114,7 @@ static void flashpage_heapsort(void)
     unsigned short* temp = lines[0];
     lines[0] = lines[i];
     lines[i] = temp;
+    osal_run_system();
     siftdown(0, i - 1);
   }
 }
@@ -161,11 +163,10 @@ unsigned char** flashstore_init(unsigned char** startmem)
         *lineindexend++ = (unsigned short*)ptr;
       }
       ptr += FLASHSTORE_PADDEDSIZE(ptr[sizeof(unsigned short)]);
-    }
-  
+      osal_run_system();
+    } 
     orderedpages[ordered].free = FLASHSTORE_PAGESIZE - (ptr - page);
     ordered++;
-    osal_run_system();
   }
 
   // We now have a set of program lines, indexed from "startmem" to "mem" which we need to sort
