@@ -30,6 +30,7 @@ static struct
 {
   unsigned short free;
   unsigned short waste;
+  unsigned short *special;
 } orderedpages[FLASHSTORE_NRPAGES];
 
 #define FLASHSTORE_PAGEBASE(IDX)  &flashstore[FLASHSTORE_PAGESIZE * (IDX)]
@@ -138,6 +139,7 @@ unsigned char** flashstore_init(unsigned char** startmem)
   for (page = flashstore; pnr--; page += FLASHSTORE_PAGESIZE)
   {
     orderedpages[ordered].waste = 0;
+    orderedpages[ordered].special = (unsigned short*)0;
     if (*(flashpage_age*)page > lastage)
     {
       lastage = *(flashpage_age*)page;
@@ -161,6 +163,12 @@ unsigned char** flashstore_init(unsigned char** startmem)
       {
         // Valid program line - record entry (sort later)
         *lineindexend++ = (unsigned short*)ptr;
+      }
+      else if (orderedpages[ordered].special == (unsigned short*)0)
+      {
+        // mark the first secial entry in the page
+        // for faster access via find_special
+        orderedpages[ordered].special = (unsigned short*) ptr;
       }
       ptr += FLASHSTORE_PADDEDSIZE(ptr[sizeof(unsigned short)]);
       osal_run_system();
@@ -294,6 +302,12 @@ unsigned char flashstore_addspecial(unsigned char* item)
     unsigned short* mem = (unsigned short*)(FLASHSTORE_PAGEBASE(pg) + FLASHSTORE_PAGESIZE - orderedpages[pg].free);
     OS_flashstore_write(FLASHSTORE_FADDR(mem), item, FLASHSTORE_WORDS(len));
     orderedpages[pg].free -= len;
+    if ( (orderedpages[pg].special != 0) && (mem < orderedpages[pg].special) || orderedpages[pg].special == 0 )
+    {
+      // the new entry is located before the saved one
+      // or its the first entry in this page
+      orderedpages[pg].special = mem;
+    }
     return 1;
   }
   else
@@ -308,6 +322,10 @@ unsigned char flashstore_deletespecial(unsigned long specialid)
   if (ptr)
   {
     flashstore_invalidate((unsigned short*)ptr);
+    unsigned char page = ((unsigned char*)ptr - flashstore) / FLASHSTORE_PAGESIZE;
+    if (orderedpages[page].special == (unsigned short*)ptr)
+      // we put 1 (impossible page pointer) as an indicator, to search
+      orderedpages[page].special = (unsigned short*)1; 
     return 1;
   }
   return 0;
@@ -316,22 +334,43 @@ unsigned char flashstore_deletespecial(unsigned long specialid)
 unsigned char* flashstore_findspecial(unsigned long specialid)
 {
   const unsigned char* page;
-  unsigned char pnr = FLASHSTORE_NRPAGES;
-  for (page = flashstore; pnr--; page += FLASHSTORE_PAGESIZE)
+  unsigned char pnr = 0;
+  for (page = flashstore; pnr < FLASHSTORE_NRPAGES; page += FLASHSTORE_PAGESIZE, pnr++)
   {
     const unsigned char* ptr;
-    for (ptr = page + sizeof(flashpage_age);
+    // when no special is marked then we don't need to search the page
+    if (orderedpages[pnr].special == 0)
+    {
+      continue;
+    }
+    if (orderedpages[pnr].special != (unsigned short*)1)
+    {
+      ptr = (unsigned char*)orderedpages[pnr].special;
+    }
+    else
+    {
+      ptr = page + sizeof(flashpage_age);
+    }
+    for ( ;
          (ptr <= page + (FLASHSTORE_PAGESIZE-1)) && (ptr > page);
          ptr += FLASHSTORE_PADDEDSIZE(ptr[sizeof(unsigned short)]))
     {
       unsigned short id = *(unsigned short*)ptr;
       if (id == FLASHID_FREE)
       {
+        if (orderedpages[pnr].special == (unsigned short*)1)
+        {
+          orderedpages[pnr].special = 0;
+        }
         break;
       }
-      else if (id == FLASHID_SPECIAL && *(unsigned long*)(ptr + FLASHSPECIAL_ITEM_ID) == specialid)
-      {
-        return (unsigned char*)ptr;
+      else if (id == FLASHID_SPECIAL) {
+        if (orderedpages[pnr].special == (unsigned short*)1)
+          orderedpages[pnr].special = (unsigned short*)ptr;
+        if (*(unsigned long*)(ptr + FLASHSPECIAL_ITEM_ID) == specialid)
+        {
+          return (unsigned char*)ptr;
+        }
       }
     }
   }
@@ -376,6 +415,7 @@ unsigned char** flashstore_deleteall(void)
       OS_flashstore_write(FLASHSTORE_FADDR(base), (unsigned char*)&lastage, FLASHSTORE_WORDS(sizeof(lastage)));
       orderedpages[pg].waste = 0;
       orderedpages[pg].free = FLASHSTORE_PAGESIZE - sizeof(flashpage_age);
+      orderedpages[pg].special = 0;
     }
     // keep OSAL spinning
     osal_run_system();
@@ -439,6 +479,7 @@ void flashstore_compact(unsigned char len, unsigned char* tempmemstart, unsigned
     unsigned char* ptr;
     unsigned short mem_length = 0;
     char deleted = 0;
+    unsigned short *special = 0;
     for (ptr = flash + sizeof(flashpage_age); (ptr <= flash + (FLASHSTORE_PAGESIZE-1)) && (ptr > flash); )
     {
       unsigned short id = *(unsigned short*)ptr;
@@ -451,6 +492,10 @@ void flashstore_compact(unsigned char len, unsigned char* tempmemstart, unsigned
       else if (id != FLASHID_INVALID)
       {
         corrupted |= (id != FLASHID_SPECIAL) && deleted;
+        if (special == 0 && id == FLASHID_SPECIAL)
+        {
+          special = (unsigned short *)(flash + mem_length + sizeof(flashpage_age));
+        }
         if (mem_length + len <= available)
         {
           OS_memcpy(ram, ptr, len);
@@ -474,6 +519,7 @@ void flashstore_compact(unsigned char len, unsigned char* tempmemstart, unsigned
     OS_flashstore_write(FLASHSTORE_FADDR(flash), (unsigned char*)&lastage, FLASHSTORE_WORDS(sizeof(lastage)));
     orderedpages[selected].waste = 0;
     orderedpages[selected].free = FLASHSTORE_PAGESIZE - mem_length - sizeof(flashpage_age);
+    orderedpages[selected].special = special;
 
     // Copy the old lines back in.
     flash += sizeof(flashpage_age);
