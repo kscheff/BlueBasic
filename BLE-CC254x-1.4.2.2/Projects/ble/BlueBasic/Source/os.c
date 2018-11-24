@@ -302,6 +302,7 @@ void OS_reboot(char flash)
     uint16 addr = OAD_IMG_B_PAGE * (HAL_FLASH_PAGE_SIZE / HAL_FLASH_WORD_SIZE);
     HalFlashWrite(addr, (uint8*)&zero, sizeof(zero));
 #else
+    HAL_DISABLE_INTERRUPTS();
     JumpToImageAorB = 0;
     // Simulate a reset for the Application code by an absolute jump to the expected INTVEC addr.
     asm("LJMP 0x0830");
