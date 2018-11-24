@@ -11,10 +11,23 @@
 		22FA2DB7197331050049CDB8 /* main.c in Sources */ = {isa = PBXBuildFile; fileRef = 22FA2DB6197331050049CDB8 /* main.c */; };
 		22FA2DC01973315F0049CDB8 /* BlueBasic_Interpreter.c in Sources */ = {isa = PBXBuildFile; fileRef = 22FA2DBF1973315F0049CDB8 /* BlueBasic_Interpreter.c */; };
 		22FA2DC4197335CE0049CDB8 /* os.c in Sources */ = {isa = PBXBuildFile; fileRef = 22FA2DC3197335CE0049CDB8 /* os.c */; };
+		2AE01AB72196E21500A94B03 /* os.c in Sources */ = {isa = PBXBuildFile; fileRef = 22FA2DC3197335CE0049CDB8 /* os.c */; };
+		2AE01AB82196E21500A94B03 /* main.c in Sources */ = {isa = PBXBuildFile; fileRef = 22FA2DB6197331050049CDB8 /* main.c */; };
+		2AE01AB92196E21500A94B03 /* BlueBasic_Interpreter.c in Sources */ = {isa = PBXBuildFile; fileRef = 22FA2DBF1973315F0049CDB8 /* BlueBasic_Interpreter.c */; };
+		2AE01ABA2196E21500A94B03 /* BlueBasic_Flashstore.c in Sources */ = {isa = PBXBuildFile; fileRef = 222635EF19BE5AD60031438D /* BlueBasic_Flashstore.c */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXCopyFilesBuildPhase section */
 		22FA2DB1197331050049CDB8 /* CopyFiles */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = /usr/share/man/man1/;
+			dstSubfolderSpec = 0;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 1;
+		};
+		2AE01ABC2196E21500A94B03 /* CopyFiles */ = {
 			isa = PBXCopyFilesBuildPhase;
 			buildActionMask = 2147483647;
 			dstPath = /usr/share/man/man1/;
@@ -80,11 +93,19 @@
 		22FA2DC3197335CE0049CDB8 /* os.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = os.c; sourceTree = "<group>"; };
 		22FA500A199BCF8800535BCE /* add03.test */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = add03.test; sourceTree = "<group>"; };
 		22FA500B199BD02300535BCE /* add04.test */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = add04.test; sourceTree = "<group>"; };
+		2AE01AC02196E21500A94B03 /* BlueBasic Test */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = "BlueBasic Test"; sourceTree = BUILT_PRODUCTS_DIR; };
 		B81A7E5619774A81007DFEC6 /* add10.test */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = add10.test; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
 		22FA2DB0197331050049CDB8 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		2AE01ABB2196E21500A94B03 /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -170,6 +191,7 @@
 			isa = PBXGroup;
 			children = (
 				22FA2DB3197331050049CDB8 /* BlueBasic */,
+				2AE01AC02196E21500A94B03 /* BlueBasic Test */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -207,6 +229,23 @@
 			productReference = 22FA2DB3197331050049CDB8 /* BlueBasic */;
 			productType = "com.apple.product-type.tool";
 		};
+		2AE01AB52196E21500A94B03 /* BlueBasic Test */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 2AE01ABD2196E21500A94B03 /* Build configuration list for PBXNativeTarget "BlueBasic Test" */;
+			buildPhases = (
+				2AE01AB62196E21500A94B03 /* Sources */,
+				2AE01ABB2196E21500A94B03 /* Frameworks */,
+				2AE01ABC2196E21500A94B03 /* CopyFiles */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = "BlueBasic Test";
+			productName = BlueBasic;
+			productReference = 2AE01AC02196E21500A94B03 /* BlueBasic Test */;
+			productType = "com.apple.product-type.tool";
+		};
 /* End PBXNativeTarget section */
 
 /* Begin PBXProject section */
@@ -229,6 +268,7 @@
 			projectRoot = "";
 			targets = (
 				22FA2DB2197331050049CDB8 /* BlueBasic */,
+				2AE01AB52196E21500A94B03 /* BlueBasic Test */,
 			);
 		};
 /* End PBXProject section */
@@ -242,6 +282,17 @@
 				22FA2DB7197331050049CDB8 /* main.c in Sources */,
 				22FA2DC01973315F0049CDB8 /* BlueBasic_Interpreter.c in Sources */,
 				222635F019BE5AD60031438D /* BlueBasic_Flashstore.c in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		2AE01AB62196E21500A94B03 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				2AE01AB72196E21500A94B03 /* os.c in Sources */,
+				2AE01AB82196E21500A94B03 /* main.c in Sources */,
+				2AE01AB92196E21500A94B03 /* BlueBasic_Interpreter.c in Sources */,
+				2AE01ABA2196E21500A94B03 /* BlueBasic_Flashstore.c in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -369,6 +420,30 @@
 			};
 			name = Release;
 		};
+		2AE01ABE2196E21500A94B03 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				HEADER_SEARCH_PATHS = (
+					"$(inherited)",
+					/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/include,
+				);
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				TEST_HOST = "";
+			};
+			name = Debug;
+		};
+		2AE01ABF2196E21500A94B03 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				HEADER_SEARCH_PATHS = (
+					"$(inherited)",
+					/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/include,
+				);
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				TEST_HOST = "";
+			};
+			name = Release;
+		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
@@ -386,6 +461,15 @@
 			buildConfigurations = (
 				22FA2DBD197331050049CDB8 /* Debug */,
 				22FA2DBE197331050049CDB8 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		2AE01ABD2196E21500A94B03 /* Build configuration list for PBXNativeTarget "BlueBasic Test" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				2AE01ABE2196E21500A94B03 /* Debug */,
+				2AE01ABF2196E21500A94B03 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
