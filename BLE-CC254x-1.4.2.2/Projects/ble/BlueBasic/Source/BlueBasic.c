@@ -595,22 +595,25 @@ uint16 BlueBasic_ProcessEvent( uint8 task_id, uint16 events )
     return (events ^ (events & BLUEBASIC_EVENT_TIMERS));
   }
   
+  
   if ( events & BLUEBASIC_EVENT_SERIAL )
   {
-    if (serial[0].onread && sbuf_read_pos == 16 )
+    uint8 len = Hal_UART_RxBufLen(HAL_UART_PORT_0);
+    if (serial[0].onread && sbuf_read_pos == 16)
     {
-      uint8 len = Hal_UART_RxBufLen(HAL_UART_PORT_0);
-      for ( ; len >= 16 ; len--)
+      for ( ; len >= 16 ; )
       {
 #ifdef PROCESS_SERIAL_DATA        
         if (sflow == 'V')
         {
           HalUARTRead(HAL_UART_PORT_0, &sbuf[0], 1);
+          --len;
           if (sbuf[0] == 0xAA)
           {
             uint8 parity = 0;
             uint8 cnt;
             HalUARTRead(HAL_UART_PORT_0, &sbuf[1], 15);
+            len -= 15;
             for (cnt=1; cnt < 15; )
             {
               parity ^= sbuf[cnt++];
