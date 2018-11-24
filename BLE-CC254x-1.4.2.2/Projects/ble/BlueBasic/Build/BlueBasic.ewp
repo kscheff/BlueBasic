@@ -8370,7 +8370,7 @@
           <state>HAL_I2C=TRUE</state>
           <state>HAL_I2C_SLAVE</state>
           <state>HAL_I2C_BUF_MAX=7</state>
-          <state>POWER_SAVING</state>
+          <state>xPOWER_SAVING</state>
           <state>xPLUS_BROADCASTER</state>
           <state>HAL_LCD=FALSE</state>
           <state>HAL_LED=FALSE</state>
@@ -8916,6 +8916,7 @@
         </option>
         <option>
           <name>XclFile</name>
+          <state>F:\github\BlueBasic\BLE-CC254x-1.4.2.2\Projects\ble\common\cc2540\cc254x_f256_imgB.xcl</state>
         </option>
         <option>
           <name>XclFileSlave</name>
