@@ -425,7 +425,7 @@ enum
 typedef struct
 {
   char frame_type;
-  unsigned short frame_size;
+  uint16_t frame_size;
 } frame_header;
 
 typedef struct
