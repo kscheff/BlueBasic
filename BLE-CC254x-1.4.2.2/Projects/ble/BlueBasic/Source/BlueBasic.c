@@ -544,8 +544,13 @@ uint16 BlueBasic_ProcessEvent( uint8 task_id, uint16 events )
   }
 
   if ( bluebasic_block_execution )
-    return 0;
-    
+//    return 0;  // discard all events
+    return events; // keep events spinning
+
+  // in case events come in we need to block
+  // until any previouse interpreter task returns
+  SEMAPHORE_YIELD_WAIT();
+
   // in case of a valid line number a yield is pending
   // so we clear the line number and let the interpreter run
   if (bluebasic_yield_linenum)
@@ -553,11 +558,13 @@ uint16 BlueBasic_ProcessEvent( uint8 task_id, uint16 events )
       unsigned short ln = bluebasic_yield_linenum;
       bluebasic_yield_linenum = 0;
       interpreter_run(ln, INTERPRETER_CAN_YIELD);
+      SEMAPHORE_YIELD_SIGNAL();
     }
   
   // return when yield event was present or a new yield is scheduled
   if ( (events & BLUEBASIC_EVENT_YIELD) || bluebasic_yield_linenum)
   {
+    SEMAPHORE_YIELD_SIGNAL();
     return (events & ~BLUEBASIC_EVENT_YIELD);
   }
 #endif // ENABLE_YIELD
@@ -571,6 +578,7 @@ uint16 BlueBasic_ProcessEvent( uint8 task_id, uint16 events )
         interpreter_run(blueBasic_interrupts[i].linenum, INTERPRETER_CAN_RETURN | INTERPRETER_CAN_YIELD);
       }
     }
+    SEMAPHORE_YIELD_SIGNAL();
     return (events ^ (events & BLUEBASIC_EVENT_INTERRUPTS));
   }
 
@@ -583,6 +591,7 @@ uint16 BlueBasic_ProcessEvent( uint8 task_id, uint16 events )
         interpreter_run(blueBasic_timers[i].linenum, i == DELAY_TIMER ? 0 : INTERPRETER_CAN_RETURN | INTERPRETER_CAN_YIELD);
       }
     }
+    SEMAPHORE_YIELD_SIGNAL();
     return (events ^ (events & BLUEBASIC_EVENT_TIMERS));
   }
   
@@ -625,6 +634,7 @@ uint16 BlueBasic_ProcessEvent( uint8 task_id, uint16 events )
         }
       }
     } 
+    SEMAPHORE_YIELD_SIGNAL();
     return (events ^ BLUEBASIC_EVENT_SERIAL);
   }
 
@@ -640,11 +650,13 @@ uint16 BlueBasic_ProcessEvent( uint8 task_id, uint16 events )
     {
       interpreter_run(i2c[0].onwrite, INTERPRETER_CAN_RETURN);
     }
+    SEMAPHORE_YIELD_SIGNAL();
     return (events ^ BLUEBASIC_EVENT_I2C);
   }
 #endif
   
   // Discard unknown events
+  SEMAPHORE_YIELD_SIGNAL();
   return 0;
 }
 

@@ -349,6 +349,8 @@ extern unsigned char bluebasic_block_execution;
 #define SEMAPHORE_CONN_SIGNAL()  BLUEBASIC_BLOCK_CLR(0x02)
 #define SEMAPHORE_FLASH_WAIT()   BLUEBASIC_BLOCK_SET(0x04)
 #define SEMAPHORE_FLASH_SIGNAL() BLUEBASIC_BLOCK_CLR(0x04)
+#define SEMAPHORE_YIELD_WAIT()   BLUEBASIC_BLOCK_SET(0x08)
+#define SEMAPHORE_YIELD_SIGNAL() BLUEBASIC_BLOCK_CLR(0x08)
 
 extern void OS_init(void);
 extern void OS_openserial(void);
