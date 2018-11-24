@@ -293,6 +293,7 @@ __no_init __data uint8 JumpToImageAorB @ 0x09;
 
 void OS_reboot(char flash)
 {
+  GAPRole_TerminateConnection();
  #ifdef FEATURE_OAD_HEADER
   if (flash)
   {
