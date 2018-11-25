@@ -23,6 +23,10 @@
 #endif
 #include "hal_uart.h"
 
+#ifdef HAL_UART_DMA  
+#include "hal_dma.h"
+#endif
+
 #define FILE_HANDLE_PROGRAM     0
 #define FILE_HANDLE_DATA        1
 #define FILE_HANDLE_MAX         (OS_MAX_FILE)
@@ -536,6 +540,9 @@ unsigned char OS_serial_close(unsigned char port)
 #endif  
   // HalUARTClose(0); - In the hal_uart.h include file, but not actually in the code
   HalUARTSuspend();
+#ifdef HAL_UART_DMA  
+  HAL_DMA_ABORT_CH( HAL_DMA_CH_RX );
+#endif
   P0SEL &= ~0x3c;  // select GPIO mode
   uart_stop_polling = 1;
 //  P0DIR &= ~0x08;
