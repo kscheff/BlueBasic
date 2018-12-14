@@ -256,7 +256,8 @@ char OS_interrupt_attach(unsigned char pin, unsigned short lineno)
 
   for (i = 0; i < OS_MAX_INTERRUPT; i++)
   {
-    if (blueBasic_interrupts[i].linenum == 0)
+    if (blueBasic_interrupts[i].linenum == 0
+        || blueBasic_interrupts[i].pin == pin)
     {
       blueBasic_interrupts[i].pin = pin;
       blueBasic_interrupts[i].linenum = lineno;
