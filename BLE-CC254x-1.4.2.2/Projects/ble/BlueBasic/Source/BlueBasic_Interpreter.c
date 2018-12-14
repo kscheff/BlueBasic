@@ -2764,7 +2764,7 @@ cmd_interrupt:
       i = 1 << PIN_MINOR(pin);
       if (PIN_MAJOR(pin) == 0)
       {
-        PICTL = (PICTL & 0x01) | falling;
+        PICTL = (PICTL & ~0x01) | falling;
         P0IEN |= i;
         IEN1 |= 1 << 5;
       }
@@ -2772,18 +2772,18 @@ cmd_interrupt:
       {
         if (PIN_MINOR(pin) < 4)
         {
-          PICTL = (PICTL & 0x02) | (falling << 1);
+          PICTL = (PICTL & ~0x02) | (falling << 1);
         }
         else
         {
-          PICTL = (PICTL & 0x04) | (falling << 2);
+          PICTL = (PICTL & ~0x04) | (falling << 2);
         }
         P1IEN |= i;
         IEN2 |= 1 << 4;
       }
       else
       {
-        PICTL = (PICTL & 0x08) | (falling << 3);
+        PICTL = (PICTL & ~0x08) | (falling << 3);
         P2IEN |= i;
         IEN2 |= 1 << 1;
       }
