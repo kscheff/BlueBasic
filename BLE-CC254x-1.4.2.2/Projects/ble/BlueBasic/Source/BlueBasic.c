@@ -135,10 +135,6 @@ uint8 blueBasic_TaskID;   // Task ID for internal task/event processing
  * EXTERNAL VARIABLES
  */
 
-extern uint8 sbuf_read_pos;
-extern unsigned char sbuf[];
-extern unsigned char sflow;
-
 /*********************************************************************
  * EXTERNAL FUNCTIONS
  */
@@ -596,49 +592,58 @@ uint16 BlueBasic_ProcessEvent( uint8 task_id, uint16 events )
   }
   
   
-  if ( events & BLUEBASIC_EVENT_SERIAL )
+  if ( events & BLUEBASIC_EVENT_SERIALS )
   {
-    uint8 len = Hal_UART_RxBufLen(HAL_UART_PORT_0);
-    if (serial[0].onread && sbuf_read_pos == 16)
-    {
-      for ( ; len >= 16 ; )
+    for ( i = 0 ; i < OS_MAX_SERIAL; i++)  
+    { 
+      if (events & (BLUEBASIC_EVENT_SERIAL << i))
       {
-#ifdef PROCESS_SERIAL_DATA        
-        if (sflow == 'V')
-        {
-          HalUARTRead(HAL_UART_PORT_0, &sbuf[0], 1);
-          --len;
-          if (sbuf[0] == 0xAA)
-          {
-            uint8 parity = 0;
-            uint8 cnt;
-            HalUARTRead(HAL_UART_PORT_0, &sbuf[1], 15);
-            len -= 15;
-            for (cnt=1; cnt < 15; )
-            {
-              parity ^= sbuf[cnt++];
-            }
-            //only send serial data when frame has no parity error
-            if (parity == sbuf[15])
-            {
-              sbuf_read_pos = 0;
-              interpreter_run(serial[0].onread, INTERPRETER_CAN_RETURN);
-            }
-            break;
-          }
-        }
-        else
+#if ((HAL_UART_PORT_0 != 0) || (HAL_UART_PORT_1 != 1) )
+#error HAL_UART_PORT_0/1 should have values of 0,1 respectivly!
 #endif
+        uint8 len = Hal_UART_RxBufLen(i);
+        if (serial[i].onread && serial[i].sbuf_read_pos == 16)
         {
-          HalUARTRead(HAL_UART_PORT_0, &sbuf[0], 16);
-          sbuf_read_pos = 0;
-          interpreter_run(serial[0].onread, INTERPRETER_CAN_RETURN);
-          break;
-        }
+          for ( ; len >= 16 ; )
+          {
+#ifdef PROCESS_SERIAL_DATA        
+            if (serial[i].sflow == 'V')
+            {
+              HalUARTRead(i, &serial[i].sbuf[0], 1);
+              --len;
+              if (serial[i].sbuf[0] == 0xAA)
+              {
+                uint8 parity = 0;
+                uint8 cnt;
+                HalUARTRead(i, &serial[i].sbuf[1], 15);
+                len -= 15;
+                for (cnt=1; cnt < 15; )
+                {
+                  parity ^= serial[i].sbuf[cnt++];
+                }
+                //only send serial data when frame has no parity error
+                if (parity == serial[i].sbuf[15])
+                {
+                  serial[i].sbuf_read_pos = 0;
+                  interpreter_run(serial[i].onread, INTERPRETER_CAN_RETURN);
+                }
+                break;
+              }
+            }
+            else
+#endif
+            {
+              HalUARTRead(i, &serial[i].sbuf[0], 16);
+              serial[i].sbuf_read_pos = 0;
+              interpreter_run(serial[i].onread, INTERPRETER_CAN_RETURN);
+              break;
+            }
+          }
+        } 
       }
-    } 
+    }
     SEMAPHORE_YIELD_SIGNAL();
-    return (events ^ BLUEBASIC_EVENT_SERIAL);
+    return (events ^ BLUEBASIC_EVENT_SERIALS);
   }
 
 #ifdef HAL_I2C         

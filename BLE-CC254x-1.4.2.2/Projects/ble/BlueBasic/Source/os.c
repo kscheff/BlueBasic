@@ -45,14 +45,6 @@ os_interrupt_t blueBasic_interrupts[OS_MAX_INTERRUPT];
 os_timer_t blueBasic_timers[OS_MAX_TIMER];
 os_discover_t blueBasic_discover;
 
-unsigned char sbuf[16];
-uint8 sbuf_read_pos = 16;
-uint8 uart_stop_polling = 1;
-
-#ifdef PROCESS_SERIAL_DATA
-unsigned char sflow;
-#endif
-
 struct program_header
 {
   char autorun;
@@ -68,6 +60,7 @@ struct
 
 // Serial
 os_serial_t serial[OS_MAX_SERIAL];
+uint8 uart_stop_polling = 1;
 
 #ifdef HAL_I2C
 // I2C
@@ -366,24 +359,24 @@ static void _uartCallback(uint8 port, uint8 event)
     return;
   }
 #endif
-  if (port != HAL_UART_PORT_0)
+  if (port != HAL_UART_PORT_0 && port != HAL_UART_PORT_1)
     return;
   if (event & (HAL_UART_RX_ABOUT_FULL | HAL_UART_RX_FULL)
-      && serial[0].onread
-        && sbuf_read_pos == 16 )
+      && serial[port].onread
+        && serial[port].sbuf_read_pos == 16 )
   {
-    uint8 len = Hal_UART_RxBufLen(HAL_UART_PORT_0);
+    uint8 len = Hal_UART_RxBufLen(port);
     if (len >= 16)
     {
-      HalUARTRead(HAL_UART_PORT_0, &sbuf[0], 16);
-      sbuf_read_pos = 0;
-      osal_set_event(blueBasic_TaskID, BLUEBASIC_EVENT_SERIAL);
+      HalUARTRead(port, &serial[port].sbuf[0], 16);
+      serial[port].sbuf_read_pos = 0;
+      osal_set_event(blueBasic_TaskID, BLUEBASIC_EVENT_SERIAL<<(port == HAL_UART_PORT_1));
     }
   }
   else if (event & HAL_UART_TX_EMPTY
-             && serial[0].onwrite )
+             && serial[port].onwrite )
   {
-    osal_set_event(blueBasic_TaskID, BLUEBASIC_EVENT_SERIAL);
+    osal_set_event(blueBasic_TaskID, BLUEBASIC_EVENT_SERIAL<<(port == HAL_UART_PORT_1));
   }
 }
 
@@ -399,45 +392,45 @@ static void _uartCallback(uint8 port, uint8 event)
     return;
   }
 #endif
-  if (port != HAL_UART_PORT_0)
+  if (port != HAL_UART_PORT_0 && port != HAL_UART_PORT_1)
     return;
   if (event & (HAL_UART_RX_ABOUT_FULL | HAL_UART_RX_FULL)
-      && serial[0].onread
-        && sbuf_read_pos == 16 )
+      && serial[port].onread
+        && serial[port].sbuf_read_pos == 16 )
   {
-    uint8 len = Hal_UART_RxBufLen(HAL_UART_PORT_0);
+    uint8 len = Hal_UART_RxBufLen(port);
     if ( len >= 16 )
     {
-      if (sflow == 'V')
+      if (serial[port].sflow == 'V')
       {
-        HalUARTRead(HAL_UART_PORT_0, &sbuf[0], 1);
-        if (sbuf[0] == 0xAA)
+        HalUARTRead(port, &serial[port].sbuf[0], 1);
+        if (serial[port].sbuf[0] == 0xAA)
         {
           uint8 parity = 0;
           uint8 cnt;
-          HalUARTRead(HAL_UART_PORT_0, &sbuf[1], 15);
+          HalUARTRead(port, &serial[port].sbuf[1], 15);
           for (cnt=1; cnt < 15; )
           {
-            parity ^= sbuf[cnt++];
+            parity ^= serial[port].sbuf[cnt++];
           }
           //only send serial data when frame has no parity error
-          if (parity == sbuf[15])
+          if (parity == serial[port].sbuf[15])
           {
-            sbuf_read_pos = 0;
-            osal_set_event(blueBasic_TaskID, BLUEBASIC_EVENT_SERIAL);
+            serial[port].sbuf_read_pos = 0;
+            osal_set_event(blueBasic_TaskID, BLUEBASIC_EVENT_SERIAL<<(port == HAL_UART_PORT_1));
           }
         }
       }
       else
       {
-        HalUARTRead(HAL_UART_PORT_0, &sbuf[0], 16);
-        sbuf_read_pos = 0;
-        osal_set_event(blueBasic_TaskID, BLUEBASIC_EVENT_SERIAL);
+        HalUARTRead(HAL_UART_PORT_0, &serial[port].sbuf[0], 16);
+        serial[port].sbuf_read_pos = 0;
+        osal_set_event(blueBasic_TaskID, BLUEBASIC_EVENT_SERIAL<<(port == HAL_UART_PORT_1));
       }
     } else if (event & HAL_UART_TX_EMPTY
-               && serial[0].onwrite )
+               && serial[port].onwrite )
     {
-      osal_set_event(blueBasic_TaskID, BLUEBASIC_EVENT_SERIAL);
+      osal_set_event(blueBasic_TaskID, BLUEBASIC_EVENT_SERIAL<<(port == HAL_UART_PORT_1));
     }
   }
 }
@@ -450,7 +443,10 @@ unsigned char OS_serial_open(unsigned char port, unsigned long baud, unsigned ch
 {
   halUARTCfg_t config;
   int cbaud;
-  
+  if (port > OS_MAX_SERIAL - 1)
+  {
+    return 1;
+  }
   switch (baud)
   {
     case 1000:
@@ -475,13 +471,13 @@ unsigned char OS_serial_open(unsigned char port, unsigned long baud, unsigned ch
       return 2;
   }
  
-  // Only support port 0, no-parity, 8-bits, 1 stop bit
+  // Only support port 0-1, no-parity, 8-bits, 1 stop bit
 #ifndef PROCESS_SERIAL_DATA 
-  if (port != 0 || parity != 'N' || bits != 8 || stop != 1 || (flow != 'H' && flow != 'N'))
+  if (port > (OS_MAX_SERIAL - 1) || parity != 'N' || bits != 8 || stop != 1 || (flow != 'H' && flow != 'N'))
 #else
   // additional option 'V' means preprocessing needs to be enabled
-  sflow = flow;
-  if (port != 0 || parity != 'N' || bits != 8 || stop != 1 || (flow != 'H' && flow != 'N' && flow != 'V'))
+  serial[port].sflow = flow;
+  if (port > (OS_MAX_SERIAL - 1) || parity != 'N' || bits != 8 || stop != 1 || (flow != 'H' && flow != 'N' && flow != 'V'))
 #endif
   {
     return 3;
@@ -511,21 +507,44 @@ unsigned char OS_serial_open(unsigned char port, unsigned long baud, unsigned ch
   prevent_sleep_flags |= 0x01;
 #endif
 #endif
-  HalUARTInit();
-  P0SEL |= 0x3c;  // select peripheral mode
-  if (HalUARTOpen(HAL_UART_PORT_0, &config) == HAL_UART_SUCCESS)
+  if (uart_stop_polling)
   {
-    serial[0].onread = onread;
-    serial[0].onwrite = onwrite;
+    HalUARTInit();
+  }
+  if (port == 0)
+  {
+    // P0(5) RX    
+    // P0(4) TX
+    // P0(3) RT
+    // P0(2) CT
+    P0SEL |= (flow == 'H') ? 0x3c : 0xc0;  // select peripheral mode
+  }
+  else
+  {
+    // for port 1 we use UART1 alternate 2 configuration
+    // P1(7) RX 
+    // P1(6) TX
+    // P1(5) RT
+    // P1(4) CT
+    P1SEL |= (flow == 'H') ? 0xf0 : 0xc0; // selecet peripheral mode
+    PERCFG |= 0x02; // select alt 2. location USART 1
+  }
+  if (HalUARTOpen(port, &config) == HAL_UART_SUCCESS)
+  {
+    serial[port].onread = onread;
+    serial[port].onwrite = onwrite;
 #ifdef PROCESS_SERIAL_DATA
-    sbuf_read_pos = 16;
+    serial[port].sbuf_read_pos = 16;
 #endif
+    if (onread != 0 || onwrite != 0)
+    {
 #if !(UART_USE_CALLBACK)  
-    uint32 periode = 160000UL / baud;
-    if (periode < 10)
-      periode = 10;
-    osal_start_reload_timer(blueBasic_TaskID, BLUEBASIC_EVENT_SERIAL, periode);
+      uint32 periode = 160000UL / baud;
+      if (periode < 10)
+        periode = 10;
+      osal_start_reload_timer(blueBasic_TaskID, BLUEBASIC_EVENT_SERIAL<<port , periode);
 #endif
+    }
     uart_stop_polling = 0;
     return 0;
   }
@@ -534,36 +553,72 @@ unsigned char OS_serial_open(unsigned char port, unsigned long baud, unsigned ch
 
 unsigned char OS_serial_close(unsigned char port)
 {
-  serial[0].onread = 0;
-  serial[0].onwrite = 0;
-#if !(UART_USE_CALLBACK)  
-  osal_stop_timerEx(blueBasic_TaskID, BLUEBASIC_EVENT_SERIAL);
+  if (port > (OS_MAX_SERIAL - 1))
+  {
+    return 0;
+  }
+  serial[port].onread = 0;
+  serial[port].onwrite = 0;
+#if !(UART_USE_CALLBACK)
+  osal_stop_timerEx(blueBasic_TaskID, BLUEBASIC_EVENT_SERIAL<<port);
 #endif
 #ifdef PROCESS_SERIAL_DATA
-    sbuf_read_pos = 16;
+  serial[port].sbuf_read_pos = 16;
 #endif  
+  unsigned char stop = 1;
+  for (unsigned char i = 0; i < OS_MAX_SERIAL; i++)
+  {
+    if (serial[i].onread || serial[i].onwrite)
+      stop = 0;
+  }
   // HalUARTClose(0); - In the hal_uart.h include file, but not actually in the code
-  HalUARTSuspend();
+  if (stop)
+  {
+    HalUARTSuspend();
+  }
 #ifdef HAL_UART_DMA  
-  HAL_DMA_ABORT_CH( HAL_DMA_CH_RX );
+#if HAL_UART_DMA == 1
+  if (port == 0)
+#else
+  if (port == 1)
 #endif
-  P0SEL &= ~0x3c;  // select GPIO mode
-  uart_stop_polling = 1;
+  {
+    // stop DMA for UART0
+    HAL_DMA_ABORT_CH( HAL_DMA_CH_RX );
+  }
+  else
+  {
+    // FIXME: stop interrupt for UART1
+  }
+#endif
+  if (port == 0)
+  {
+    P0SEL &= ~0x3c;  // select GPIO mode on P0
+  }  
+  else
+  {
+    P1SEL &= ~0xf0;  // select GPIO mode on P1
+  }
+  uart_stop_polling = stop;
 //  P0DIR &= ~0x08;
 //  P0 &= ~0x0c;
 //  P0INP |= 0x0c;   
 #ifdef POWER_SAVING
+  if (stop)
+  {
 #if HAL_UART_DMA
-  extern uint8 Hal_TaskID;
+    extern uint8 Hal_TaskID;
 #ifndef HAL_I2C
-  osal_pwrmgr_task_state(Hal_TaskID, PWRMGR_CONSERVE);
+    osal_pwrmgr_task_state(Hal_TaskID, PWRMGR_CONSERVE);
 #else
-  prevent_sleep_flags &= 0xFE;
-  if (!prevent_sleep_flags) {
-    osal_pwrmgr_task_state(Hal_TaskID, PWRMGR_CONSERVE);    
+    prevent_sleep_flags &= 0xFE;
+    if (!prevent_sleep_flags)
+    {
+      osal_pwrmgr_task_state(Hal_TaskID, PWRMGR_CONSERVE);    
+    }
+#endif
+#endif
   }
-#endif
-#endif
 #endif  
   return 1;
 }
@@ -584,9 +639,13 @@ short OS_serial_read(unsigned char port)
 #else
 short OS_serial_read(unsigned char port)
 {
-  if (sbuf_read_pos < 16)
+  if (port > OS_MAX_SERIAL)
   {
-    return sbuf[sbuf_read_pos++];
+    return -1;
+  }
+  if (serial[port].sbuf_read_pos < 16)
+  {
+    return serial[port].sbuf[serial[port].sbuf_read_pos++];
   }
   else
   {
@@ -604,12 +663,20 @@ unsigned char OS_serial_write(unsigned char port, unsigned char ch)
 #ifndef PROCESS_SERIAL_DATA
 unsigned char OS_serial_available(unsigned char port, unsigned char ch)
 {
-  return ch == 'R' ? Hal_UART_RxBufLen(HAL_UART_PORT_0) : Hal_UART_TxBufLen(HAL_UART_PORT_0);
+  if (port > OS_MAX_SERIAL -1)
+  {
+    return 0;
+  }
+  return ch == 'R' ? Hal_UART_RxBufLen(port == 0 ? HAL_UART_PORT_0 : HAL_UART_PORT_1) : Hal_UART_TxBufLen(port == 0 ? HAL_UART_PORT_0 : HAL_UART_PORT_1);
 }
 #else
 unsigned char OS_serial_available(unsigned char port, unsigned char ch)
 {
-  return ch == 'R' ? (16 - sbuf_read_pos) : Hal_UART_TxBufLen(HAL_UART_PORT_0);
+  if (port > OS_MAX_SERIAL -1)
+  {
+    return 0;
+  }
+  return ch == 'R' ? (16 - serial[port].sbuf_read_pos) : Hal_UART_TxBufLen(port == 0 ? HAL_UART_PORT_0 : HAL_UART_PORT_1);
 }
 #endif
 

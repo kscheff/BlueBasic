@@ -270,29 +270,35 @@ extern unsigned char blueBasic_TaskID;
 #define BLUEBASIC_START_DEVICE_EVT 0x0001
 #define BLUEBASIC_CONNECTION_EVENT 0x0002
 #define BLUEBASIC_INPUT_AVAILABLE 0x0004
+#define OS_MAX_SERIAL             2
 #define BLUEBASIC_EVENT_SERIAL    0x0008
+#define BLUEBASIC_EVENT_SERIALS   0x0018
 #define OS_MAX_TIMER              4
 #define DELAY_TIMER               3
-#define BLUEBASIC_EVENT_TIMER     0x0010
-#define BLUEBASIC_EVENT_TIMERS    0x00F0 // Num bits == OS_MAX_TIMER
+#define BLUEBASIC_EVENT_TIMER     0x0020
+#define BLUEBASIC_EVENT_TIMERS    0x01E0 // Num bits == OS_MAX_TIMER
 #define OS_MAX_INTERRUPT          4
-#define BLUEBASIC_EVENT_INTERRUPT 0x0100
-#define BLUEBASIC_EVENT_INTERRUPTS 0x0F00 // Num bits == OS_MAX_INTERRUPT
-#define BLUEBASIC_EVENT_I2C        0x1000
-#define BLUEBASIC_EVENT_YIELD      0x2000
-#define BLUEBASIC_EVENT_CON        0x4000
+#define BLUEBASIC_EVENT_INTERRUPT 0x0200
+#define BLUEBASIC_EVENT_INTERRUPTS 0x1E00 // Num bits == OS_MAX_INTERRUPT
+#define BLUEBASIC_EVENT_I2C        0x2000
+#define BLUEBASIC_EVENT_YIELD      0x4000
+#define BLUEBASIC_EVENT_CON        0x8000
 
 #define OS_AUTORUN_TIMEOUT        5000
 
 #define OS_MAX_FILE               16
 
-#define OS_MAX_SERIAL             1
 
 // Serial
 typedef struct
 {
   unsigned short onread;
   unsigned short onwrite;
+  unsigned char sbuf[16];
+  uint8 sbuf_read_pos; // = 16;
+#ifdef PROCESS_SERIAL_DATA
+  unsigned char sflow;
+#endif  
 } os_serial_t;
 extern os_serial_t serial[OS_MAX_SERIAL];
 

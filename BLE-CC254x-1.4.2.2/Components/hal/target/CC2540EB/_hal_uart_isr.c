@@ -275,11 +275,11 @@ static void HalUARTInitISR(void)
 
 #if (HAL_UART_ISR == 1)
   PERCFG &= ~HAL_UART_PERCFG_BIT;    // Set UART0 I/O location to P0.
+  ADCCFG &= ~HAL_UART_Px_RX_TX;      // Make sure ADC doesnt use this.
 #else
   PERCFG |= HAL_UART_PERCFG_BIT;     // Set UART1 I/O location to P1.
-#endif
   PxSEL  |= HAL_UART_Px_RX_TX;       // Enable Tx and Rx on P1.
-  ADCCFG &= ~HAL_UART_Px_RX_TX;      // Make sure ADC doesnt use this.
+#endif
   UxCSR = CSR_MODE;                  // Mode is UART Mode.
   UxUCR = UCR_FLUSH;                 // Flush it.
 }
@@ -301,20 +301,31 @@ static void HalUARTOpenISR(halUARTCfg_t *config)
                   (config->baudRate == HAL_UART_BR_19200) ||
                   (config->baudRate == HAL_UART_BR_38400) ||
                   (config->baudRate == HAL_UART_BR_57600) ||
-                  (config->baudRate == HAL_UART_BR_115200));
+                  (config->baudRate == HAL_UART_BR_115200) ||
+                  (config->baudRate == HAL_UART_BR_1000));
 
-  if (config->baudRate == HAL_UART_BR_57600 ||
-      config->baudRate == HAL_UART_BR_115200)
+  if (config->baudRate == HAL_UART_BR_1000)
   {
-    UxBAUD = 216;
+    UxBAUD = 6;
   }
   else
   {
-    UxBAUD = 59;
-  }
-
+    if (config->baudRate == HAL_UART_BR_57600 ||
+        config->baudRate == HAL_UART_BR_115200)
+    {
+      UxBAUD = 216;
+    }
+    else
+    {
+      UxBAUD = 59;
+    }
+  }  
+  
   switch (config->baudRate)
   {
+    case HAL_UART_BR_1000:
+      UxGCR = 5;
+      break;
     case HAL_UART_BR_9600:
       UxGCR = 8;
       break;

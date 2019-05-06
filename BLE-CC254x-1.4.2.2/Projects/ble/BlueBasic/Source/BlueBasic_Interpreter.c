@@ -1101,8 +1101,11 @@ static void clean_memory(void)
   }
   lineptr = NULL;
   
-  // Stop serial interface
-  OS_serial_close(0);
+  // Stop serial interfaces
+  for (unsigned char i = OS_MAX_SERIAL; i--; )
+  {
+    OS_serial_close(i);
+  }
 
 #ifdef HAL_I2C  
   // Stop i2c interface
@@ -1335,6 +1338,17 @@ static VAR_TYPE expression(unsigned char mode)
         ch = *++txtpos;
         if (ch == KW_SERIAL)
         {
+          unsigned char port = 0;
+          ignore_blanks();
+          if (!(txtpos[1] & KW_CONSTANT))
+          {
+            port = *++txtpos - '0';
+            if (port > (OS_MAX_SERIAL-1))
+            {
+              goto expr_error;
+            }
+            ignore_blanks();
+          }
           ch = txtpos[1];
           if (!(ch == KW_READ || ch == KW_WRITE) || txtpos[2] != ')')
           {
@@ -1345,7 +1359,7 @@ static VAR_TYPE expression(unsigned char mode)
           {
             goto expr_oom;
           }
-          *queueptr++ = OS_serial_available(0, ch == KW_READ ? 'R' : 'W');
+          *queueptr++ = OS_serial_available(port, ch == KW_READ ? 'R' : 'W');
         }
 #ifdef HAL_I2C
         else if (ch == KW_I2C)
@@ -2837,9 +2851,23 @@ cmd_interrupt:
   
 //
 // SERIAL <baud>,<parity:N|P>,<bits>,<stop>,<flow> [ONREAD GOSUB <linenum>] [ONWRITE GOSUB <linenum>]
+// or  
+// SERIAL #<port> <baud>,<parity:N|P>,<bits>,<stop>,<flow> [ONREAD GOSUB <linenum>] [ONWRITE GOSUB <linenum>]
 //
 cmd_serial:
   {
+    unsigned char port = 0;
+    if (*txtpos == '#')
+    {
+      txtpos++;
+      ignore_blanks();
+      port = expression(EXPR_COMMA);
+      if (port > (OS_MAX_SERIAL-1))
+      {
+        goto qwhat;
+      }
+    }
+    ignore_blanks();
     unsigned long baud = expression(EXPR_COMMA);
     ignore_blanks();
     unsigned char parity = *txtpos++;
@@ -2875,7 +2903,7 @@ cmd_serial:
       }
       onwrite = expression(EXPR_NORMAL);
     }
-    if (OS_serial_open(0, baud, parity, bits, stop, flow, onread, onwrite))
+    if (OS_serial_open(port, baud, parity, bits, stop, flow, onread, onwrite))
     {
       goto qwhat;
     }
@@ -3447,8 +3475,18 @@ cmd_close:
   {
     if (*txtpos == KW_SERIAL)
     {
+      unsigned char port = 0;
       txtpos++;
-      OS_serial_close(0);
+      ignore_blanks();
+      if (*txtpos != NL)
+      {
+        port = expression(EXPR_COMMA);
+        if (error_num || port > (OS_MAX_SERIAL-1))
+        {
+          goto qwhat;
+        }
+      }
+      OS_serial_close(port);
     }
 #ifdef HAL_I2C
     else if (*txtpos == KW_I2C)
@@ -3472,7 +3510,7 @@ cmd_close:
 //
 // READ #<0-3>, <variable>[, ...]
 //  Read from the currrent place in the numbered file into the variable
-// READ #SERIAL, <variable>[, ...]
+// READ #SERIAL, <variable>[, ...]  
 // READ #I2C, <variable>[, ...]
 cmd_read:
   {
@@ -3482,7 +3520,17 @@ cmd_read:
     }
     else if (*txtpos == KW_SERIAL)
     {
+      unsigned char port = 0;
       txtpos++;
+      ignore_blanks();
+      if (*txtpos != ',')
+      {
+        port = *txtpos++ - '0';
+        if (port > (OS_MAX_SERIAL-1))
+        {
+          goto qwhat;
+        }
+      }
       for (;;)
       {
         ignore_blanks();
@@ -3500,11 +3548,11 @@ cmd_read:
         {
           if (vframe->type == VAR_INT)
           {
-            *(VAR_TYPE*)ptr = OS_serial_read(0);
+            *(VAR_TYPE*)ptr = OS_serial_read(port);
           }
           else if (vframe->type == VAR_DIM_BYTE)
           {
-            *ptr = OS_serial_read(0);
+            *ptr = OS_serial_read(port);
           }
         }
         else if (vframe)
@@ -3515,7 +3563,7 @@ cmd_read:
           unsigned char alen = vframe->header.frame_size - sizeof(variable_frame);
           for (ptr = (unsigned char*)vframe + sizeof(variable_frame); alen; alen--)
           {
-            *ptr++ = OS_serial_read(0);
+            *ptr++ = OS_serial_read(port);
           }
         }
         else
@@ -3673,7 +3721,17 @@ cmd_write:
     }
     else if (*txtpos == KW_SERIAL)
     {
+      unsigned char port = 0;
       txtpos++;
+      ignore_blanks();
+      if (*txtpos != ',')
+      {
+        port = *txtpos++ - '0';
+        if (port > (OS_MAX_SERIAL - 1))
+        {
+          goto qwhat;
+        }
+      }
       for (;;)
       {
         ignore_blanks();
@@ -3691,11 +3749,11 @@ cmd_write:
         {
           if (vframe->type == VAR_DIM_BYTE)
           {
-            OS_serial_write(0, *ptr);
+            OS_serial_write(port, *ptr);
           }
           else
           {
-            OS_serial_write(0, *(VAR_TYPE*)ptr);
+            OS_serial_write(port, *(VAR_TYPE*)ptr);
           }
         }
         else if (vframe)
@@ -3707,7 +3765,7 @@ cmd_write:
           ptr = (unsigned char*)vframe + sizeof(variable_frame);
           for (alen = vframe->header.frame_size - sizeof(variable_frame); alen; alen--)
           {
-            OS_serial_write(0, *ptr++);
+            OS_serial_write(port, *ptr++);
           }
         }
         else if (*txtpos == NL)
@@ -3721,7 +3779,7 @@ cmd_write:
           {
             goto qwhat;
           }
-          OS_serial_write(0, val);
+          OS_serial_write(port, val);
         }
       }
       goto run_next_statement;
