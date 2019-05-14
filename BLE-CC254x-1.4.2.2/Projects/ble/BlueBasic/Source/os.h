@@ -9,7 +9,7 @@
 //
 
 
-#define kVersion "v0.11"
+#define kVersion "v0.12"
 
 #ifndef kProduct
 #define kProduct "BlueBasic"
