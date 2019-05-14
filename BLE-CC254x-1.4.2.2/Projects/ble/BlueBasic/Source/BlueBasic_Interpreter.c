@@ -3450,11 +3450,6 @@ cmd_open:
         {
           if (hasOffset && (unsigned short) (special & 0xffff) >= file->record)
           {
-            //delete rest of the file
-            for ( ; flashstore_deletespecial(special++); )
-            {
-               if (special % 16 == 0) osal_run_system();
-            }
             break;
           }
           // keep OSAL spinning
