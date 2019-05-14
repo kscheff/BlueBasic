@@ -153,31 +153,37 @@ extern void* memcpy(void *dest, const void *src, size_t len);
  * Profile Attributes - variables
  */
 
+#define DEVINFO_SHORTER_HEADER
+
 // Device Information Service attribute
 static CONST gattAttrType_t devInfoService = { ATT_BT_UUID_SIZE, devInfoServUUID };
 
 // System ID characteristic
-static uint8 devInfoSystemIdProps = GATT_PROP_READ;
+static CONST uint8 devInfoSystemIdProps = GATT_PROP_READ;
 static uint8 devInfoSystemId[DEVINFO_SYSTEM_ID_LEN] = {0, 0, 0, 0, 0, 0, 0, 0};
 
 // Model Number String characteristic
-static uint8 devInfoModelNumberProps = GATT_PROP_READ;
-static const uint8 devInfoModelNumber[] = "BLE-1.4.2.2";
+static CONST uint8 devInfoModelNumberProps = GATT_PROP_READ;
+static CONST uint8 devInfoModelNumber[] = "BLE-1.4.2.2";
 
+#ifndef DEVINFO_SHORTER_HEADER
 // Serial Number String characteristic
-static uint8 devInfoSerialNumberProps = GATT_PROP_READ;
-static const uint8 devInfoSerialNumber[] = "-";
+static CONST uint8 devInfoSerialNumberProps = GATT_PROP_READ;
+static CONST uint8 devInfoSerialNumber[] = "-";
+#endif
 
 // Firmware Revision String characteristic
-static uint8 devInfoFirmwareRevProps = GATT_PROP_READ;
-static const uint8 devInfoFirmwareRev[] = BUILD_TIMESTAMP;
+static CONST uint8 devInfoFirmwareRevProps = GATT_PROP_READ;
+static CONST uint8 devInfoFirmwareRev[] = BUILD_TIMESTAMP;
 
+#ifndef DEVINFO_SHORTER_HEADER
 // Hardware Revision String characteristic
-static uint8 devInfoHardwareRevProps = GATT_PROP_READ;
-static const uint8 devInfoHardwareRev[] = "-";
+static CONST uint8 devInfoHardwareRevProps = GATT_PROP_READ;
+static CONST uint8 devInfoHardwareRev[] = "-";
+#endif
 
 // Software Revision String characteristic
-static uint8 devInfoSoftwareRevProps = GATT_PROP_READ;
+static CONST uint8 devInfoSoftwareRevProps = GATT_PROP_READ;
 #ifdef kVersion
 static const uint8 devInfoSoftwareRev[] = kProduct " " kVersion;
 #else
@@ -185,18 +191,21 @@ static const uint8 devInfoSoftwareRev[] = kProduct "Loader";
 #endif
 
 // Manufacturer Name String characteristic
-static uint8 devInfoMfrNameProps = GATT_PROP_READ;
-static const uint8 devInfoMfrName[] = kMfrName;
+static CONST uint8 devInfoMfrNameProps = GATT_PROP_READ;
+static CONST uint8 devInfoMfrName[] = kMfrName;
 
+#ifndef DEVINFO_SHORTER_HEADER
 // IEEE 11073-20601 Regulatory Certification Data List characteristic
-static uint8 devInfo11073CertProps = GATT_PROP_READ;
-static const uint8 devInfo11073Cert[] =
+static CONST uint8 devInfo11073CertProps = GATT_PROP_READ;
+static CONST uint8 devInfo11073Cert[] =
 {
   DEVINFO_11073_BODY_EXP,      // authoritative body type
   0x00,                       // authoritative body structure type
                               // authoritative body data follows below:
   'e', 'x', 'p', 'e', 'r', 'i', 'm', 'e', 'n', 't', 'a', 'l'
 };
+#endif
+
 
 #ifndef DEVINFO_VID
 #define DEVINFO_VID 0x000D
@@ -208,7 +217,7 @@ static const uint8 devInfo11073Cert[] =
 
 // System ID characteristic
 static uint8 devInfoPnpIdProps = GATT_PROP_READ;
-static uint8 devInfoPnpId[DEVINFO_PNP_ID_LEN] =
+static const uint8 devInfoPnpId[DEVINFO_PNP_ID_LEN] =
 {
   1,                                      // Vendor ID source (1=Bluetooth SIG)
   LO_UINT16(DEVINFO_VID), HI_UINT16(DEVINFO_VID),   // Vendor ID (Texas Instruments)
@@ -235,7 +244,7 @@ static gattAttribute_t devInfoAttrTbl[] =
       { ATT_BT_UUID_SIZE, characterUUID },
       GATT_PERMIT_READ,
       0,
-      &devInfoSystemIdProps
+      (uint8 *)&devInfoSystemIdProps
     },
 
       // System ID Value
@@ -243,7 +252,7 @@ static gattAttribute_t devInfoAttrTbl[] =
         { ATT_BT_UUID_SIZE, devInfoSystemIdUUID },
         GATT_PERMIT_READ,
         0,
-        (uint8 *) devInfoSystemId
+        (uint8 *)&devInfoSystemId
       },
 
     // Model Number String Declaration
@@ -251,7 +260,7 @@ static gattAttribute_t devInfoAttrTbl[] =
       { ATT_BT_UUID_SIZE, characterUUID },
       GATT_PERMIT_READ,
       0,
-      &devInfoModelNumberProps
+      (uint8 *) &devInfoModelNumberProps
     },
 
       // Model Number Value
@@ -262,14 +271,17 @@ static gattAttribute_t devInfoAttrTbl[] =
         (uint8 *) devInfoModelNumber
       },
 
+#ifndef DEVINFO_SHORTER_HEADER      
     // Serial Number String Declaration
     {
       { ATT_BT_UUID_SIZE, characterUUID },
       GATT_PERMIT_READ,
       0,
-      &devInfoSerialNumberProps
+      (uint8 *) &devInfoSerialNumberProps
     },
+#endif
 
+#ifndef DEVINFO_SHORTER_HEADER    
       // Serial Number Value
       {
         { ATT_BT_UUID_SIZE, devInfoSerialNumberUUID },
@@ -277,13 +289,14 @@ static gattAttribute_t devInfoAttrTbl[] =
         0,
         (uint8 *) devInfoSerialNumber
       },
+#endif
 
     // Firmware Revision String Declaration
     {
       { ATT_BT_UUID_SIZE, characterUUID },
       GATT_PERMIT_READ,
       0,
-      &devInfoFirmwareRevProps
+      (uint8 *) &devInfoFirmwareRevProps
     },
 
       // Firmware Revision Value
@@ -294,14 +307,17 @@ static gattAttribute_t devInfoAttrTbl[] =
         (uint8 *) devInfoFirmwareRev
       },
 
+#ifndef DEVINFO_SHORTER_HEADER
     // Hardware Revision String Declaration
     {
       { ATT_BT_UUID_SIZE, characterUUID },
       GATT_PERMIT_READ,
       0,
-      &devInfoHardwareRevProps
+      (uint8 *) &devInfoHardwareRevProps
     },
+#endif
 
+#ifndef DEVINFO_SHORTER_HEADER
       // Hardware Revision Value
       {
         { ATT_BT_UUID_SIZE, devInfoHardwareRevUUID },
@@ -309,13 +325,14 @@ static gattAttribute_t devInfoAttrTbl[] =
         0,
         (uint8 *) devInfoHardwareRev
       },
-
+#endif
+      
     // Software Revision String Declaration
     {
       { ATT_BT_UUID_SIZE, characterUUID },
       GATT_PERMIT_READ,
       0,
-      &devInfoSoftwareRevProps
+      (uint8 *) &devInfoSoftwareRevProps
     },
 
       // Software Revision Value
@@ -331,7 +348,7 @@ static gattAttribute_t devInfoAttrTbl[] =
       { ATT_BT_UUID_SIZE, characterUUID },
       GATT_PERMIT_READ,
       0,
-      &devInfoMfrNameProps
+      (uint8 *) &devInfoMfrNameProps
     },
 
       // Manufacturer Name Value
@@ -342,14 +359,17 @@ static gattAttribute_t devInfoAttrTbl[] =
         (uint8 *) devInfoMfrName
       },
 
+#ifndef DEVINFO_SHORTER_HEADER      
     // IEEE 11073-20601 Regulatory Certification Data List Declaration
     {
       { ATT_BT_UUID_SIZE, characterUUID },
       GATT_PERMIT_READ,
       0,
-      &devInfo11073CertProps
+      (uint8 *) &devInfo11073CertProps
     },
+#endif
 
+#ifndef DEVINFO_SHORTER_HEADER    
       // IEEE 11073-20601 Regulatory Certification Data List Value
       {
         { ATT_BT_UUID_SIZE, devInfo11073CertUUID },
@@ -357,6 +377,7 @@ static gattAttribute_t devInfoAttrTbl[] =
         0,
         (uint8 *) devInfo11073Cert
       },
+#endif
 
     // PnP ID Declaration
     {
@@ -477,17 +498,22 @@ bStatus_t DevInfo_GetParameter( uint8 param, void *value )
     case DEVINFO_MODEL_NUMBER:
       memcpy(value, devInfoModelNumber, sizeof(devInfoModelNumber));
       break;
+      
+#ifndef DEVINFO_SHORTER_HEADER
     case DEVINFO_SERIAL_NUMBER:
       memcpy(value, devInfoSerialNumber, sizeof(devInfoSerialNumber));
       break;
-
+#endif
+      
     case DEVINFO_FIRMWARE_REV:
       memcpy(value, devInfoFirmwareRev, sizeof(devInfoFirmwareRev));
       break;
 
+#ifndef DEVINFO_SHORTER_HEADER      
     case DEVINFO_HARDWARE_REV:
       memcpy(value, devInfoHardwareRev, sizeof(devInfoHardwareRev));
       break;
+#endif
 
     case DEVINFO_SOFTWARE_REV:
       memcpy(value, devInfoSoftwareRev, sizeof(devInfoSoftwareRev));
@@ -497,10 +523,12 @@ bStatus_t DevInfo_GetParameter( uint8 param, void *value )
       memcpy(value, devInfoMfrName, sizeof(devInfoMfrName));
       break;
 
+#ifndef DEVINFO_SHORTER_HEADER
     case DEVINFO_11073_CERT_DATA:
       memcpy(value, devInfo11073Cert, sizeof(devInfo11073Cert));
       break;
-
+#endif
+      
     case DEVINFO_PNP_ID:
       memcpy(value, devInfoPnpId, sizeof(devInfoPnpId));
       break;
@@ -572,6 +600,7 @@ static bStatus_t devInfo_ReadAttrCB( uint16 connHandle, gattAttribute_t *pAttr,
       }
       break;
 
+#ifndef DEVINFO_SHORTER_HEADER
     case SERIAL_NUMBER_UUID:
       // verify offset
       if (offset > (sizeof(devInfoSerialNumber) - 1))
@@ -587,7 +616,8 @@ static bStatus_t devInfo_ReadAttrCB( uint16 connHandle, gattAttribute_t *pAttr,
         memcpy(pValue, &devInfoSerialNumber[offset], *pLen);
       }
       break;
-
+#endif
+      
     case FIRMWARE_REV_UUID:
       // verify offset
       if (offset > (sizeof(devInfoFirmwareRev) - 1))
@@ -604,6 +634,7 @@ static bStatus_t devInfo_ReadAttrCB( uint16 connHandle, gattAttribute_t *pAttr,
       }
       break;
 
+#ifndef DEVINFO_SHORTER_HEADER      
     case HARDWARE_REV_UUID:
       // verify offset
       if (offset > (sizeof(devInfoHardwareRev) - 1))
@@ -619,7 +650,8 @@ static bStatus_t devInfo_ReadAttrCB( uint16 connHandle, gattAttribute_t *pAttr,
         memcpy(pValue, &devInfoHardwareRev[offset], *pLen);
       }
       break;
-
+#endif
+      
     case SOFTWARE_REV_UUID:
       // verify offset
       if (offset > (sizeof(devInfoSoftwareRev) - 1))
@@ -652,6 +684,7 @@ static bStatus_t devInfo_ReadAttrCB( uint16 connHandle, gattAttribute_t *pAttr,
       }
       break;
 
+#ifndef DEVINFO_SHORTER_HEADER
     case IEEE_11073_CERT_DATA_UUID:
       // verify offset
       if (offset > sizeof(devInfo11073Cert))
@@ -667,7 +700,8 @@ static bStatus_t devInfo_ReadAttrCB( uint16 connHandle, gattAttribute_t *pAttr,
         memcpy(pValue, &devInfo11073Cert[offset], *pLen);
       }
       break;
-
+#endif 
+      
     case PNP_ID_UUID:
       // verify offset
       if (offset > sizeof(devInfoPnpId))
