@@ -3446,16 +3446,20 @@ cmd_open:
       case FS_APPEND: // Append
       {
         file->action = 'W';
-        unsigned short stop = file->record;
-        file->record = 0;
-        for (unsigned long special = FS_MAKE_FILE_SPECIAL(file->filename, 0); flashstore_findspecial(special); special++, file->record++)
+        for (unsigned long special = FS_MAKE_FILE_SPECIAL(file->filename, 0); flashstore_findspecial(special); special++)
         {
-          if (hasOffset && file->record == stop)
+          if (hasOffset && (unsigned short) (special & 0xffff) >= file->record)
+          {
+            //delete rest of the file
+            for ( ; flashstore_deletespecial(special++); )
+            {
+               if (special % 16 == 0) osal_run_system();
+            }
             break;
+          }
           // keep OSAL spinning
           if (special % 16 == 0) osal_run_system();          
         }
-        file->record %= file->modulo; 
         break;
       }
       default:
