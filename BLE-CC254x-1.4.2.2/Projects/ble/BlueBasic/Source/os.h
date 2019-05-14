@@ -270,7 +270,13 @@ extern unsigned char blueBasic_TaskID;
 #define BLUEBASIC_START_DEVICE_EVT 0x0001
 #define BLUEBASIC_CONNECTION_EVENT 0x0002
 #define BLUEBASIC_INPUT_AVAILABLE 0x0004
+#ifdef HAL_UART_DMA
+#ifdef HAL_UART_ISR
 #define OS_MAX_SERIAL             2
+#else
+#define OS_MAX_SERIAL             1
+#endif
+#endif
 #define BLUEBASIC_EVENT_SERIAL    0x0008
 #define BLUEBASIC_EVENT_SERIALS   0x0018
 #define OS_MAX_TIMER              4
