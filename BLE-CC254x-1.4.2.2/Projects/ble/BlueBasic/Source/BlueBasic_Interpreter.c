@@ -528,8 +528,16 @@ unsigned short timeSlice = 20;
     ((VAR_TYPE*)variables_begin)[vname] = (V)->ovalue; \
   } while(0)
 
-#define CHECK_SP_OOM(S,E)   if (sp - (S) < heap) goto E; else sp -= (S)
-#define CHECK_HEAP_OOM(S,E) if (heap + (S) > sp) goto E; else heap += (S)
+
+#define CHECK_MIN_MEMORY() minMemory = (sp - heap < minMemory) ? (sp - heap) : minMemory
+#ifdef CHECK_MIN_MEMORY
+static unsigned short minMemory;  
+#else
+#define CHECK_MIN_MEMORY()
+#endif
+
+#define CHECK_SP_OOM(S,E)   if (sp - (S) < heap) goto E; else {sp -= (S); CHECK_MIN_MEMORY();}
+#define CHECK_HEAP_OOM(S,E) if (heap + (S) > sp) goto E; else {heap += (S); CHECK_MIN_MEMORY();};
 
 #ifdef SIMULATE_PINS
 static unsigned char P0DIR, P1DIR, P2DIR;
@@ -1142,6 +1150,9 @@ static void clean_memory(void)
     ptr += ((frame_header*)ptr)->frame_size;
   }
   heap = (unsigned char*)program_end;
+#ifdef CHECK_MIN_MEMORY  
+  minMemory = sp - heap;
+#endif  
 }
 
 // -------------------------------------------------------------------------------------------
@@ -1709,6 +1720,9 @@ void interpreter_init()
   sp = variables_begin;
   program_end = flashstore_init(program_start);
   heap = (unsigned char*)program_end;
+#ifdef CHECK_MIN_MEMORY
+  minMemory = sp - heap;
+#endif
   //interpreter_banner();
 }
 
@@ -2495,6 +2509,11 @@ mem:
   printmsg(memorymsg);
   printnum(0, sp - heap);
   printmsg(" bytes on heap free.");
+#ifdef CHECK_MIN_MEMORY
+  CHECK_MIN_MEMORY();
+  printnum(0, minMemory);
+  printmsg(" bytes lowest free heap.");
+#endif  
 #if OSALMEM_METRICS
   extern uint16 blkMax;  // Max cnt of all blocks ever seen at once.
   extern uint16 blkCnt;  // Current cnt of all blocks.
