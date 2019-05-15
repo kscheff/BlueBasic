@@ -302,7 +302,7 @@ unsigned char flashstore_addspecial(unsigned char* item)
     unsigned short* mem = (unsigned short*)(FLASHSTORE_PAGEBASE(pg) + FLASHSTORE_PAGESIZE - orderedpages[pg].free);
     OS_flashstore_write(FLASHSTORE_FADDR(mem), item, FLASHSTORE_WORDS(len));
     orderedpages[pg].free -= len;
-    if ( (orderedpages[pg].special != 0) && (mem < orderedpages[pg].special) || orderedpages[pg].special == 0 )
+    if ( ((orderedpages[pg].special != 0) && (mem < orderedpages[pg].special)) || orderedpages[pg].special == 0 )
     {
       // the new entry is located before the saved one
       // or its the first entry in this page
