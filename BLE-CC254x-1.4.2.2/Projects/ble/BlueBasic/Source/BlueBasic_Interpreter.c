@@ -726,7 +726,7 @@ static void tokenize(void)
           *writepos++ = table[1];
         }
         // Skip whitespace
-        while (c = *readpos, c == WS_SPACE || c == WS_TAB)
+        while ((void)(c = *readpos), c == WS_SPACE || c == WS_TAB)
         {
           readpos++;
         }
