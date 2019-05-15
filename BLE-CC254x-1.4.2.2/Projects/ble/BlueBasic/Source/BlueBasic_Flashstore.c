@@ -434,7 +434,7 @@ unsigned int flashstore_freemem(void)
   unsigned char pg;
   for (pg = 0; pg < FLASHSTORE_NRPAGES; pg++)
   {
-    free += orderedpages[pg].free;
+    free += orderedpages[pg].free + orderedpages[pg].waste;
   }
   return free;
 }
