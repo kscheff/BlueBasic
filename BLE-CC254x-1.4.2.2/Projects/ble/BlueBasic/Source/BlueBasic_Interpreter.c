@@ -504,15 +504,16 @@ static VAR_TYPE yield_time;
 unsigned short timeSlice = 20;
 #endif
 
+#define VAR_COUNT 26
 #define VARIABLE_INT_ADDR(F)    (((VAR_TYPE*)variables_begin) + ((F) - 'A'))
 #define VARIABLE_INT_GET(F)     (*VARIABLE_INT_ADDR(F))
 #define VARIABLE_INT_SET(F,V)   (*VARIABLE_INT_ADDR(F) = (V))
 
-#define VARIABLE_IS_EXTENDED(F)  (vname = (F) - 'A', (*(variables_begin + 26 * VAR_SIZE + (vname >> 3)) & (1 << (vname & 7))))
+#define VARIABLE_IS_EXTENDED(F)  (vname = (F) - 'A', (*(variables_begin + VAR_COUNT * VAR_SIZE + (vname >> 3)) & (1 << (vname & 7))))
 #define VARIABLE_SAVE(V) \
   do { \
     unsigned char vname = (V)->name - 'A'; \
-    unsigned char* v = variables_begin + 26 * VAR_SIZE + (vname >> 3); \
+    unsigned char* v = variables_begin + VAR_COUNT * VAR_SIZE + (vname >> 3); \
     VAR_TYPE* p = ((VAR_TYPE*)variables_begin) + vname; \
     vname = 1 << (vname & 7); \
     (V)->oflags = *v & vname; \
@@ -523,7 +524,7 @@ unsigned short timeSlice = 20;
 #define VARIABLE_RESTORE(V) \
   do { \
     unsigned char vname = (V)->name - 'A'; \
-    unsigned char* v = variables_begin + 26 * VAR_SIZE + (vname >> 3); \
+    unsigned char* v = variables_begin + VAR_COUNT * VAR_SIZE + (vname >> 3); \
     *v = (*v & (255 - (1 << (vname & 7)))) | (V)->oflags; \
     ((VAR_TYPE*)variables_begin)[vname] = (V)->ovalue; \
   } while(0)
@@ -1121,7 +1122,7 @@ static void clean_memory(void)
 #endif
   
   // Reset variables to 0 and remove all types
-  OS_memset(variables_begin, 0, 26 * VAR_SIZE + 4);
+  OS_memset(variables_begin, 0, VAR_COUNT * VAR_SIZE + 4);
   
   // Reset file handles
   OS_memset(files, 0, sizeof(files));
@@ -1716,7 +1717,7 @@ void interpreter_init()
 #endif
   program_start = OS_malloc(kRamSize);
   OS_memset(program_start, 0, kRamSize);
-  variables_begin = (unsigned char*)program_start + kRamSize - 26 * VAR_SIZE - 4; // 4 bytes = 32 bits of flags
+  variables_begin = (unsigned char*)program_start + kRamSize - VAR_COUNT * VAR_SIZE - 4; // 4 bytes = 32 bits of flags
   sp = variables_begin;
   program_end = flashstore_init(program_start);
   heap = (unsigned char*)program_end;
