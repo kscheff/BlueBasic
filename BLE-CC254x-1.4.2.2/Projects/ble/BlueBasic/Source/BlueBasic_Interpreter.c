@@ -5167,12 +5167,13 @@ wire_error:
 
 static unsigned char addspecial_with_compact(unsigned char* item)
 {
-  unsigned char ret = 1;
+  unsigned char ret;
   SEMAPHORE_FLASH_WAIT();
-  if (!flashstore_addspecial(item))
+  ret = flashstore_addspecial(item);
+  if (!ret )
   {
     flashstore_compact(item[sizeof(unsigned short)], heap, sp);
-    unsigned char ret = flashstore_addspecial(item);
+    ret = flashstore_addspecial(item);
   }
   SEMAPHORE_FLASH_SIGNAL();
   return ret;
