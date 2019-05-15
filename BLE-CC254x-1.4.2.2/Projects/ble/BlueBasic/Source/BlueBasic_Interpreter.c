@@ -1547,7 +1547,21 @@ static VAR_TYPE expression(unsigned char mode)
                 {
                   goto expr_error;
                 }
-                queueptr[-1] = flashstore_findspecial(FS_MAKE_FILE_SPECIAL(files[top].filename, files[top].record)) ? 0 : 1;
+                else
+                {
+                  unsigned char* special = flashstore_findspecial(FS_MAKE_FILE_SPECIAL(files[top].filename, files[top].record));
+                  if (special)
+                  {
+                    // check if poffset is at the end, so we look ahead into next record
+                    unsigned char len = special[FLASHSPECIAL_DATA_LEN];
+                    if (files[top].poffset == len)
+                    {
+                      unsigned short record = (files[top].record + 1) % files[top].modulo;
+                      special = flashstore_findspecial(FS_MAKE_FILE_SPECIAL(files[top].filename, record));
+                    }
+                  }
+                  queueptr[-1] = special ? 0 : 1;
+                }
                 break;
 #ifdef ENABLE_PORT0
               case KW_PIN_P0:
