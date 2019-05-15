@@ -504,7 +504,6 @@ static VAR_TYPE yield_time;
 unsigned short timeSlice = 20;
 #endif
 
-#define VAR_COUNT 26
 #define VARIABLE_INT_ADDR(F)    (((VAR_TYPE*)variables_begin) + ((F) - 'A'))
 #define VARIABLE_INT_GET(F)     (*VARIABLE_INT_ADDR(F))
 #define VARIABLE_INT_SET(F,V)   (*VARIABLE_INT_ADDR(F) = (V))
@@ -2508,7 +2507,7 @@ print:
 mem:
   printnum(0, flashstore_freemem());
   printmsg(memorymsg);
-  printnum(0, (VAR_TYPE)(sp - heap));
+  printnum(0, sp - heap);
   printmsg(" bytes on heap free.");
 #ifdef CHECK_MIN_MEMORY
   CHECK_MIN_MEMORY();
@@ -4188,7 +4187,7 @@ cmd_i2c:
     case KW_READ:
     {
       unsigned char* rdata = NULL;
-      unsigned char* data = NULL;
+      unsigned char* data;
       unsigned char len = 0;
       unsigned char i = 0;
       unsigned char* ptr = heap;
@@ -5168,13 +5167,12 @@ wire_error:
 
 static unsigned char addspecial_with_compact(unsigned char* item)
 {
-  unsigned char ret;
+  unsigned char ret = 1;
   SEMAPHORE_FLASH_WAIT();
-  ret = flashstore_addspecial(item);
-  if (!ret )
+  if (!flashstore_addspecial(item))
   {
     flashstore_compact(item[sizeof(unsigned short)], heap, sp);
-    ret = flashstore_addspecial(item);
+    unsigned char ret = flashstore_addspecial(item);
   }
   SEMAPHORE_FLASH_SIGNAL();
   return ret;
