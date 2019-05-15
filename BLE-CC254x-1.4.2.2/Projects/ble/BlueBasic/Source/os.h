@@ -69,9 +69,9 @@ extern void OS_init(void);
 extern uint32_t OS_get_millis(void);
 
 
-#define OS_MAX_TIMER              2
+#define OS_MAX_TIMER              4
 #define BLUEBASIC_EVENT_TIMER     0x0001
-#define DELAY_TIMER               1
+#define DELAY_TIMER               3
 #define OS_MAX_INTERRUPT          1
 #define BLUEBASIC_EVENT_INTERRUPT 0x0100
 #define OS_AUTORUN_TIMEOUT        5000
@@ -215,6 +215,8 @@ extern bStatus_t GAP_SetParamValue( gapParamIDs_t paramID, uint16 paramValue );
 #define SEMAPHORE_CONN_SIGNAL()
 #define SEMAPHORE_FLASH_WAIT()
 #define SEMAPHORE_FLASH_SIGNAL()
+
+#define OS_MAX_SERIAL 2
 
 #else /* __APPLE__ --------------------------------------------------------------------------- */
 

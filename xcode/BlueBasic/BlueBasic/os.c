@@ -20,11 +20,15 @@ extern char *flash_file;
 struct
 {
   unsigned short lineno;
+  unsigned char repeat;
+  uint32_t periode;
+  uint32_t fireTime;
 } timers[OS_MAX_TIMER];
 
 os_discover_t blueBasic_discover;
 
 static char alarmfire;
+static char alarm_active = 0;
 static unsigned char* bstart;
 static unsigned char* bend;
 
@@ -53,9 +57,28 @@ char OS_prompt_available(void)
         }
         if (alarmfire)
         {
-          alarmfire = 0;
-          timers[0].lineno && interpreter_run(timers[0].lineno, 1);
-          timers[1].lineno && interpreter_run(timers[1].lineno, 0);
+          //alarmfire = 0;
+          uint32_t millis = OS_get_millis();
+          //printf("tick %d\n", millis);
+          for (unsigned char id = 0; id < OS_MAX_TIMER; id++)
+          {
+            if ((timers[id].lineno != 0) && (timers[id].fireTime <= millis))
+            {
+              printf("run timer %d:  millis=%d, fireTime=%d, periode=%d, repeat=%d \n", id, millis, timers[id].fireTime, timers[id].periode, timers[id].repeat);
+              unsigned short lineno = timers[id].lineno;
+              if (id != DELAY_TIMER && timers[id].repeat)
+              {
+                timers[id].fireTime += timers[id].periode;
+              }
+              else
+              {
+                timers[id].lineno = 0;
+              }
+              interpreter_run(lineno, id == DELAY_TIMER ? 0 : INTERPRETER_CAN_YIELD | INTERPRETER_CAN_RETURN);
+            }
+          }
+//          timers[0].lineno && interpreter_run(timers[0].lineno, 1);
+//          timers[1].lineno && interpreter_run(timers[1].lineno, 0);
         }
         break;
       case '\n':
@@ -96,29 +119,47 @@ static void alarmhandler(int sig)
   alarmfire = 1;
 }
 
+
 void OS_timer_stop(unsigned char id)
 {
-  alarm(0);
-  alarmfire = 0;
+  unsigned char stop = 1;
   timers[id].lineno = 0;
+  timers[id].fireTime = 0;
+  timers[id].periode = 0;
+  timers[id].repeat = 0;
+  for (unsigned char id = 0; id < OS_MAX_TIMER; id++)
+  {
+    if (timers[id].lineno)
+      stop = 0;
+  }
+  if (stop)
+  {
+    alarm(0);
+    alarmfire = 0;
+    alarm_active = 0;
+  }
 }
 
 char OS_timer_start(unsigned char id, unsigned long timeout, unsigned char repeat, unsigned short lineno)
 {
-  static char first = 1;
-  if (first)
-  {
-    first = 0;
-    alarmfire = 0;
-    struct sigaction act = { alarmhandler, 0, 0 };
-    sigaction(SIGALRM, &act, NULL);
-  }
   if (id >= OS_MAX_TIMER)
   {
     return 0;
   }
+  printf("setting timer %d: timeout=%d, repeat=%d, lineno=%d\n", id, timeout, repeat, lineno);
   timers[id].lineno = lineno;
-  ualarm((useconds_t)(timeout * 1000), repeat ? (useconds_t)(timeout * 1000) : 0);
+  timers[id].periode = id == DELAY_TIMER ? 0 : (int32_t) timeout;
+  timers[id].repeat = id == DELAY_TIMER ? 0 :  repeat;
+  timers[id].fireTime = OS_get_millis() + (int32_t) timeout;
+  //ualarm((useconds_t)(timeout * 1000), repeat ? (useconds_t)(timeout * 1000) : 0);
+  // schedule a alam evry 1 us
+  if (alarm_active == 0)
+  {
+    alarm_active = 1;
+    struct sigaction act = { alarmhandler, 0, 0 };
+    sigaction(SIGALRM, &act, NULL);
+    ualarm((useconds_t)(1000), (useconds_t)(1000));
+  }
   return 1;
 }
 
@@ -289,7 +330,7 @@ uint32_t OS_get_millis(void) {
   static uint32_t start_millis = 0xffffffff;
   struct timespec t;
   clock_gettime(CLOCK_MONOTONIC, &t);
-  uint32_t millis = t.tv_sec * 1000 + t.tv_nsec / 1000 / 1000;
+  uint32_t millis = (uint32_t)(t.tv_sec * 1000 + t.tv_nsec / 1000 / 1000);
   if (start_millis == 0xffffffff) {
     start_millis = millis;
   }
