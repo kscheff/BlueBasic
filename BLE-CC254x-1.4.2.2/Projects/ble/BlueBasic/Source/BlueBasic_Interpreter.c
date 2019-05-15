@@ -528,17 +528,32 @@ unsigned short timeSlice = 20;
     *v = (*v & (255 - (1 << (vname & 7)))) | (V)->oflags; \
     ((VAR_TYPE*)variables_begin)[vname] = (V)->ovalue; \
   } while(0)
-
-
-#define CHECK_MIN_MEMORY() minMemory = (sp - heap < minMemory) ? (sp - heap) : minMemory
-#ifdef CHECK_MIN_MEMORY
+ 
+// define for getting min heap size statistic in MEM command    
+//#define REPORT_MIN_MEMORY
+#ifdef REPORT_MIN_MEMORY
 static unsigned short minMemory;  
+#define CHECK_MIN_MEMORY() minMemory = (sp - heap < minMemory) ? (sp - heap) : minMemory
+#define SET_MIN_MEMORY(A) minMemory = (A)
 #else
 #define CHECK_MIN_MEMORY()
+#define SET_MIN_MEMORY(A)
 #endif
 
-#define CHECK_SP_OOM(S,E)   if (sp - (S) < heap) goto E; else {sp -= (S); CHECK_MIN_MEMORY();}
-#define CHECK_HEAP_OOM(S,E) if (heap + (S) > sp) goto E; else {heap += (S); CHECK_MIN_MEMORY();};
+// define for getting source code line numbers to the errors... 
+// eats ca. 1100 bytes CODE and 2 bytes XDATA
+#define REPORT_ERROR_LINE
+#ifdef REPORT_ERROR_LINE
+static unsigned short err_line = 0;
+#define SET_ERR_LINE err_line = __LINE__
+#else
+#define SET_ERR_LINE
+#endif
+
+#define GOTO_QWHAT {SET_ERR_LINE; goto qwhat;}
+
+#define CHECK_SP_OOM(S,E)   if (sp - (S) < heap) {SET_ERR_LINE ; goto E;} else {sp -= (S); CHECK_MIN_MEMORY();}
+#define CHECK_HEAP_OOM(S,E) if (heap + (S) > sp) {SET_ERR_LINE ; goto E;} else {heap += (S); CHECK_MIN_MEMORY();}
 
 #ifdef SIMULATE_PINS
 static unsigned char P0DIR, P1DIR, P2DIR;
@@ -1151,9 +1166,7 @@ static void clean_memory(void)
     ptr += ((frame_header*)ptr)->frame_size;
   }
   heap = (unsigned char*)program_end;
-#ifdef CHECK_MIN_MEMORY  
-  minMemory = sp - heap;
-#endif  
+  SET_MIN_MEMORY(sp - heap);
 }
 
 // -------------------------------------------------------------------------------------------
@@ -1735,9 +1748,7 @@ void interpreter_init()
   sp = variables_begin;
   program_end = flashstore_init(program_start);
   heap = (unsigned char*)program_end;
-#ifdef CHECK_MIN_MEMORY
-  minMemory = sp - heap;
-#endif
+  SET_MIN_MEMORY(sp - heap);
   //interpreter_banner();
 }
 
@@ -1842,7 +1853,7 @@ unsigned char interpreter_run(LINENUM gofrom, unsigned char canreturn)
     }
     if (linenum == 0xFFFF)
     {
-      goto qwhat;
+      GOTO_QWHAT;
     }
     
     // Clean the memory (heap & stack) if we're modifying the code
@@ -1932,7 +1943,7 @@ run_next_statement:
       }
       break;
     case KW_CONSTANT:
-      goto qwhat;
+      GOTO_QWHAT;
     case KW_LIST:
       goto list;
     case KW_MEM:
@@ -1940,7 +1951,7 @@ run_next_statement:
     case KW_NEW:
       if (*txtpos != NL)
       {
-        goto qwhat;
+        GOTO_QWHAT;
       }
       clean_memory();
       program_end = flashstore_deleteall();
@@ -1966,7 +1977,7 @@ run_next_statement:
       linenum = expression(EXPR_NORMAL);
       if (error_num || *txtpos != NL)
       {
-        goto qwhat;
+        GOTO_QWHAT;
       }
       lineptr = findlineptr();
       if (lineptr >= program_end)
@@ -2044,7 +2055,7 @@ run_next_statement:
     case KW_WRITE:
       goto cmd_write;
   }
-  goto qwhat;
+  GOTO_QWHAT;
 
 // -- Errors -----------------------------------------------------------------
   
@@ -2076,6 +2087,14 @@ qwhat:
   // Fall through ...
 
 print_error_or_ok:
+#ifdef REPORT_ERROR_LINE  
+  if (err_line)
+  {
+    printnum(0, err_line);
+    printmsg(" : BlueBasic_Interpreter.c"); 
+    err_line = 0;
+  }
+#endif  
   printmsg(error_msgs[error_num]);
   if (lineptr < program_end && error_num != ERROR_OK)
   {
@@ -2100,7 +2119,7 @@ cmd_elif:
     val = expression(EXPR_NORMAL);
     if (error_num || *txtpos != NL)
     {
-      goto qwhat;
+      GOTO_QWHAT;
     }
     if (val)
     {
@@ -2156,7 +2175,7 @@ cmd_else:
     ignore_blanks();
     if (*txtpos != NL)
     {
-      goto qwhat;
+      GOTO_QWHAT;
     }
     for (;;)
     {
@@ -2193,31 +2212,31 @@ forloop:
 
     if (*txtpos < 'A' || *txtpos > 'Z')
     {
-      goto qwhat;
+      GOTO_QWHAT;
     }
     var = *txtpos++;
     ignore_blanks();
     if (*txtpos != OP_EQ)
     {
-      goto qwhat;
+      GOTO_QWHAT;
     }
     txtpos++;
 
     initial = expression(EXPR_NORMAL);
     if (error_num)
     {
-      goto qwhat;
+      GOTO_QWHAT;
     }
 
     if (*txtpos++ != ST_TO)
     {
-      goto qwhat;
+      GOTO_QWHAT;
     }
 
     terminal = expression(EXPR_NORMAL);
     if (error_num)
     {
-      goto qwhat;
+      GOTO_QWHAT;
     }
 
     if (*txtpos++ == ST_STEP)
@@ -2225,7 +2244,7 @@ forloop:
       step = expression(EXPR_NORMAL);
       if (error_num)
       {
-        goto qwhat;
+        GOTO_QWHAT;
       }
     }
     else
@@ -2236,14 +2255,14 @@ forloop:
     ignore_blanks();
     if (*txtpos != NL)
     {
-      goto qwhat;
+      GOTO_QWHAT;
     }
 
     CHECK_SP_OOM(sizeof(for_frame), qoom);
     f = (for_frame *)sp;
     if (VARIABLE_IS_EXTENDED(var))
     {
-      goto qwhat;
+      GOTO_QWHAT;
     }
     VARIABLE_INT_SET(var, initial);
     f->header.frame_type = FRAME_FOR_FLAG;
@@ -2262,7 +2281,7 @@ cmd_gosub:
     linenum = expression(EXPR_NORMAL);
     if (error_num || *txtpos != NL)
     {
-      goto qwhat;
+      GOTO_QWHAT;
     }
     CHECK_SP_OOM(sizeof(gosub_frame), qoom);
     f = (gosub_frame *)sp;
@@ -2282,7 +2301,7 @@ next:
   // Find the variable name
   if (*txtpos < 'A' || *txtpos > 'Z' || txtpos[1] != NL)
   {
-    goto qwhat;
+    GOTO_QWHAT;
   }
 
 gosub_return:
@@ -2339,6 +2358,7 @@ gosub_return:
         }
         break;
       default:
+        SET_ERR_LINE;
         goto qoom;
     }
     sp += ((frame_header*)sp)->frame_size;
@@ -2349,7 +2369,7 @@ gosub_return:
   {
     goto print_error_or_ok;
   }
-  goto qwhat;
+  GOTO_QWHAT;
 
 //
 // PX(Y) = Z
@@ -2362,17 +2382,17 @@ assignpin:
     pin[0] = pin_parse();
     if (error_num)
     {
-      goto qwhat;
+      GOTO_QWHAT;
     }
     if (*txtpos != OP_EQ)
     {
-      goto qwhat;
+      GOTO_QWHAT;
     }
     txtpos++;
     val = expression(EXPR_NORMAL);
     if (error_num)
     {
-      goto qwhat;
+      GOTO_QWHAT;
     }
     pin[0] |= (val ? WIRE_PIN_HIGH : WIRE_PIN_LOW);
     pin_wire(pin, pin + 1);
@@ -2392,7 +2412,7 @@ assignment:
     ptr = parse_variable_address(&frame);
     if (*txtpos != OP_EQ || (ptr == NULL && (frame == NULL || frame->type != VAR_DIM_BYTE)))
     {
-      goto qwhat;
+      GOTO_QWHAT;
     }
     error_num = ERROR_OK;
     txtpos++;
@@ -2401,7 +2421,7 @@ assignment:
       val = expression(EXPR_NORMAL);
       if (error_num)
       {
-        goto qwhat;
+        GOTO_QWHAT;
       }
       if (frame->type == VAR_DIM_BYTE)
       {
@@ -2422,7 +2442,7 @@ assignment:
         val = expression(EXPR_COMMA);
         if (error_num)
         {
-          goto qwhat;
+          GOTO_QWHAT;
         }
         *ptr++ = val;
       }
@@ -2448,7 +2468,7 @@ list:
     // Should be EOL
     if (*txtpos != NL)
     {
-      goto qwhat;
+      GOTO_QWHAT;
     }
     
     for(lineptr = findlineptr(); lineptr < program_end; lineptr++)
@@ -2494,7 +2514,7 @@ print:
     {
       if (*txtpos == '"' || *txtpos == '\'')
       {
-        goto qwhat;
+        GOTO_QWHAT;
       }
       else if (*txtpos == ',' || *txtpos == WS_SPACE)
       {
@@ -2506,7 +2526,7 @@ print:
         e = expression(EXPR_COMMA);
         if (error_num)
         {
-          goto qwhat;
+          GOTO_QWHAT;
         }
         printnum(0, e);
       }
@@ -2524,7 +2544,7 @@ mem:
   printmsg(memorymsg);
   printnum(0, sp - heap);
   printmsg(" bytes on heap free.");
-#ifdef CHECK_MIN_MEMORY
+#if CHECK_MIN_MEMORY
   CHECK_MIN_MEMORY();
   printnum(0, minMemory);
   printmsg(" bytes lowest free heap.");
@@ -2563,7 +2583,7 @@ cmd_reboot:
   }
 #endif
   OS_reboot(0);
-  goto qwhat; // Not reached
+  GOTO_QWHAT; // Not reached
 
 //
 // DIM <var>(<size>)
@@ -2576,18 +2596,18 @@ cmd_dim:
 
     if (*txtpos < 'A' || *txtpos > 'Z')
     {
-      goto qwhat;
+      GOTO_QWHAT;
     }
     name = *txtpos++;
     size = expression(EXPR_BRACES);
     if (error_num || !size)
     {
-      goto qwhat;
+      GOTO_QWHAT;
     }
     create_dim(name, size, NULL);
     if (error_num)
     {
-      goto qwhat;
+      GOTO_QWHAT;
     }
   }
   goto run_next_statement;
@@ -2606,7 +2626,7 @@ cmd_timer:
     timer = (unsigned char)expression(EXPR_COMMA);
     if (error_num)
     {
-      goto qwhat;
+      GOTO_QWHAT;
     }
     ignore_blanks();
     if (*txtpos == TI_STOP)
@@ -2619,7 +2639,7 @@ cmd_timer:
       timeout = expression(EXPR_NORMAL);
       if (error_num)
       {
-        goto qwhat;
+        GOTO_QWHAT;
       }
       ignore_blanks();
       if (*txtpos == TI_REPEAT)
@@ -2629,17 +2649,17 @@ cmd_timer:
       }
       if (*txtpos != KW_GOSUB)
       {
-        goto qwhat;
+        GOTO_QWHAT;
       }
       txtpos++;
       subline = (LINENUM)expression(EXPR_NORMAL);
       if (error_num)
       {
-        goto qwhat;
+        GOTO_QWHAT;
       }
       if (!OS_timer_start(timer, timeout, repeat, subline))
       {
-        goto qwhat;
+        GOTO_QWHAT;
       }
     }
   }
@@ -2653,7 +2673,7 @@ cmd_delay:
   val = expression(EXPR_NORMAL);
   if (error_num)
   {
-    goto qwhat;
+    GOTO_QWHAT;
   }
   if (val >= 0)
   {
@@ -2661,7 +2681,7 @@ cmd_delay:
   }
   else if (val < -1)
   {
-    goto qwhat;
+    GOTO_QWHAT;
   }
   goto prompt;
 
@@ -2674,7 +2694,7 @@ cmd_autorun:
     VAR_TYPE v = expression(EXPR_NORMAL);
     if (error_num)
     {
-      goto qwhat;
+      GOTO_QWHAT;
     }
     if (v)
     {
@@ -2700,7 +2720,7 @@ cmd_pinmode:
     *cmd++ = pin_parse();
     if (error_num)
     {
-      goto qwhat;
+      GOTO_QWHAT;
     }
 
     ignore_blanks();
@@ -2726,14 +2746,14 @@ cmd_pinmode:
         {
           if (PIN_MAJOR(cmd[-1]) != 0)
           {
-            goto qwhat;
+            GOTO_QWHAT;
           }
           *cmd++ = WIRE_INPUT_ADC;
         }
         else
         {
           txtpos--;
-          goto qwhat;
+          GOTO_QWHAT;
         }
         break;
       case PM_OUTPUT:
@@ -2742,13 +2762,13 @@ cmd_pinmode:
         break;
       default:
         txtpos--;
-        goto qwhat;
+        GOTO_QWHAT;
     }
     
     pin_wire(cmds, cmd);
     if (error_num)
     {
-      goto qwhat;
+      GOTO_QWHAT;
     }
   }
   goto run_next_statement;
@@ -2774,7 +2794,7 @@ cmd_interrupt:
       pin = pin_parse();
       if (error_num)
       {
-        goto qwhat;
+        GOTO_QWHAT;
       }
       if (PIN_MAJOR(pin) == 2 && PIN_MINOR(pin) >= 4)
       {
@@ -2791,17 +2811,17 @@ cmd_interrupt:
           break;
         default:
           txtpos--;
-          goto qwhat;
+          GOTO_QWHAT;
       }
       if (*txtpos++ != KW_GOSUB)
       {
         txtpos--;
-        goto qwhat;
+        GOTO_QWHAT;
       }
       line = expression(EXPR_NORMAL);
       if (error_num)
       {
-        goto qwhat;
+        GOTO_QWHAT;
       }
       
       if (!OS_interrupt_attach(pin, line))
@@ -2842,7 +2862,7 @@ cmd_interrupt:
       pin = pin_parse();
       if (error_num)
       {
-        goto qwhat;
+        GOTO_QWHAT;
       }
       
       i = ~(1 << PIN_MINOR(pin));
@@ -2878,7 +2898,7 @@ cmd_interrupt:
     }
     else
     {
-      goto qwhat;
+      GOTO_QWHAT;
     }
     goto run_next_statement;
   }
@@ -2898,7 +2918,7 @@ cmd_serial:
       port = expression(EXPR_COMMA);
       if (port > (OS_MAX_SERIAL-1))
       {
-        goto qwhat;
+        GOTO_QWHAT;
       }
     }
     ignore_blanks();
@@ -2908,14 +2928,14 @@ cmd_serial:
     ignore_blanks();
     if (*txtpos++ != ',')
     {
-      goto qwhat;
+      GOTO_QWHAT;
     }
     unsigned char bits = expression(EXPR_COMMA);
     unsigned char stop = expression(EXPR_COMMA);
     unsigned char flow = *txtpos++;
     if (error_num)
     {
-      goto qwhat;
+      GOTO_QWHAT;
     }
     LINENUM onread = 0;
     if (*txtpos == BLE_ONREAD)
@@ -2923,7 +2943,7 @@ cmd_serial:
       txtpos++;
       if (*txtpos++ != KW_GOSUB)
       {
-        goto qwhat;
+        GOTO_QWHAT;
       }
       onread = expression(EXPR_NORMAL);
     }
@@ -2933,13 +2953,13 @@ cmd_serial:
       txtpos++;
       if (*txtpos++ != KW_GOSUB)
       {
-        goto qwhat;
+        GOTO_QWHAT;
       }
       onwrite = expression(EXPR_NORMAL);
     }
     if (OS_serial_open(port, baud, parity, bits, stop, flow, onread, onwrite))
     {
-      goto qwhat;
+      GOTO_QWHAT;
     }
   }
   goto run_next_statement;
@@ -2955,7 +2975,7 @@ cmd_wire:
   pin_wire_parse();
   if (error_num)
   {
-    goto qwhat;
+    GOTO_QWHAT;
   }
   goto run_next_statement;
 
@@ -3016,7 +3036,7 @@ ble_gatt:
         }
         else
         {
-          goto qwhat;
+          GOTO_QWHAT;
         }
       }
       break;
@@ -3029,8 +3049,9 @@ ble_gatt:
         default:
           break;
         case 1:
-          goto qwhat;
+          GOTO_QWHAT;
         case 2:
+          SET_ERR_LINE;
           goto qoom;
       }
       break;
@@ -3039,7 +3060,7 @@ ble_gatt:
       GAPRole_TerminateConnection();
       break;
     default:
-      goto qwhat;
+      GOTO_QWHAT;
   }
   goto run_next_statement;
 
@@ -3059,7 +3080,7 @@ ble_scan:
     val = expression(EXPR_NORMAL);
     if (error_num)
     {
-      goto qwhat;
+      GOTO_QWHAT;
     }
 
     ignore_blanks();
@@ -3084,7 +3105,7 @@ ble_scan:
 
         break;
       default:
-        goto qwhat;
+        GOTO_QWHAT;
     }
 
     if (*txtpos == BLE_ACTIVE)
@@ -3100,14 +3121,14 @@ ble_scan:
 
     if (txtpos[0] != BLE_ONDISCOVER || txtpos[1] != KW_GOSUB)
     {
-      goto qwhat;
+      GOTO_QWHAT;
     }
     txtpos += 2;
 
     linenum = expression(EXPR_NORMAL);
     if (error_num)
     {
-      goto qwhat;
+      GOTO_QWHAT;
     }
     blueBasic_discover.linenum = linenum;
     GAPRole_SetParameter(TGAP_GEN_DISC_SCAN, val, NULL);
@@ -3121,7 +3142,7 @@ ble_scan:
 #else // ( HOST_CONFIG & OBSERVER_CFG )
   {
     printmsg("Observer Role not supported in this build.");
-    goto qwhat;
+    GOTO_QWHAT;
   }
 #endif  // ( HOST_CONFIG & OBSERVER_CFG )
   // Fall through ...
@@ -3138,6 +3159,7 @@ ble_advert:
       case BLE_LIMITED:
         if (ble_adptr + 3 > ble_adbuf + sizeof(ble_adbuf))
         {
+          SET_ERR_LINE;
           goto qtoobig;
         }
         *ble_adptr++ = 2;
@@ -3148,6 +3170,7 @@ ble_advert:
       case BLE_GENERAL:
         if (ble_adptr + 3 > ble_adbuf + sizeof(ble_adbuf))
         {
+          SET_ERR_LINE;
           goto qtoobig;
         }
         *ble_adptr++ = 2;
@@ -3160,7 +3183,7 @@ ble_advert:
           ch = *++txtpos;
           if (ch != SQUOTE && ch != DQUOTE)
           {
-            goto qwhat;
+            GOTO_QWHAT;
           }
           else
           {
@@ -3170,10 +3193,11 @@ ble_advert:
             len = find_quoted_string();
             if (len == -1)
             {
-              goto qwhat;
+              GOTO_QWHAT;
             }
             if (ble_adptr + 3 > ble_adbuf + sizeof(ble_adbuf))
             {
+              SET_ERR_LINE;
               goto qtoobig;
             }
             else
@@ -3203,10 +3227,11 @@ ble_advert:
           unsigned char* lenptr;
           if (ble_adptr == NULL)
           {
-            goto qwhat;
+            GOTO_QWHAT;
           }
           if (ble_adptr + 1 > ble_adbuf + sizeof(ble_adbuf))
           {
+            SET_ERR_LINE;
             goto qtoobig;
           }
           lenptr = ble_adptr++;
@@ -3234,10 +3259,11 @@ ble_advert:
                     error_num = ERROR_OK;
                     break;
                   }
-                  goto qwhat;
+                  GOTO_QWHAT;
                 }
                 if (ble_adptr + 1 > ble_adbuf + sizeof(ble_adbuf))
                 {
+                  SET_ERR_LINE;
                   goto qtoobig;
                 }
                 *ble_adptr++ = (unsigned char)v;
@@ -3250,16 +3276,17 @@ ble_advert:
               
               if (txtpos[1] != NL && txtpos[1] != WS_SPACE)
               {
-                goto qwhat;
+                GOTO_QWHAT;
               }
 
               ptr = get_variable_frame(ch, &frame);
               if (frame->type != VAR_DIM_BYTE)
               {
-                goto qwhat;
+                GOTO_QWHAT;
               }
               if (ble_adptr + frame->header.frame_size - sizeof(variable_frame) > ble_adbuf + sizeof(ble_adbuf))
               {
+                SET_ERR_LINE;
                 goto qtoobig;
               }
               for (ch = sizeof(variable_frame); ch < frame->header.frame_size; ch++)
@@ -3269,7 +3296,7 @@ ble_advert:
             }
             else if (ch != WS_SPACE)
             {
-              goto qwhat;
+              GOTO_QWHAT;
             }
           }
         }
@@ -3278,7 +3305,7 @@ ble_advert:
         if (ble_adptr == ble_adbuf)
         {
           ble_adptr = NULL;
-          goto qwhat;
+          GOTO_QWHAT;
         }
         if (ble_isadvert)
         {
@@ -3295,17 +3322,18 @@ ble_advert:
       default:
         if (ch != SQUOTE && ch != DQUOTE)
         {
-          goto qwhat;
+          GOTO_QWHAT;
         }
         else
         {
           ch = ble_get_uuid();
           if (!ch)
           {
-            goto qwhat;
+            GOTO_QWHAT;
           }
           if (ble_adptr + 2 + ble_uuid_len > ble_adbuf + sizeof(ble_adbuf))
           {
+            SET_ERR_LINE;
             goto qtoobig;
           }
           *ble_adptr++ = ble_uuid_len + 1;
@@ -3321,7 +3349,7 @@ ble_advert:
               *ble_adptr++ = GAP_ADTYPE_128BIT_COMPLETE;
               break;
             default:
-              goto qwhat;
+              GOTO_QWHAT;
           }
           OS_memcpy(ble_adptr, ble_uuid, ble_uuid_len);
           ignore_blanks();
@@ -3348,7 +3376,7 @@ cmd_btpoke:
     param = (unsigned short)expression(EXPR_COMMA);
     if (error_num)
     {
-      goto qwhat;
+      GOTO_QWHAT;
     }
     // Expects an array
     if (param & 0x8000)
@@ -3358,22 +3386,22 @@ cmd_btpoke:
       ptr = get_variable_frame(*txtpos, &vframe);
       if (vframe->type != VAR_DIM_BYTE)
       {
-        goto qwhat;
+        GOTO_QWHAT;
       }
       if (param >= _GAPROLE(BLE_PAIRING_MODE) && param <= _GAPROLE(BLE_ERASE_SINGLEBOND))
       {
 #if GAP_BOND_MGR       
         if (GAPBondMgr_SetParameter(param, vframe->header.frame_size - sizeof(variable_frame), ptr) != SUCCESS)
         {
-          goto qwhat;
+          GOTO_QWHAT;
         }
 #else
-        goto qwhat;
+        GOTO_QWHAT;
 #endif
       }
       else if (GAPRole_SetParameter(param, vframe->header.frame_size - sizeof(variable_frame), ptr) != SUCCESS)
       {
-        goto qwhat;
+        GOTO_QWHAT;
       }
     }
     // Expects an int
@@ -3384,24 +3412,24 @@ cmd_btpoke:
       param = _GAPROLE(param);
       if (error_num)
       {
-        goto qwhat;
+        GOTO_QWHAT;
       }
       if (param >= _GAPROLE(BLE_PAIRING_MODE) && param <= _GAPROLE(BLE_ERASE_SINGLEBOND))
       {
 #if GAP_BOND_MGR
         if (GAPBondMgr_SetParameter(param, len, &val) != SUCCESS)
         {
-          goto qwhat;
+          GOTO_QWHAT;
         }
 #else
-        goto qwhat;
+        GOTO_QWHAT;
 #endif 
       }
       else if (_GAPROLE(param) >= _GAPROLE(BLE_PROFILEROLE) && _GAPROLE(param) <= _GAPROLE(BLE_ADV_NONCONN_ENABLED))
       {
         if (GAPRole_SetParameter(param, len, &val) != SUCCESS) 
         {
-          goto qwhat;
+          GOTO_QWHAT;
         }
       }
       else
@@ -3410,7 +3438,7 @@ cmd_btpoke:
         // always uint16, masking any size with _GAPROLE()
         if (GAP_SetParamValue( _GAPROLE(param), val) != SUCCESS)
         {
-          goto qwhat;
+          GOTO_QWHAT;
         }
       }
     }
@@ -3427,7 +3455,7 @@ cmd_open:
     unsigned char id = expression(EXPR_COMMA);
     if (error_num || id >= FS_NR_FILE_HANDLES)
     {
-      goto qwhat;
+      GOTO_QWHAT;
     }
     os_file_t* file = &files[id];
     if (txtpos[1] == '"' && txtpos[3] == '"' && txtpos[2] >= 'A' && txtpos[2] <= 'Z')
@@ -3439,16 +3467,16 @@ cmd_open:
     }
     else
     {
-      goto qwhat;
+      GOTO_QWHAT;
     }
     unsigned char kw = *txtpos;
     if (txtpos[4] == ',')
     {
       txtpos += 5;
       VAR_TYPE value = expression(EXPR_COMMA);
-      if (error_num || value > FLASHSPECIAL_NR_FILE_RECORDS || value < 0)
+      if (error_num || value > FLASHSPECIAL_NR_FILE_RECORDS || value <= 0)
       {
-        goto qwhat;
+        GOTO_QWHAT;
       }
       file->modulo = (unsigned short) value;
       if (*txtpos != NL)
@@ -3456,7 +3484,7 @@ cmd_open:
         value = expression(EXPR_NORMAL);
         if (error_num || value > file->modulo || value < 0)
         {
-          goto qwhat;
+          GOTO_QWHAT;
         }
         file->record = value;
         hasOffset = TRUE;
@@ -3492,7 +3520,7 @@ cmd_open:
         break;
       }
       default:
-        goto qwhat;
+        GOTO_QWHAT;
     }
   }
   goto run_next_statement;
@@ -3516,7 +3544,7 @@ cmd_close:
         port = expression(EXPR_COMMA);
         if (error_num || port > (OS_MAX_SERIAL-1))
         {
-          goto qwhat;
+          GOTO_QWHAT;
         }
       }
       OS_serial_close(port);
@@ -3533,7 +3561,7 @@ cmd_close:
       unsigned char id = expression(EXPR_COMMA);
       if (error_num || id >= FS_NR_FILE_HANDLES)
       {
-        goto qwhat;
+        GOTO_QWHAT;
       }
       files[id].action = 0;
     }
@@ -3549,7 +3577,7 @@ cmd_read:
   {
     if (*txtpos++ != '#')
     {
-      goto qwhat;
+      GOTO_QWHAT;
     }
     else if (*txtpos == KW_SERIAL)
     {
@@ -3561,7 +3589,7 @@ cmd_read:
         port = *txtpos++ - '0';
         if (port > (OS_MAX_SERIAL-1))
         {
-          goto qwhat;
+          GOTO_QWHAT;
         }
       }
       for (;;)
@@ -3573,7 +3601,7 @@ cmd_read:
         }
         else if (*txtpos++ != ',')
         {
-          goto qwhat;
+          GOTO_QWHAT;
         }
         variable_frame* vframe = NULL;
         unsigned char* ptr = parse_variable_address(&vframe);
@@ -3601,7 +3629,7 @@ cmd_read:
         }
         else
         {
-          goto qwhat;
+          GOTO_QWHAT;
         }
       }
     }
@@ -3618,7 +3646,7 @@ cmd_read:
         }
         else if (*txtpos++ != ',')
         {
-          goto qwhat;
+          GOTO_QWHAT;
         }
         variable_frame* vframe = NULL;
         unsigned char* ptr = parse_variable_address(&vframe);
@@ -3646,7 +3674,7 @@ cmd_read:
         }
         else
         {
-          goto qwhat;
+          GOTO_QWHAT;
         }
       }
     }
@@ -3656,13 +3684,14 @@ cmd_read:
       unsigned char id = expression(EXPR_COMMA);
       if (error_num || id >= FS_NR_FILE_HANDLES || files[id].action != 'R')
       {
-        goto qwhat;
+        GOTO_QWHAT;
       }
       os_file_t* file = &files[id];
 
       unsigned char* special = flashstore_findspecial(FS_MAKE_FILE_SPECIAL(file->filename, file->record));
       if (!special)
       {
+        SET_ERR_LINE;
         goto qeof;
       }
       unsigned char len = special[FLASHSPECIAL_DATA_LEN];
@@ -3677,7 +3706,7 @@ cmd_read:
         }
         else if (*txtpos++ != ',')
         {
-          goto qwhat;
+          GOTO_QWHAT;
         }
         variable_frame* vframe = NULL;
         unsigned char* ptr = parse_variable_address(&vframe);
@@ -3689,6 +3718,7 @@ cmd_read:
             special = flashstore_findspecial(FS_MAKE_FILE_SPECIAL(file->filename, file->record));
             if (!special)
             {
+              SET_ERR_LINE;
               goto qeof;
             }
             file->poffset = FLASHSPECIAL_DATA_OFFSET;
@@ -3719,6 +3749,7 @@ cmd_read:
               special = flashstore_findspecial(FS_MAKE_FILE_SPECIAL(file->filename, file->record));
               if (!special)
               {
+                SET_ERR_LINE;
                 goto qeof;
               }
               file->poffset = FLASHSPECIAL_DATA_OFFSET;
@@ -3733,7 +3764,7 @@ cmd_read:
         }
         else
         {
-          goto qwhat;
+          GOTO_QWHAT;
         }
       }
     }
@@ -3750,7 +3781,7 @@ cmd_write:
   {
     if (*txtpos++ != '#')
     {
-      goto qwhat;
+      GOTO_QWHAT;
     }
     else if (*txtpos == KW_SERIAL)
     {
@@ -3762,7 +3793,7 @@ cmd_write:
         port = *txtpos++ - '0';
         if (port > (OS_MAX_SERIAL - 1))
         {
-          goto qwhat;
+          GOTO_QWHAT;
         }
       }
       for (;;)
@@ -3810,7 +3841,7 @@ cmd_write:
           VAR_TYPE val = expression(EXPR_COMMA);
           if (error_num)
           {
-            goto qwhat;
+            GOTO_QWHAT;
           }
           OS_serial_write(port, val);
         }
@@ -3826,10 +3857,11 @@ cmd_write:
       unsigned char id = expression(EXPR_COMMA);
       if (error_num || id >= FS_NR_FILE_HANDLES || files[id].action != 'W')
       {
-        goto qwhat;
+        GOTO_QWHAT;
       }
       if (files[id].record == FLASHSPECIAL_NR_FILE_RECORDS)
       {
+        SET_ERR_LINE;
         goto qtoobig;
       }
       unsigned long special = FS_MAKE_FILE_SPECIAL(files[id].filename, files[id].record++);
@@ -3855,7 +3887,7 @@ cmd_write:
         else if (*txtpos++ != ',')
         {
           heap = item;
-          goto qwhat;
+          GOTO_QWHAT;
         }
         variable_frame* vframe = NULL;
         unsigned char* ptr = parse_variable_address(&vframe);
@@ -3886,7 +3918,7 @@ cmd_write:
           if (error_num)
           {
             heap = item;
-            goto qwhat;
+            GOTO_QWHAT;
           }
           CHECK_HEAP_OOM(1, qhoom);
           *iptr = val;
@@ -3898,6 +3930,7 @@ cmd_write:
         if (iptr - item > 0xFC)
         {
           heap = item;
+          SET_ERR_LINE;
           goto qtoobig;
         }
         iptr = heap;
@@ -3905,6 +3938,7 @@ cmd_write:
       item[FLASHSPECIAL_DATA_LEN] = iptr - item;
       if (!addspecial_with_compact(item))
       {
+        SET_ERR_LINE;
         goto qhoom;
       }
       heap = item;
@@ -3935,12 +3969,12 @@ cmd_spi:
       mode = expression(EXPR_COMMA);
       if (error_num || port > 3 || mode > 3)
       {
-        goto qwhat;
+        GOTO_QWHAT;
       }
       msblsb = *txtpos;
       if (msblsb != SPI_MSB && msblsb != SPI_LSB)
       {
-        goto qwhat;
+        GOTO_QWHAT;
       }
       txtpos++;
       speed = expression(EXPR_COMMA);
@@ -3958,7 +3992,7 @@ cmd_spi:
             spiWordsize = 3;
             break;
           default:
-            goto qwhat;
+            GOTO_QWHAT;
         }
       }
       else
@@ -3967,7 +4001,7 @@ cmd_spi:
       }
       if (error_num)
       {
-        goto qwhat;
+        GOTO_QWHAT;
       }
 
       mode = (mode << 6) | (msblsb == SPI_MSB ? 0x20 : 0x00);
@@ -3983,7 +4017,7 @@ cmd_spi:
           mode |= 17;
           break;
         default:
-          goto qwhat;
+          GOTO_QWHAT;
       }
       
       if ((port & 2) == 0)
@@ -4032,18 +4066,18 @@ cmd_spi:
       pin[0] |= WIRE_PIN_HIGH;
       if (error_num)
       {
-        goto qwhat;
+        GOTO_QWHAT;
       }
       ignore_blanks();
       const unsigned char ch = *txtpos;
       if (ch < 'A' || ch > 'Z')
       {
-        goto qwhat;
+        GOTO_QWHAT;
       }
       ptr = get_variable_frame(ch, &vframe);
       if (vframe->type != VAR_DIM_BYTE)
       {
-        goto qwhat;
+        GOTO_QWHAT;
       }
       txtpos++;
 
@@ -4101,7 +4135,7 @@ cmd_spi:
     }
     else
     {
-      goto qwhat;
+      GOTO_QWHAT;
     }
   }
   goto run_next_statement;
@@ -4128,7 +4162,7 @@ cmd_i2c:
       i2cSda = pin_parse();
       if (error_num)
       {
-        goto qwhat;
+        GOTO_QWHAT;
       }
       ignore_blanks();
       if (*txtpos == PM_PULLUP)
@@ -4169,7 +4203,7 @@ cmd_i2c:
         txtpos++;
         if (*txtpos++ != KW_GOSUB)
         {
-          goto qwhat;
+          GOTO_QWHAT;
         }
         onread = expression(EXPR_NORMAL);
       }
@@ -4179,13 +4213,13 @@ cmd_i2c:
         txtpos++;
         if (*txtpos++ != KW_GOSUB)
         {
-          goto qwhat;
+          GOTO_QWHAT;
         }
         onwrite = expression(EXPR_NORMAL);
       }
       if (OS_i2c_open(addr, onread, onwrite))
       {
-        goto qwhat;
+        GOTO_QWHAT;
       }
       break;
     }
@@ -4231,7 +4265,7 @@ cmd_i2c:
           txtpos++;
           if (rnw || !len)
           {
-            goto qwhat;
+            GOTO_QWHAT;
           }
           // Switch from WRITE to READ
           // Re-start
@@ -4246,7 +4280,7 @@ cmd_i2c:
           d = expression(EXPR_COMMA);
           if (error_num)
           {
-            goto qwhat;
+            GOTO_QWHAT;
           }
           // Remember the address
           if (len == 0)
@@ -4289,7 +4323,7 @@ cmd_i2c:
       i = *txtpos;
       if (i < 'A' || i > 'Z')
       {
-        goto qwhat;
+        GOTO_QWHAT;
       }
       txtpos++;
       rdata = get_variable_frame(i, &vframe);
@@ -4375,11 +4409,11 @@ i2c_end:
     }
     default:
       txtpos--;
-      goto qwhat;
+      GOTO_QWHAT;
   }
   if (error_num)
   {
-    goto qwhat;
+    GOTO_QWHAT;
   }
   goto run_next_statement;
 
@@ -4405,7 +4439,7 @@ cmd_analog:
           analogReference = 0x80;
           break;
         default:
-          goto qwhat;
+          GOTO_QWHAT;
       }
       break;
     case CO_RESOLUTION:
@@ -4424,11 +4458,11 @@ cmd_analog:
           analogResolution = 0x30;
           break;
         default:
-          goto qwhat;
+          GOTO_QWHAT;
       }
       break;
     default:
-      goto qwhat;
+      GOTO_QWHAT;
   }
   goto run_next_statement;
 
@@ -4439,13 +4473,13 @@ cmd_config:
     {
       if (txtpos[1] != ',')
       {
-        goto qwhat;
+        GOTO_QWHAT;
       }
       txtpos += 2;
       VAR_TYPE time = expression(EXPR_NORMAL);
       if (error_num)
       {
-        goto qwhat;
+        GOTO_QWHAT;
       }
       OS_set_millis(time);
       break;
@@ -4458,7 +4492,7 @@ cmd_config:
           unsigned char option = expression(EXPR_NORMAL);
           if (error_num)
           {
-            goto qwhat;
+            GOTO_QWHAT;
           }
           switch (option)
           {
@@ -4492,12 +4526,12 @@ cmd_config:
               OS_enable_sleep(1);
               break;
             default:
-              goto qwhat;
+              GOTO_QWHAT;
           }
           break;
         }
         default:
-          goto qwhat;
+          GOTO_QWHAT;
       }
   }
   goto run_next_statement;
