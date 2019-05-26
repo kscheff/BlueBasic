@@ -441,6 +441,7 @@ static void _uartCallback(uint8 port, uint8 event)
   
 unsigned char OS_serial_open(unsigned char port, unsigned long baud, unsigned char parity, unsigned char bits, unsigned char stop, unsigned char flow, unsigned short onread, unsigned short onwrite)
 {
+#if HAL_UART
   halUARTCfg_t config;
   int cbaud;
   if (port > OS_MAX_SERIAL - 1)
@@ -548,11 +549,13 @@ unsigned char OS_serial_open(unsigned char port, unsigned long baud, unsigned ch
     uart_stop_polling = 0;
     return 0;
   }
+#endif  
   return 1;
 }
 
 unsigned char OS_serial_close(unsigned char port)
 {
+#if HAL_UART  
   if (port > (OS_MAX_SERIAL - 1))
   {
     return 0;
@@ -620,6 +623,7 @@ unsigned char OS_serial_close(unsigned char port)
 #endif
   }
 #endif  
+#endif
   return 1;
 }
 
@@ -639,6 +643,9 @@ short OS_serial_read(unsigned char port)
 #else
 short OS_serial_read(unsigned char port)
 {
+#if !HAL_UART
+  return -1;
+#else
   if (port > OS_MAX_SERIAL)
   {
     return -1;
@@ -651,13 +658,18 @@ short OS_serial_read(unsigned char port)
   {
     return -1;
   }
+#endif
 }
 #endif
 
 
 unsigned char OS_serial_write(unsigned char port, unsigned char ch)
 {
+#if HAL_UART
   return HalUARTWrite(HAL_UART_PORT_0, &ch, 1) == 1 ? 1 : 0;
+#else
+  return 0;
+#endif
 }
 
 #ifndef PROCESS_SERIAL_DATA
@@ -672,11 +684,15 @@ unsigned char OS_serial_available(unsigned char port, unsigned char ch)
 #else
 unsigned char OS_serial_available(unsigned char port, unsigned char ch)
 {
+#if !HAL_UART
+  return 0;
+#else
   if (port > OS_MAX_SERIAL -1)
   {
     return 0;
   }
   return ch == 'R' ? (16 - serial[port].sbuf_read_pos) : Hal_UART_TxBufLen(port == 0 ? HAL_UART_PORT_0 : HAL_UART_PORT_1);
+#endif
 }
 #endif
 

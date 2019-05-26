@@ -598,7 +598,7 @@ uint16 BlueBasic_ProcessEvent( uint8 task_id, uint16 events )
     return (events & ~done);
   }
   
-  
+#if HAL_UART  
   if ( events & BLUEBASIC_EVENT_SERIALS )
   {
     for ( i = 0 ; i < OS_MAX_SERIAL; i++)  
@@ -652,6 +652,7 @@ uint16 BlueBasic_ProcessEvent( uint8 task_id, uint16 events )
     SEMAPHORE_YIELD_SIGNAL();
     return (events ^ BLUEBASIC_EVENT_SERIALS);
   }
+#endif  
 
 #ifdef HAL_I2C         
   if ( events & BLUEBASIC_EVENT_I2C )

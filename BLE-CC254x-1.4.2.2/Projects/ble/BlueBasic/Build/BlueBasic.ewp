@@ -7201,10 +7201,10 @@
           <state>OSAL_CBTIMER_NUM_TASKS=1</state>
           <state>HAL_AES_DMA=TRUE</state>
           <state>HAL_DMA=TRUE</state>
-          <state>HAL_UART=TRUE</state>
-          <state>HAL_UART_DMA=1</state>
-          <state>HAL_UART_DMA_RX_MAX=32</state>
-          <state>HAL_UART_DMA_TX_MAX=32</state>
+          <state>HAL_UART=FALSE</state>
+          <state>xHAL_UART_DMA=1</state>
+          <state>xHAL_UART_DMA_RX_MAX=32</state>
+          <state>xHAL_UART_DMA_TX_MAX=32</state>
           <state>POWER_SAVING</state>
           <state>xPLUS_BROADCASTER</state>
           <state>HAL_LCD=FALSE</state>
@@ -9547,7 +9547,7 @@
           <state>FEATURE_BOOST_CONVERTER=P2_0</state>
           <state>UART_USE_CALLBACK=0</state>
           <state>PROCESS_SERIAL_DATA</state>
-          <state>OSALMEM_METRICS=TRUE</state>
+          <state>xOSALMEM_METRICS=TRUE</state>
         </option>
         <option>
           <name>CCPreprocFile</name>
@@ -10892,6 +10892,9 @@
           </file>
           <file>
             <name>$PROJ_DIR$\..\..\..\..\COMPONENTS\hal\target\CC2540EB\hal_uart.c</name>
+            <excluded>
+              <configuration>BlueBattery</configuration>
+            </excluded>
           </file>
         </group>
         <group>
