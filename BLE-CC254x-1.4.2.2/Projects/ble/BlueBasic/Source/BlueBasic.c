@@ -580,15 +580,22 @@ uint16 BlueBasic_ProcessEvent( uint8 task_id, uint16 events )
 
   if ( events & BLUEBASIC_EVENT_TIMERS )
   {
+    uint16 done = 0;
     for (i = 0; i < OS_MAX_TIMER; i++)
     {
-      if (blueBasic_timers[i].linenum && (events & (BLUEBASIC_EVENT_TIMER << i)))
+      done |= (BLUEBASIC_EVENT_TIMER<<i);
+      if ( blueBasic_timers[i].linenum && (events & (BLUEBASIC_EVENT_TIMER<<i)))
       {
         interpreter_run(blueBasic_timers[i].linenum, i == DELAY_TIMER ? 0 : INTERPRETER_CAN_RETURN | INTERPRETER_CAN_YIELD);
+        if (bluebasic_yield_linenum)
+        {
+          // timer did not finish, the event frame  still sitts on the stack
+          break;
+        }
       }
     }
     SEMAPHORE_YIELD_SIGNAL();
-    return (events ^ (events & BLUEBASIC_EVENT_TIMERS));
+    return (events & ~done);
   }
   
   
