@@ -1452,6 +1452,7 @@ static VAR_TYPE expression(unsigned char mode)
       case BLE_FUNC_BTPEEK:
       case FUNC_POW:
       case FUNC_TEMP:
+      case KW_MEM:
         if (stackptr == stackend)
         {
           goto expr_oom;
@@ -1540,6 +1541,10 @@ static VAR_TYPE expression(unsigned char mode)
                 //return temperature in degree celsius * 100
                 *queueptr++ = OS_get_temperature(0);
                 break;
+            case KW_MEM:
+                //return free heap space
+                *queueptr++ = sp - heap;
+                break;
               default:
                 goto expr_error;
             }
@@ -1621,6 +1626,18 @@ static VAR_TYPE expression(unsigned char mode)
               case FUNC_TEMP:
                 queueptr[-1] = OS_get_temperature(top ? 1:0);
                 break;
+                
+//            case KW_MEM:
+//                switch (top)
+//                {
+//                case 0:  // return free heap
+//                  queueptr[-1] = sp - heap;
+//                case 1:  // return free flash
+//                  queueptr[-1] =  flashstore_freemem();
+//                default:
+//                  goto expr_error;
+//                }
+//                break;
 
               default:
                 if (op >= 'A' && op <= 'Z')
