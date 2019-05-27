@@ -1147,6 +1147,9 @@ static void clean_memory(void)
   {
     OS_timer_stop(i);
   }
+  
+  // Stop pending yield event
+  OS_yield(0);
 
   // Remove any persistent info from the stack.
   sp = (unsigned char*)variables_begin;
@@ -2561,6 +2564,10 @@ mem:
   printmsg(memorymsg);
   printnum(0, sp - heap);
   printmsg(" bytes on heap free.");
+#if ENABLE_YIELD
+  printnum(0, OS_get_yield_overruns());
+  printmsg(" yield overruns.");
+#endif  
 #if CHECK_MIN_MEMORY
   CHECK_MIN_MEMORY();
   printnum(0, minMemory);

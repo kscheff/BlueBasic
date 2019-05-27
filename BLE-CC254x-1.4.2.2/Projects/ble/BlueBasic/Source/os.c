@@ -68,7 +68,10 @@ os_i2c_t i2c[1];
 unsigned char prevent_sleep_flags = 0; 
 #endif
 
+#if ENABLE_YIELD
 unsigned short bluebasic_yield_linenum;
+long yield_overruns;
+#endif
 
 enum {
   MODE_STARTUP = 0,
@@ -231,17 +234,31 @@ char OS_timer_start(unsigned char id, unsigned long timeout, unsigned char repea
   return 1;
 }
 
+#if ENABLE_YIELD
 void OS_yield(unsigned short linenum)
 {
+  if (bluebasic_yield_linenum)
+  {
+    yield_overruns++;
+  }
   bluebasic_yield_linenum = linenum;
-  osal_set_event( blueBasic_TaskID, BLUEBASIC_EVENT_YIELD );
-#if 0  
-  extern void printnum(signed char fieldsize, long num);
-  extern void printmsg(const char *msg);
-  printnum(0, linenum);
-  printmsg(" YLD");
-#endif
+  if (linenum) 
+  {
+    osal_set_event( blueBasic_TaskID, BLUEBASIC_EVENT_YIELD );
+  }
+  else
+  {
+    osal_clear_event( blueBasic_TaskID, BLUEBASIC_EVENT_YIELD );
+    yield_overruns = 0;
+  }
 }
+
+long OS_get_yield_overruns(void)
+{
+  return yield_overruns;
+}
+
+#endif
 
 char OS_interrupt_attach(unsigned char pin, unsigned short lineno)
 {

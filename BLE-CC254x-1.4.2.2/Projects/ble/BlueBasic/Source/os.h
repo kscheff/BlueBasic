@@ -374,6 +374,7 @@ extern void* OS_rmemcpy(void *dst, const void *src, unsigned int len);
 extern void OS_timer_stop(unsigned char id);
 extern char OS_timer_start(unsigned char id, unsigned long timeout, unsigned char repeat, unsigned short lineno);
 extern void OS_yield(unsigned short linenum);
+extern long OS_get_yield_overruns(void);
 extern char OS_interrupt_attach(unsigned char pin, unsigned short lineno);
 extern char OS_interrupt_detach(unsigned char pin);
 extern long OS_get_millis(void);
