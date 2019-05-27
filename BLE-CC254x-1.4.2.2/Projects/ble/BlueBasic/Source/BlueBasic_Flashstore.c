@@ -434,7 +434,11 @@ unsigned int flashstore_freemem(void)
   unsigned char pg;
   for (pg = 0; pg < FLASHSTORE_NRPAGES; pg++)
   {
-    free += orderedpages[pg].free + orderedpages[pg].waste;
+    unsigned int pgFree = orderedpages[pg].free + orderedpages[pg].waste;
+    free += pgFree;
+    printnum(2, pg);
+    printnum(5, FLASHSTORE_PAGESIZE - pgFree);
+    printmsg(" page bytes occupied");
   }
   return free;
 }
