@@ -2598,15 +2598,18 @@ mem:
 //  Reboot the device. If the UP option is present, reboot into upgrade mode.
 //
 cmd_reboot:
-  // stop pending timer, etc.
-  clean_memory(); 
-#ifdef OAD_IMAGE_VERSION
-  if (txtpos[0] == 'U' && txtpos[1] == 'P' && txtpos[2] == NL)
   {
-    OS_reboot(1);
-  }
+    unsigned char up = 0;
+#ifdef OAD_IMAGE_VERSION
+    if (txtpos[0] == 'U' && txtpos[1] == 'P' && txtpos[2] == NL)
+    {
+      up = 1;
+    }
 #endif
-  OS_reboot(0);
+    // stop pending timer, etc.
+    clean_memory(); 
+    OS_reboot(up);
+  }
   GOTO_QWHAT; // Not reached
 
 //
