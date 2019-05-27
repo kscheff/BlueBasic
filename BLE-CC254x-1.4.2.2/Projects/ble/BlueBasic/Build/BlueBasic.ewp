@@ -7194,8 +7194,8 @@
           <state>kProduct="BlueBattery"</state>
           <state>kMfrName="blue-battery.com"</state>
           <state>BLUEBATTERY=TRUE</state>
-          <state>INT_HEAP_LEN=4224</state>
-          <state>BLUEBASIC_MEM=3072</state>
+          <state>INT_HEAP_LEN=4352</state>
+          <state>BLUEBASIC_MEM=3328</state>
           <state>BLUEBASIC=TRUE</state>
           <state>HALNODEBUG</state>
           <state>OSAL_CBTIMER_NUM_TASKS=1</state>
@@ -9517,8 +9517,8 @@
           <state>kProduct="BlueBattery"</state>
           <state>kMfrName="blue-battery.com"</state>
           <state>BLUEBATTERY=TRUE</state>
-          <state>INT_HEAP_LEN=4224</state>
-          <state>BLUEBASIC_MEM=3072</state>
+          <state>INT_HEAP_LEN=4352</state>
+          <state>BLUEBASIC_MEM=3328</state>
           <state>BLUEBASIC=TRUE</state>
           <state>HALNODEBUG</state>
           <state>OSAL_CBTIMER_NUM_TASKS=1</state>
