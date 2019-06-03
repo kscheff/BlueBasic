@@ -668,10 +668,12 @@ short OS_serial_read(unsigned char port)
 unsigned char OS_serial_write(unsigned char port, unsigned char ch)
 {
 #if HAL_UART
-  return HalUARTWrite(HAL_UART_PORT_0, &ch, 1) == 1 ? 1 : 0;
-#else
-  return 0;
+  if (port < OS_MAX_SERIAL)
+  {
+    return HalUARTWrite(port, &ch, 1) == 1 ? 1 : 0;
+  }
 #endif
+  return 0;
 }
 
 #ifndef PROCESS_SERIAL_DATA
