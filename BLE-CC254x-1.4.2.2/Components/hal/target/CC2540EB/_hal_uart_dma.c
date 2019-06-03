@@ -581,6 +581,14 @@ static void HalUARTOpenDMA(halUARTCfg_t *config)
 #endif
 }
 
+void HalUARTCloseDMA( void )
+{
+  HAL_DMA_ABORT_CH(HAL_DMA_CH_RX);
+  IENx &= ~IEN_BIT;    // disable interrupt
+  UxUCR |= UCR_FLUSH;  // flush TX
+  UxCSR &= ~CSR_RE;    // disable receiver
+}
+
 /*****************************************************************************
  * @fn      HalUARTReadDMA
  *

@@ -360,6 +360,13 @@ static void HalUARTOpenISR(halUARTCfg_t *config)
   UxCSR = (CSR_MODE | CSR_RE);
 }
 
+void HalUARTCloseISR()
+{
+  URXxIE = 0;          // disable interrupt
+  UxUCR |= UCR_FLUSH;  // flush TX
+  UxCSR &= ~CSR_RE;    // disable receiver
+}
+
 /*****************************************************************************
  * @fn      HalUARTReadISR
  *

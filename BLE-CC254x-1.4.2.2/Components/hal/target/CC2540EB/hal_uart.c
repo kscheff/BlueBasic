@@ -160,6 +160,40 @@ uint8 HalUARTOpen(uint8 port, halUARTCfg_t *config)
   return HAL_UART_SUCCESS;
 }
 
+
+void HalUARTClose(uint8 port)
+{
+#if (HAL_UART_DMA == 1)
+  if (port == HAL_UART_PORT_0)  HalUARTCloseDMA();
+#endif
+#if (HAL_UART_DMA == 2)
+  if (port == HAL_UART_PORT_1)  HalUARTCloseDMA();
+#endif
+#if (HAL_UART_ISR == 1)
+  if (port == HAL_UART_PORT_0)  HalUARTCloseISR();
+#endif
+#if (HAL_UART_ISR == 2)
+  if (port == HAL_UART_PORT_1)  HalUARTCloseISR();
+#endif
+#if (HAL_UART_SPI == 1)
+  if (port == HAL_UART_PORT_0)  HalUARTCloseSPI();
+#endif
+#if (HAL_UART_SPI == 2)
+  if (port == HAL_UART_PORT_1)  HalUARTCloseSPI();
+#endif
+#if (HAL_UART_USB)
+  HalUARTCloseUSB(config);
+#endif
+#if (HAL_UART_DMA == 0) && (HAL_UART_ISR == 0) && (HAL_UART_SPI == 0)
+  // UART is not enabled. Do nothing.
+  (void) port;   // unused argument
+#endif
+
+  return;
+}
+
+
+
 /*****************************************************************************
  * @fn      HalUARTRead
  *

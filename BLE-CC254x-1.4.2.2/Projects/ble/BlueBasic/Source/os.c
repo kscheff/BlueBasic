@@ -591,26 +591,11 @@ unsigned char OS_serial_close(unsigned char port)
     if (serial[i].onread || serial[i].onwrite)
       stop = 0;
   }
-  // HalUARTClose(0); - In the hal_uart.h include file, but not actually in the code
+  HalUARTClose(port);
   if (stop)
   {
     HalUARTSuspend();
   }
-#ifdef HAL_UART_DMA  
-#if HAL_UART_DMA == 1
-  if (port == 0)
-#else
-  if (port == 1)
-#endif
-  {
-    // stop DMA for UART0
-    HAL_DMA_ABORT_CH( HAL_DMA_CH_RX );
-  }
-  else
-  {
-    // FIXME: stop interrupt for UART1
-  }
-#endif
   if (port == 0)
   {
     P0SEL &= ~0x3c;  // select GPIO mode on P0
