@@ -572,8 +572,10 @@ static unsigned char spiChannel;
 static unsigned char spiWordsize;
 static unsigned char analogReference;
 static unsigned char analogResolution = 0x30; // 14-bits
+#if HAL_I2C
 static unsigned char i2cScl;
 static unsigned char i2cSda;
+#endif
 
 static VAR_TYPE pin_read(unsigned char major, unsigned char minor);
 static unsigned char pin_parse(void);
@@ -2075,8 +2077,10 @@ run_next_statement:
       goto cmd_config;
     case KW_WIRE:
       goto cmd_wire;
+#if HAL_I2C      
     case KW_I2C:
       goto cmd_i2c;
+#endif
     case KW_OPEN:
       goto cmd_open;
     case KW_CLOSE:
@@ -4371,6 +4375,7 @@ cmd_spi:
   }
   goto run_next_statement;
   
+#if HAL_I2C  
 //
 // I2C MASTER <scl pin> <sda pin> [PULLUP]
 //  or
@@ -4647,7 +4652,8 @@ i2c_end:
     GOTO_QWHAT;
   }
   goto run_next_statement;
-
+#endif
+  
 //
 // ANALOG RESOLUTION, 8|10|12|14
 //  Set the number of bits returned from an ADC operation.
