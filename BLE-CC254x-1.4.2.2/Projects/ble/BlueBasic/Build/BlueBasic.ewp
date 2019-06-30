@@ -11111,6 +11111,12 @@
     </file>
     <file>
       <name>$PROJ_DIR$\..\..\Profiles\Roles\CC254x\observer.c</name>
+      <excluded>
+        <configuration>BlueSolar</configuration>
+        <configuration>BlueBattery</configuration>
+        <configuration>BlueSteca</configuration>
+        <configuration>BlueBattery-D1</configuration>
+      </excluded>
     </file>
     <file>
       <name>$PROJ_DIR$\..\..\Profiles\Roles\CC254x\observer.h</name>

@@ -2064,11 +2064,9 @@ run_next_statement:
     case KW_ADVERT:
       ble_isadvert = 1;
       goto ble_advert;
-#if ( HOST_CONFIG & OBSERVER_CFG )    
     case KW_SCAN:
       ble_isadvert = 0;
       goto ble_scan;
-#endif
     case KW_BTPOKE:
       goto cmd_btpoke;
     case KW_PINMODE:
@@ -3125,12 +3123,13 @@ ble_gatt:
 //  or
 // SCAN LIMITED|GENERAL|NAME "..."|CUSTOM "..."|END
 //
-#if ( HOST_CONFIG & OBSERVER_CFG )    
 ble_scan:
   if (*txtpos < 0x80)
   {
+#if ( HOST_CONFIG & OBSERVER_CFG )        
     unsigned char active = 0;
     unsigned char dups = 0;
+#endif
     unsigned char mode = 0;
 
     val = expression(EXPR_NORMAL);
@@ -3164,6 +3163,7 @@ ble_scan:
         GOTO_QWHAT;
     }
 
+#if ( HOST_CONFIG & OBSERVER_CFG )    
     if (*txtpos == BLE_ACTIVE)
     {
       txtpos++;
@@ -3180,23 +3180,25 @@ ble_scan:
       GOTO_QWHAT;
     }
     txtpos += 2;
-
+#endif
+    
     linenum = expression(EXPR_NORMAL);
     if (error_num)
     {
       GOTO_QWHAT;
     }
-    blueBasic_discover.linenum = linenum;
     GAPRole_SetParameter(TGAP_GEN_DISC_SCAN, val, NULL);
     GAPRole_SetParameter(TGAP_LIM_DISC_SCAN, val, NULL);
+#if ( HOST_CONFIG & OBSERVER_CFG )        
+    blueBasic_discover.linenum = linenum;
     GAPRole_SetParameter(TGAP_FILTER_ADV_REPORTS, !dups, NULL);
     GAPObserverRole_CancelDiscovery();
     mode = 3;
     GAPObserverRole_StartDiscovery(mode, !!active, 0);
+#endif    
     goto run_next_statement;
   }
   // Fall through ...
-#endif  // ( HOST_CONFIG & OBSERVER_CFG )
   
 ble_advert:
   {
