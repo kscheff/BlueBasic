@@ -208,6 +208,9 @@ void OS_init(void)
 #ifndef ENABLE_BLE_CONSOLE
   OS_openserial();
 #endif
+#if ENABLE_SNV  
+  osal_snv_init();
+#endif
 }
 
 void OS_timer_stop(unsigned char id)

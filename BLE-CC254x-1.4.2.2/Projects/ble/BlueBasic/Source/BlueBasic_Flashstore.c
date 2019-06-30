@@ -559,33 +559,35 @@ static void flashstore_invalidate(unsigned short* mem)
 //
 // Support the OSAL flash API
 //
-
+#if !defined(ENABLE_SNV) || (ENABLE_SNV && !OAD_KEEP_NV_PAGES)
 unsigned char osal_snv_read(unsigned char id, unsigned char len, void *pBuf)
 {
 #if !GAP_BOND_MGR
-  return 0;  
+  return SUCCESS;  
 #else
   unsigned char* mem = flashstore_findspecial(FLASHSPECIAL_SNV + id);
   if (mem && mem[FLASHSPECIAL_DATA_LEN] == len)
   {
     OS_memcpy(pBuf, mem + FLASHSPECIAL_DATA_OFFSET, len);
-    return 1;
+    return SUCCESS;
   }
   else
   {
-    return 0;
+    return NV_OPER_FAILED;
   }
 #endif  
 }
+#endif
 
+#if !defined(ENABLE_SNV) || !OAD_KEEP_NV_PAGES || !ENABLE_SNV
 unsigned char osal_snv_write(unsigned char id, unsigned char len, void *pBuf)
 {  
 #if !GAP_BOND_MGR
-  return 0;
+  return SUCCESS;
 #else  
   if (heap + len + FLASHSPECIAL_DATA_OFFSET > sp)
   {
-    return 0;
+    return NV_OPER_FAILED;
   }
   else
   {
@@ -598,12 +600,22 @@ unsigned char osal_snv_write(unsigned char id, unsigned char len, void *pBuf)
     unsigned char r = flashstore_addspecial(item);
     
     heap = item;
-    return r;
+    return r != 0 ? SUCCESS : NV_OPER_FAILED;
   }
 #endif  
 }
+#endif
+
+#if !defined(ENABLE_SNV) || (ENABLE_SNV && !OAD_KEEP_NV_PAGES)
 
 unsigned char osal_snv_compact(unsigned char threshold)
 {
-  return 0;
+  return SUCCESS;
 }
+
+unsigned char osal_snv_init()
+{
+  return SUCCESS;
+}
+
+#endif

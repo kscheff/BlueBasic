@@ -1569,6 +1569,9 @@ static VAR_TYPE expression(unsigned char mode)
                   goto expr_error;
                 }
                 else
+#if ENABLE_SNV                  
+                  if (files[top].filename >= 'A')
+#endif
                 {
                   unsigned char* special = flashstore_findspecial(FS_MAKE_FILE_SPECIAL(files[top].filename, files[top].record));
                   if (special)
@@ -1583,6 +1586,14 @@ static VAR_TYPE expression(unsigned char mode)
                   }
                   queueptr[-1] = special ? 0 : 1;
                 }
+#if ENABLE_SNV
+                else
+                {
+                  // check for SNV id
+                  osalSnvId_t id = files[top].filename - '0' + BLE_NVID_CUST_START;
+                  queueptr[-1] = osal_snv_read(id,0,0) == SUCCESS ? 0 : 1;
+                }
+#endif
                 break;
 #ifdef ENABLE_PORT0
               case KW_PIN_P0:
@@ -3473,9 +3484,10 @@ cmd_btpoke:
   goto run_next_statement;
 
 //
-// OPEN <0-3>, READ|TRUNCATE|APPEND "<A-Z>"[, modulo[, record]]
+// OPEN <0-3>, READ|TRUNCATE|APPEND "<A-Z> | <0-9>"[, modulo[, record]]
 //  Open a numbered file for read, write or append access.
 //  optional modulo paramter wraps read, write record number around
+//  in case the file name is a number between 0-9 access SNV
 cmd_open:
   {
     unsigned char hasOffset = FALSE;
@@ -3485,7 +3497,13 @@ cmd_open:
       GOTO_QWHAT;
     }
     os_file_t* file = &files[id];
-    if (txtpos[1] == '"' && txtpos[3] == '"' && txtpos[2] >= 'A' && txtpos[2] <= 'Z')
+#if ENABLE_SNV    
+    bool bSnv = txtpos[2] >= '0' && txtpos[2] <= '9';
+#else
+#define bSnv 0
+#endif
+    if (txtpos[1] == '"' && txtpos[3] == '"' &&
+        ((txtpos[2] >= 'A' && txtpos[2] <= 'Z')  || bSnv ))
     {
       file->filename = txtpos[2];
       file->record = 0;
@@ -3525,6 +3543,8 @@ cmd_open:
       case FS_TRUNCATE: // Truncate
       {
         file->action = 'W';
+        if (bSnv)
+          break;
         for (unsigned long special = FS_MAKE_FILE_SPECIAL(file->filename, file->record); flashstore_deletespecial(special); special++)
         {
           // keep OSAL spinning
@@ -3534,6 +3554,8 @@ cmd_open:
       }
       case FS_APPEND: // Append
       {
+        if (bSnv)
+          GOTO_QWHAT;
         file->action = 'W';
         for (unsigned long special = FS_MAKE_FILE_SPECIAL(file->filename, 0); flashstore_findspecial(special); special++)
         {
@@ -3715,60 +3737,33 @@ cmd_read:
       }
       os_file_t* file = &files[id];
 
-      unsigned char* special = flashstore_findspecial(FS_MAKE_FILE_SPECIAL(file->filename, file->record));
-      if (!special)
+#if ENABLE_SNV      
+      if (file->filename >= 'A')
+#endif        
       {
-        SET_ERR_LINE;
-        goto qeof;
-      }
-      unsigned char len = special[FLASHSPECIAL_DATA_LEN];
+        unsigned char* special = flashstore_findspecial(FS_MAKE_FILE_SPECIAL(file->filename, file->record));
+        if (!special)
+        {
+          SET_ERR_LINE;
+          goto qeof;
+        }
+        unsigned char len = special[FLASHSPECIAL_DATA_LEN];
 
-      txtpos--;
-      for (;;)
-      {
-        ignore_blanks();
-        if (*txtpos == NL)
+        txtpos--;
+        for (;;)
         {
-          break;
-        }
-        else if (*txtpos++ != ',')
-        {
-          GOTO_QWHAT;
-        }
-        variable_frame* vframe = NULL;
-        unsigned char* ptr = parse_variable_address(&vframe);
-        if (ptr)
-        {
-          if (file->poffset == len)
+          ignore_blanks();
+          if (*txtpos == NL)
           {
-            file->record = (file->record + 1) % file->modulo;
-            special = flashstore_findspecial(FS_MAKE_FILE_SPECIAL(file->filename, file->record));
-            if (!special)
-            {
-              SET_ERR_LINE;
-              goto qeof;
-            }
-            file->poffset = FLASHSPECIAL_DATA_OFFSET;
-            len = special[FLASHSPECIAL_DATA_LEN];
+            break;
           }
-          unsigned char v = special[file->poffset++];
-          if (vframe->type == VAR_DIM_BYTE)
+          else if (*txtpos++ != ',')
           {
-            *ptr = v;
+            GOTO_QWHAT;
           }
-          else if (vframe->type == VAR_INT)
-          {
-            *(VAR_TYPE*)ptr = v;
-          }
-        }
-        else if (vframe)
-        {
-          // No address, but we have a vframe - this is a full array
-          if (error_num == ERROR_EXPRESSION)
-            error_num = ERROR_OK; // clear parsing error due to missing index braces
-          unsigned char alen = vframe->header.frame_size - sizeof(variable_frame);
-          ptr = (unsigned char*)vframe + sizeof(variable_frame);
-          while (alen)
+          variable_frame* vframe = NULL;
+          unsigned char* ptr = parse_variable_address(&vframe);
+          if (ptr)
           {
             if (file->poffset == len)
             {
@@ -3782,18 +3777,142 @@ cmd_read:
               file->poffset = FLASHSPECIAL_DATA_OFFSET;
               len = special[FLASHSPECIAL_DATA_LEN];
             }
-            unsigned char blen = (alen < len - file->poffset ? alen : len - file->poffset);
-            OS_memcpy(ptr, special + file->poffset, blen);
-            ptr += blen;
-            alen -= blen;
-            file->poffset += blen;
+            unsigned char v = special[file->poffset++];
+            if (vframe->type == VAR_DIM_BYTE)
+            {
+              *ptr = v;
+            }
+            else if (vframe->type == VAR_INT)
+            {
+              *(VAR_TYPE*)ptr = v;
+            }
+          }
+          else if (vframe)
+          {
+            // No address, but we have a vframe - this is a full array
+            if (error_num == ERROR_EXPRESSION)
+              error_num = ERROR_OK; // clear parsing error due to missing index braces
+            unsigned char alen = vframe->header.frame_size - sizeof(variable_frame);
+            ptr = (unsigned char*)vframe + sizeof(variable_frame);
+            while (alen)
+            {
+              if (file->poffset == len)
+              {
+                file->record = (file->record + 1) % file->modulo;
+                special = flashstore_findspecial(FS_MAKE_FILE_SPECIAL(file->filename, file->record));
+                if (!special)
+                {
+                  SET_ERR_LINE;
+                  goto qeof;
+                }
+                file->poffset = FLASHSPECIAL_DATA_OFFSET;
+                len = special[FLASHSPECIAL_DATA_LEN];
+              }
+              unsigned char blen = (alen < len - file->poffset ? alen : len - file->poffset);
+              OS_memcpy(ptr, special + file->poffset, blen);
+              ptr += blen;
+              alen -= blen;
+              file->poffset += blen;
+            }
+          }
+          else
+          {
+            GOTO_QWHAT;
           }
         }
-        else
-        {
-          GOTO_QWHAT;
-        }
       }
+#if ENABLE_SNV
+      else
+      {
+        // we read from SNV
+        // uint8 osal_snv_read( osalSnvId_t id, osalSnvLen_t len, void *pBuf )
+        
+        unsigned char* item = heap;
+        unsigned char len;
+        osalSnvId_t id = file->filename - '0' + BLE_NVID_CUST_START;
+        CHECK_HEAP_OOM(1, qhoom3);
+        if (osal_snv_read( id, 1, item) != SUCCESS)
+        {
+           heap = item;
+           SET_ERR_LINE;
+           goto qeof;
+        }
+        len = item[0];
+        CHECK_HEAP_OOM(len - 1, qhoom3);
+        if (osal_snv_read( id, len, item) != SUCCESS)
+        {
+           heap = item;
+           SET_ERR_LINE;
+           goto qeof;
+        }
+        file->poffset = 1;
+        txtpos--;
+        for (;;)
+        {
+          ignore_blanks();
+          if (*txtpos == NL)
+          {
+            break;
+          }
+          else if (*txtpos++ != ',')
+          {
+            GOTO_QWHAT;
+          }
+          if (file->poffset >= len)
+          {
+            heap = item;
+            SET_ERR_LINE;
+            goto qeof;
+          }
+          variable_frame* vframe = NULL;
+          unsigned char* ptr = parse_variable_address(&vframe);
+          if (ptr)
+          {
+            unsigned char v = item[file->poffset++];
+            if (vframe->type == VAR_DIM_BYTE)
+            {
+              *ptr = v;
+            }
+            else if (vframe->type == VAR_INT)
+            {
+              *(VAR_TYPE*)ptr = v;
+            }
+          }
+          else if (vframe)
+          {
+            // No address, but we have a vframe - this is a full array
+            if (error_num == ERROR_EXPRESSION)
+              error_num = ERROR_OK; // clear parsing error due to missing index braces
+            unsigned char alen = vframe->header.frame_size - sizeof(variable_frame);
+            ptr = (unsigned char*)vframe + sizeof(variable_frame);
+            while (alen)
+            {
+              if (file->poffset >= len)
+              {
+                heap = item;
+                SET_ERR_LINE;
+                goto qeof;
+              }
+              unsigned char blen = (alen < len - file->poffset ? alen : len - file->poffset);
+              OS_memcpy(ptr, item + file->poffset, blen);
+              ptr += blen;
+              alen -= blen;
+              file->poffset += blen;
+            }
+          }
+          else
+          {
+            GOTO_QWHAT;
+          }
+        }  // for(;;)
+      heap = item;
+      goto run_next_statement;
+qhoom3:
+      heap = item;
+      goto qoom;
+    //------------------------------    
+      }
+#endif  //ENABLE_SNV
     }
   }
   goto run_next_statement;
@@ -3886,96 +4005,181 @@ cmd_write:
       {
         GOTO_QWHAT;
       }
-      if (files[id].record == FLASHSPECIAL_NR_FILE_RECORDS)
+#if ENABLE_SNV      
+      if (files[id].filename >= 'A')
+#endif
       {
-        SET_ERR_LINE;
-        goto qtoobig;
-      }
-      unsigned long special = FS_MAKE_FILE_SPECIAL(files[id].filename, files[id].record++);
-      if (files[id].modulo < FLASHSPECIAL_NR_FILE_RECORDS)
-      {
-        files[id].record %= files[id].modulo;
-        flashstore_deletespecial(special);
-      }
-      unsigned char* item = heap;
-      unsigned char* iptr = item + FLASHSPECIAL_DATA_OFFSET;
-      unsigned char ilen = FLASHSPECIAL_DATA_OFFSET;
-      CHECK_HEAP_OOM(ilen, qhoom);
-      *(unsigned long*)&item[FLASHSPECIAL_ITEM_ID] = special;
+        if (files[id].record == FLASHSPECIAL_NR_FILE_RECORDS)
+        {
+          SET_ERR_LINE;
+          goto qtoobig;
+        }
+        unsigned long special = FS_MAKE_FILE_SPECIAL(files[id].filename, files[id].record++);
+        if (files[id].modulo < FLASHSPECIAL_NR_FILE_RECORDS)
+        {
+          files[id].record %= files[id].modulo;
+          flashstore_deletespecial(special);
+        }
+        unsigned char* item = heap;
+        unsigned char* iptr = item + FLASHSPECIAL_DATA_OFFSET;
+        unsigned char ilen = FLASHSPECIAL_DATA_OFFSET;
+        CHECK_HEAP_OOM(ilen, qhoom);
+        *(unsigned long*)&item[FLASHSPECIAL_ITEM_ID] = special;
 
-      txtpos--;
-      for (;;)
-      {
-        ignore_blanks();
-        if (*txtpos == NL)
+        txtpos--;
+        for (;;)
         {
-          break;
-        }
-        else if (*txtpos++ != ',')
-        {
-          heap = item;
-          GOTO_QWHAT;
-        }
-        variable_frame* vframe = NULL;
-        unsigned char* ptr = parse_variable_address(&vframe);
-        if (ptr)
-        {
-          CHECK_HEAP_OOM(1, qhoom);
-          if (vframe->type == VAR_DIM_BYTE)
+          ignore_blanks();
+          if (*txtpos == NL)
           {
-            *iptr = *ptr;
+            break;
           }
-          else
-          {
-            *iptr = *(VAR_TYPE*)ptr;
-          }
-        }
-        else if (vframe)
-        {
-          // No address, but we have a vframe - this is a full array
-          if (error_num == ERROR_EXPRESSION)
-            error_num = ERROR_OK; // clear parsing error due to missing index braces
-          unsigned char alen = vframe->header.frame_size - sizeof(variable_frame);
-          CHECK_HEAP_OOM(alen, qhoom);
-          OS_memcpy(iptr, ((unsigned char*)vframe) + sizeof(variable_frame), alen);
-        }
-        else
-        {
-          VAR_TYPE val = expression(EXPR_COMMA);
-          if (error_num)
+          else if (*txtpos++ != ',')
           {
             heap = item;
             GOTO_QWHAT;
           }
-          CHECK_HEAP_OOM(1, qhoom);
-          *iptr = val;
-          if (*txtpos != NL)
+          variable_frame* vframe = NULL;
+          unsigned char* ptr = parse_variable_address(&vframe);
+          if (ptr)
           {
-            txtpos--;
+            CHECK_HEAP_OOM(1, qhoom);
+            if (vframe->type == VAR_DIM_BYTE)
+            {
+              *iptr = *ptr;
+            }
+            else
+            {
+              *iptr = *(VAR_TYPE*)ptr;
+            }
           }
+          else if (vframe)
+          {
+            // No address, but we have a vframe - this is a full array
+            if (error_num == ERROR_EXPRESSION)
+              error_num = ERROR_OK; // clear parsing error due to missing index braces
+            unsigned char alen = vframe->header.frame_size - sizeof(variable_frame);
+            CHECK_HEAP_OOM(alen, qhoom);
+            OS_memcpy(iptr, ((unsigned char*)vframe) + sizeof(variable_frame), alen);
+          }
+          else
+          {
+            VAR_TYPE val = expression(EXPR_COMMA);
+            if (error_num)
+            {
+              heap = item;
+              GOTO_QWHAT;
+            }
+            CHECK_HEAP_OOM(1, qhoom);
+            *iptr = val;
+            if (*txtpos != NL)
+            {
+              txtpos--;
+            }
+          }
+          if (iptr - item > 0xFC)
+          {
+            heap = item;
+            SET_ERR_LINE;
+            goto qtoobig;
+          }
+          iptr = heap;
         }
-        if (iptr - item > 0xFC)
+        item[FLASHSPECIAL_DATA_LEN] = iptr - item;
+        if (!addspecial_with_compact(item))
         {
-          heap = item;
           SET_ERR_LINE;
-          goto qtoobig;
+          goto qhoom;
         }
-        iptr = heap;
-      }
-      item[FLASHSPECIAL_DATA_LEN] = iptr - item;
-      if (!addspecial_with_compact(item))
-      {
-        SET_ERR_LINE;
-        goto qhoom;
-      }
-      heap = item;
-      goto run_next_statement;
+        heap = item;
+        goto run_next_statement;
 qhoom:
-      heap = item;
-      goto qoom;
+        heap = item;
+        goto qoom;
+      }
+#if ENABLE_SNV
+      else 
+      {
+        // we write to SNV
+        unsigned char* item = heap;
+        unsigned char* iptr = item + 1;
+        CHECK_HEAP_OOM(1, qhoom2);  // reserve a byte for the length
+        txtpos--;
+        for (;;)
+        {
+          ignore_blanks();
+          if (*txtpos == NL)
+          {
+            break;
+          }
+          else if (*txtpos++ != ',')
+          {
+            heap = item;
+            GOTO_QWHAT;
+          }
+          variable_frame* vframe = NULL;
+          unsigned char* ptr = parse_variable_address(&vframe);
+          if (ptr)
+          {
+            CHECK_HEAP_OOM(1, qhoom2);
+            if (vframe->type == VAR_DIM_BYTE)
+            {
+              *iptr = *ptr;
+            }
+            else
+            {
+              *iptr = *(VAR_TYPE*)ptr;
+            }
+          }
+          else if (vframe)
+          {
+            // No address, but we have a vframe - this is a full array
+            if (error_num == ERROR_EXPRESSION)
+              error_num = ERROR_OK; // clear parsing error due to missing index braces
+            unsigned char alen = vframe->header.frame_size - sizeof(variable_frame);
+            CHECK_HEAP_OOM(alen, qhoom2);
+            OS_memcpy(iptr, ((unsigned char*)vframe) + sizeof(variable_frame), alen);
+          }
+          else
+          {
+            VAR_TYPE val = expression(EXPR_COMMA);
+            if (error_num)
+            {
+              heap = item;
+              GOTO_QWHAT;
+            }
+            CHECK_HEAP_OOM(1, qhoom2);
+            *iptr = val;
+            if (*txtpos != NL)
+            {
+              txtpos--;
+            }
+          }
+          if (iptr - item > 0xFE)
+          {
+            heap = item;
+            SET_ERR_LINE;
+            goto qtoobig;
+          }
+          iptr = heap;
+        }
+        item[0] = iptr - item;  // save length 
+        if (osal_snv_write( (osalSnvId_t) files[id].filename - '0' + BLE_NVID_CUST_START, item[0], item) != SUCCESS)
+        {
+          SET_ERR_LINE;
+          goto qhoom2;
+        }
+        heap = item;
+        goto run_next_statement;
+qhoom2:
+        heap = item;
+        goto qoom;
+      }
+#endif //ENABLE_SNV
     }
   }
 
+#if !defined(ENABLE_SPI) || ENABLE_SPI  
 //
 // SPI MASTER <port 0|1|2|3>, <mode 0|1|2|3>, LSB|MSB <speed> [, wordsize]
 //  or

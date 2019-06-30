@@ -228,6 +228,7 @@ extern bStatus_t GAP_SetParamValue( gapParamIDs_t paramID, uint16 paramValue );
 #ifdef GAP_BOND_MGR
 #include "gapbondmgr.h"
 #endif
+#include "osal_snv.h"
 #include "OnBoard.h"
 #include "gap.h"
 #include "observer.h"

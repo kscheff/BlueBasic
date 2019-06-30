@@ -6065,6 +6065,7 @@
           <state>UART_USE_CALLBACK=0</state>
           <state>PROCESS_SERIAL_DATA</state>
           <state>xOSALMEM_METRICS=TRUE</state>
+          <state>ENABLE_SNV=1</state>
         </option>
         <option>
           <name>CCPreprocFile</name>
@@ -7226,6 +7227,7 @@
           <state>UART_USE_CALLBACK=0</state>
           <state>PROCESS_SERIAL_DATA</state>
           <state>xOSALMEM_METRICS=TRUE</state>
+          <state>ENABLE_SNV=1</state>
         </option>
         <option>
           <name>CCPreprocFile</name>
@@ -9550,6 +9552,7 @@
           <state>UART_USE_CALLBACK=0</state>
           <state>PROCESS_SERIAL_DATA</state>
           <state>xOSALMEM_METRICS=TRUE</state>
+          <state>ENABLE_SNV=0</state>
         </option>
         <option>
           <name>CCPreprocFile</name>
@@ -11024,6 +11027,9 @@
     </file>
     <file>
       <name>$PROJ_DIR$\..\..\..\..\COMPONENTS\osal\common\OSAL_PwrMgr.c</name>
+    </file>
+    <file>
+      <name>$PROJ_DIR$\..\..\..\..\COMPONENTS\osal\mcu\cc2540\osal_snv.c</name>
     </file>
     <file>
       <name>$PROJ_DIR$\..\..\..\..\COMPONENTS\osal\common\OSAL_Timers.c</name>
