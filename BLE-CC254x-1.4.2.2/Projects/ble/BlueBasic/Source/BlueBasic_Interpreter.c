@@ -541,8 +541,8 @@ static unsigned short minMemory;
 #endif
 
 // define for getting source code line numbers to the errors... 
-// eats ca. 1100 bytes CODE and 2 bytes XDATA
-#define REPORT_ERROR_LINE
+// eats ca. 1172 bytes CODE and 2 bytes XDATA
+//#define REPORT_ERROR_LINE
 #ifdef REPORT_ERROR_LINE
 static unsigned short err_line = 0;
 #define SET_ERR_LINE err_line = __LINE__
