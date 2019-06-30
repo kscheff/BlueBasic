@@ -581,12 +581,14 @@ static unsigned char i2cSda;
 
 static VAR_TYPE pin_read(unsigned char major, unsigned char minor);
 static unsigned char pin_parse(void);
-static void pin_wire_parse(void);
-static void pin_wire(unsigned char* start, unsigned char* end);
 
+static void pin_wire(unsigned char* start, unsigned char* end);
+#if !defined(ENABLE_WIRE) || ENABLE_WIRE
+static void pin_wire_parse(void);
 static unsigned char pinParseCurrent;
 static unsigned char* pinParsePtr;
 static unsigned char* pinParseReadAddr;
+#endif
 
 static VAR_TYPE expression(unsigned char mode);
 #define EXPRESSION_STACK_SIZE 8
@@ -1862,8 +1864,10 @@ unsigned char interpreter_run(LINENUM gofrom, unsigned char canreturn)
     goto interperate;
   }
 
+#if !defined(ENABLE_WIRE) || ENABLE_WIRE  
   // Remove any pending WIRE parsing.
   pinParsePtr = NULL;
+#endif
 
   txtpos = heap + sizeof(LINENUM);
   tokenize();
@@ -2079,8 +2083,10 @@ run_next_statement:
       goto cmd_analog;
     case KW_CONFIG:
       goto cmd_config;
+#if !defined(ENABLE_WIRE) || ENABLE_WIRE      
     case KW_WIRE:
       goto cmd_wire;
+#endif      
 #if HAL_I2C      
     case KW_I2C:
       goto cmd_i2c;
@@ -3010,6 +3016,7 @@ cmd_serial:
   }
   goto run_next_statement;
 
+#if !defined(ENABLE_WIRE) || ENABLE_WIRE  
 //
 // WIRE ...
 //
@@ -3024,7 +3031,8 @@ cmd_wire:
     GOTO_QWHAT;
   }
   goto run_next_statement;
-
+#endif
+  
 ble_gatt:
   if (lineptr >= program_end)
   {
@@ -4879,6 +4887,7 @@ static VAR_TYPE pin_read(unsigned char major, unsigned char minor)
   }
 }
 
+#if !defined(ENABLE_WIRE) || ENABLE_WIRE
 //
 // Execute a wire command.
 // Essentially it compiles the BASIC wire representation into a set of instructions which
@@ -5081,6 +5090,7 @@ wire_error:
     error_num = ERROR_GENERAL;
   }
 }
+#endif
 
 static void pin_wire(unsigned char* ptr, unsigned char* end)
 {
