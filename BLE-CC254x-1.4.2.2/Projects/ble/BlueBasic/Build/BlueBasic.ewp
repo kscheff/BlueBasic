@@ -6066,6 +6066,7 @@
           <state>PROCESS_SERIAL_DATA</state>
           <state>xOSALMEM_METRICS=TRUE</state>
           <state>ENABLE_SNV=1</state>
+          <state>ENABLE_SPI=0</state>
         </option>
         <option>
           <name>CCPreprocFile</name>
@@ -7228,6 +7229,7 @@
           <state>PROCESS_SERIAL_DATA</state>
           <state>xOSALMEM_METRICS=TRUE</state>
           <state>ENABLE_SNV=1</state>
+          <state>ENABLE_SPI=0</state>
         </option>
         <option>
           <name>CCPreprocFile</name>
@@ -9553,6 +9555,7 @@
           <state>PROCESS_SERIAL_DATA</state>
           <state>xOSALMEM_METRICS=TRUE</state>
           <state>ENABLE_SNV=0</state>
+          <state>ENABLE_SPI=0</state>
         </option>
         <option>
           <name>CCPreprocFile</name>

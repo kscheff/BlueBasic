@@ -568,8 +568,10 @@ static unsigned char U1BAUD, U1GCR, U1CSR, U1DBUF;
 static unsigned char PERCFG;
 #endif
 
+#if !defined(ENABLE_SPI) || ENABLE_SPI
 static unsigned char spiChannel;
 static unsigned char spiWordsize;
+#endif
 static unsigned char analogReference;
 static unsigned char analogResolution = 0x30; // 14-bits
 #if HAL_I2C
@@ -2069,8 +2071,10 @@ run_next_statement:
       goto cmd_interrupt;
     case KW_SERIAL:
       goto cmd_serial;
+#if !defined(ENABLE_SPI) || ENABLE_SPI      
     case KW_SPI:
       goto cmd_spi;
+#endif      
     case KW_ANALOG:
       goto cmd_analog;
     case KW_CONFIG:
