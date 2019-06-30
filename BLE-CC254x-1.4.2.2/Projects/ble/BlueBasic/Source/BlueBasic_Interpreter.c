@@ -2064,9 +2064,11 @@ run_next_statement:
     case KW_ADVERT:
       ble_isadvert = 1;
       goto ble_advert;
+#if ( HOST_CONFIG & OBSERVER_CFG )    
     case KW_SCAN:
       ble_isadvert = 0;
       goto ble_scan;
+#endif
     case KW_BTPOKE:
       goto cmd_btpoke;
     case KW_PINMODE:
@@ -3117,15 +3119,15 @@ ble_gatt:
       GOTO_QWHAT;
   }
   goto run_next_statement;
-
+  
 //
 // SCAN <time> LIMITED|GENERAL [ACTIVE] [DUPLICATES] ONDISCOVER GOSUB <linenum>
 //  or
 // SCAN LIMITED|GENERAL|NAME "..."|CUSTOM "..."|END
 //
+#if ( HOST_CONFIG & OBSERVER_CFG )    
 ble_scan:
   if (*txtpos < 0x80)
-#if ( HOST_CONFIG & OBSERVER_CFG )    
   {
     unsigned char active = 0;
     unsigned char dups = 0;
@@ -3193,14 +3195,9 @@ ble_scan:
     GAPObserverRole_StartDiscovery(mode, !!active, 0);
     goto run_next_statement;
   }
-#else // ( HOST_CONFIG & OBSERVER_CFG )
-  {
-    printmsg("Observer Role not supported in this build.");
-    GOTO_QWHAT;
-  }
-#endif  // ( HOST_CONFIG & OBSERVER_CFG )
   // Fall through ...
-
+#endif  // ( HOST_CONFIG & OBSERVER_CFG )
+  
 ble_advert:
   {
     if (!ble_adptr)
@@ -4386,6 +4383,7 @@ cmd_spi:
     }
   }
   goto run_next_statement;
+#endif
   
 #if HAL_I2C  
 //
@@ -6066,7 +6064,7 @@ void ble_connection_status(unsigned short connHandle, unsigned char changeType, 
 
 
 #ifdef TARGET_CC254X
-
+#if ( HOST_CONFIG & OBSERVER_CFG )    
 extern void interpreter_devicefound(unsigned char addtype, unsigned char* address, signed char rssi, unsigned char eventtype, unsigned char len, unsigned char* data)
 {
   unsigned char vname;
@@ -6087,5 +6085,5 @@ extern void interpreter_devicefound(unsigned char addtype, unsigned char* addres
     sp = osp;
   }
 }
-
+#endif
 #endif // TARGET_CC254X
