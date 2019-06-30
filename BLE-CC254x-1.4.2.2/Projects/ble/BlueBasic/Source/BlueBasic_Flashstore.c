@@ -559,7 +559,7 @@ static void flashstore_invalidate(unsigned short* mem)
 //
 // Support the OSAL flash API
 //
-#if !defined(ENABLE_SNV) || (ENABLE_SNV && !OAD_KEEP_NV_PAGES)
+#if (!defined(ENABLE_SNV) && !OAD_KEEP_NV_PAGES) || (ENABLE_SNV && !OAD_KEEP_NV_PAGES)
 unsigned char osal_snv_read(unsigned char id, unsigned char len, void *pBuf)
 {
 #if !GAP_BOND_MGR
@@ -579,7 +579,7 @@ unsigned char osal_snv_read(unsigned char id, unsigned char len, void *pBuf)
 }
 #endif
 
-#if !defined(ENABLE_SNV) || !OAD_KEEP_NV_PAGES || !ENABLE_SNV
+#if (!defined(ENABLE_SNV) && !OAD_KEEP_NV_PAGES) || !OAD_KEEP_NV_PAGES && !ENABLE_SNV
 unsigned char osal_snv_write(unsigned char id, unsigned char len, void *pBuf)
 {  
 #if !GAP_BOND_MGR
@@ -606,7 +606,7 @@ unsigned char osal_snv_write(unsigned char id, unsigned char len, void *pBuf)
 }
 #endif
 
-#if !defined(ENABLE_SNV) || (ENABLE_SNV && !OAD_KEEP_NV_PAGES)
+#if (!defined(ENABLE_SNV) || ENABLE_SNV ) && !OAD_KEEP_NV_PAGES
 
 unsigned char osal_snv_compact(unsigned char threshold)
 {
