@@ -619,3 +619,11 @@ unsigned char osal_snv_init()
 }
 
 #endif
+
+#if ENABLE_SNV
+unsigned char get_snv_length(unsigned char id)
+{
+        unsigned char len = 0;
+        return osal_snv_read( id, 1, &len) == SUCCESS ? len : 0;
+}
+#endif

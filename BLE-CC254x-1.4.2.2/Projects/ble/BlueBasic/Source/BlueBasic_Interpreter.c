@@ -1410,7 +1410,33 @@ static VAR_TYPE expression(unsigned char mode)
           }
           *queueptr++ = OS_i2c_available(0, ch == KW_READ ? 'R' : 'W');
         }
+#endif        
+        else if (ch == '"' && txtpos[2] == '"') {
+          if (txtpos[1] >= 'A' && txtpos[1] <= 'Z')
+          {
+            // figure out the length of the named file
+            // tbd
+            // goto expr_error;
+          }
+#if ENABLE_SNV      
+          else if (txtpos[1] >= '0' && txtpos[1] <= '9')
+          {
+            // figure out the length of the named SNV item
+            if (queueptr == queueend)
+            {
+              goto expr_oom;
+            }
+            unsigned char len = get_snv_length(SNV_MAKE_ID(txtpos[1]));
+            *queueptr++ =  len > 0 ? len - 1 : 0;
+            txtpos += 3;
+            if (*txtpos++ != ')') goto expr_error;
+          }
 #endif
+          else
+          {
+            goto expr_error;
+          }
+        }
         else if (ch < 'A' || ch > 'Z' || txtpos[1] != ')')
         {
           goto expr_error;
@@ -1596,7 +1622,7 @@ static VAR_TYPE expression(unsigned char mode)
                 else
                 {
                   // check for SNV id
-                  osalSnvId_t id = files[top].filename - '0' + BLE_NVID_CUST_START;
+                  osalSnvId_t id = SNV_MAKE_ID(files[top].filename);
                   queueptr[-1] = osal_snv_read(id,0,0) == SUCCESS ? 0 : 1;
                 }
 #endif
@@ -3840,20 +3866,10 @@ cmd_read:
       else
       {
         // we read from SNV
-        // uint8 osal_snv_read( osalSnvId_t id, osalSnvLen_t len, void *pBuf )
-        
         unsigned char* item = heap;
-        unsigned char len;
-        osalSnvId_t id = file->filename - '0' + BLE_NVID_CUST_START;
-        CHECK_HEAP_OOM(1, qhoom3);
-        if (osal_snv_read( id, 1, item) != SUCCESS)
-        {
-           heap = item;
-           SET_ERR_LINE;
-           goto qeof;
-        }
-        len = item[0];
-        CHECK_HEAP_OOM(len - 1, qhoom3);
+        osalSnvId_t id = SNV_MAKE_ID(file->filename);
+        unsigned char len = get_snv_length(id);
+        CHECK_HEAP_OOM(len, qhoom3);
         if (osal_snv_read( id, len, item) != SUCCESS)
         {
            heap = item;
@@ -4179,7 +4195,7 @@ qhoom:
           iptr = heap;
         }
         item[0] = iptr - item;  // save length 
-        if (osal_snv_write( (osalSnvId_t) files[id].filename - '0' + BLE_NVID_CUST_START, item[0], item) != SUCCESS)
+        if (osal_snv_write(SNV_MAKE_ID(files[id].filename), item[0], item) != SUCCESS)
         {
           SET_ERR_LINE;
           goto qhoom2;

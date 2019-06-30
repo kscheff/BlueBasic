@@ -505,6 +505,8 @@ enum
 #define FLASHSPECIAL_ITEM_ID        3
 #define FLASHSPECIAL_DATA_OFFSET    (FLASHSPECIAL_ITEM_ID + sizeof(unsigned long))
 
+#define SNV_MAKE_ID(FILENAME) ((FILENAME) - '0' + BLE_NVID_CUST_START)
+
 extern unsigned char** flashstore_init(unsigned char** startmem);
 extern unsigned char** flashstore_addline(unsigned char* line);
 extern unsigned char** flashstore_deleteline(unsigned short id);
@@ -527,3 +529,4 @@ short OS_i2c_read(unsigned char port);
 unsigned char OS_i2c_write(unsigned char port, unsigned char ch);
 unsigned char OS_i2c_available(unsigned char port, unsigned char ch);
 int16 OS_get_temperature(uint8 wait);
+extern unsigned char get_snv_length(unsigned char id);
