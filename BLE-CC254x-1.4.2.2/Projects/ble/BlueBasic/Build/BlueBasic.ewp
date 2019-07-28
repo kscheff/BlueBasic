@@ -9559,6 +9559,7 @@
           <state>ENABLE_SNV=1</state>
           <state>ENABLE_SPI=0</state>
           <state>ENABLE_WIRE=0</state>
+          <state>XOSC32K_INSTALLED=TRUE</state>
         </option>
         <option>
           <name>CCPreprocFile</name>
