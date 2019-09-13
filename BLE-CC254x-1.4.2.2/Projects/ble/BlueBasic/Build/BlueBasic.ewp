@@ -9536,7 +9536,7 @@
           <state>HAL_UART_DMA=1</state>
           <state>HAL_UART_DMA_RX_MAX=32 </state>
           <state>HAL_UART_DMA_TX_MAX=32</state>
-          <state>HAL_UART_ISR=2</state>
+          <state>HAL_UART_ISR=0</state>
           <state>xPOWER_SAVING</state>
           <state>xPLUS_BROADCASTER</state>
           <state>HAL_LCD=FALSE</state>
@@ -9555,6 +9555,7 @@
           <state>FEATURE_BOOST_CONVERTER=P2_0</state>
           <state>UART_USE_CALLBACK=0</state>
           <state>PROCESS_SERIAL_DATA</state>
+          <state>PROCESS_MPPT</state>
           <state>xOSALMEM_METRICS=TRUE</state>
           <state>ENABLE_SNV=1</state>
           <state>ENABLE_SPI=0</state>
@@ -10736,6 +10737,9 @@
     </file>
     <file>
       <name>$PROJ_DIR$\..\Source\OSAL_BlueBasic.c</name>
+    </file>
+    <file>
+      <name>$PROJ_DIR$\..\Source\victron_mppt.c</name>
     </file>
   </group>
   <group>

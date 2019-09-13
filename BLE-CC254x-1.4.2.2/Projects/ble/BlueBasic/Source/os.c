@@ -460,7 +460,12 @@ unsigned char OS_serial_open(unsigned char port, unsigned long baud, unsigned ch
 #else
   // additional option 'V' means preprocessing needs to be enabled
   serial[port].sflow = flow;
+#ifndef PROCESS_MPPT
   if (port > (OS_MAX_SERIAL - 1) || parity != 'N' || bits != 8 || stop != 1 || (flow != 'H' && flow != 'N' && flow != 'V'))
+#else
+  // option 'M' means Victron MPPT preprocessing
+  if (port > (OS_MAX_SERIAL - 1) || parity != 'N' || bits != 8 || stop != 1 || (flow != 'H' && flow != 'N' && flow != 'V' && flow != 'M'))
+#endif    
 #endif
   {
     return 3;

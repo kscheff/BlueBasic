@@ -73,6 +73,10 @@
 #endif
 
 #include "os.h"
+   
+#if defined PROCESS_MPPT
+  #include "victron_mppt.h"
+#endif
 
 /*********************************************************************
  * MACROS
@@ -633,6 +637,12 @@ uint16 BlueBasic_ProcessEvent( uint8 task_id, uint16 events )
             }
           }
         }
+#ifdef PROCESS_MPPT     
+       if (serial[i].sflow == 'M')
+       {
+         process_mppt(i, len);
+       }
+#endif        
         else
 #endif
         if (len > 1)
