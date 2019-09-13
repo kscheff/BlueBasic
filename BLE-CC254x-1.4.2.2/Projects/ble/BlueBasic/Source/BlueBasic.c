@@ -609,44 +609,52 @@ uint16 BlueBasic_ProcessEvent( uint8 task_id, uint16 events )
 #error HAL_UART_PORT_0/1 should have values of 0,1 respectivly!
 #endif
         uint8 len = Hal_UART_RxBufLen(i);
-        if (serial[i].onread && serial[i].sbuf_read_pos == 16)
-        {
-          for ( ; len >= 16 ; )
-          {
 #ifdef PROCESS_SERIAL_DATA        
-            if (serial[i].sflow == 'V')
+        if (len >= 16 && serial[i].sflow == 'V' && serial[i].sbuf_read_pos == 16)
+        {
+          HalUARTRead(i, &serial[i].sbuf[0], 1);
+          --len;
+          if (serial[i].sbuf[0] == 0xAA)
+          {
+            uint8 parity = 0;
+            uint8 cnt;
+            HalUARTRead(i, &serial[i].sbuf[1], 15);
+            len -= 15;
+            for (cnt=1; cnt < 15; )
             {
-              HalUARTRead(i, &serial[i].sbuf[0], 1);
-              --len;
-              if (serial[i].sbuf[0] == 0xAA)
-              {
-                uint8 parity = 0;
-                uint8 cnt;
-                HalUARTRead(i, &serial[i].sbuf[1], 15);
-                len -= 15;
-                for (cnt=1; cnt < 15; )
-                {
-                  parity ^= serial[i].sbuf[cnt++];
-                }
-                //only send serial data when frame has no parity error
-                if (parity == serial[i].sbuf[15])
-                {
-                  serial[i].sbuf_read_pos = 0;
-                  interpreter_run(serial[i].onread, INTERPRETER_CAN_RETURN);
-                }
-                break;
-              }
+              parity ^= serial[i].sbuf[cnt++];
             }
-            else
-#endif
+            //only send serial data when frame has no parity error
+            if (parity == serial[i].sbuf[15])
             {
-              HalUARTRead(i, &serial[i].sbuf[0], 16);
               serial[i].sbuf_read_pos = 0;
-              interpreter_run(serial[i].onread, INTERPRETER_CAN_RETURN);
-              break;
+              if (serial[i].onread)
+                interpreter_run(serial[i].onread, INTERPRETER_CAN_RETURN);
             }
           }
-        } 
+        }
+        else
+#endif
+        if (len > 1)
+        {
+          // copy data when space is available
+          //if (serial[i].sbuf_read_pos != 0)
+          {
+            uint16 free = serial[i].sbuf_read_pos;
+            uint16 max = len > free ? free : len;
+            uint16 busy = 16 - free;
+            if (busy > 0)
+              OS_memcpy(&serial[i].sbuf[serial[i].sbuf_read_pos - max], &serial[i].sbuf[serial[i].sbuf_read_pos], busy);
+            if (max > 0)
+            {
+              uint16 length = HalUARTRead(i, &serial[i].sbuf[16 - max], max);
+              serial[i].sbuf_read_pos -= length;
+            }
+          }           
+          // send only full buffer to app
+          if (serial[i].onread /*&& serial[i].sbuf_read_pos != 16*/)
+            interpreter_run(serial[i].onread, INTERPRETER_CAN_RETURN);    
+        }
       }
     }
     SEMAPHORE_YIELD_SIGNAL();

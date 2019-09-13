@@ -405,44 +405,15 @@ static void _uartCallback(uint8 port, uint8 event)
 #endif
   if (port != HAL_UART_PORT_0 && port != HAL_UART_PORT_1)
     return;
-  if (event & (HAL_UART_RX_ABOUT_FULL | HAL_UART_RX_FULL)
-      && serial[port].onread
-        && serial[port].sbuf_read_pos == 16 )
+  if ( (Hal_UART_RxBufLen(port) > 1 )
+        && ( serial[port].sbuf_read_pos != 0 ) )
   {
-    uint8 len = Hal_UART_RxBufLen(port);
-    if ( len >= 16 )
-    {
-      if (serial[port].sflow == 'V')
-      {
-        HalUARTRead(port, &serial[port].sbuf[0], 1);
-        if (serial[port].sbuf[0] == 0xAA)
-        {
-          uint8 parity = 0;
-          uint8 cnt;
-          HalUARTRead(port, &serial[port].sbuf[1], 15);
-          for (cnt=1; cnt < 15; )
-          {
-            parity ^= serial[port].sbuf[cnt++];
-          }
-          //only send serial data when frame has no parity error
-          if (parity == serial[port].sbuf[15])
-          {
-            serial[port].sbuf_read_pos = 0;
-            osal_set_event(blueBasic_TaskID, BLUEBASIC_EVENT_SERIAL<<(port == HAL_UART_PORT_1));
-          }
-        }
-      }
-      else
-      {
-        HalUARTRead(HAL_UART_PORT_0, &serial[port].sbuf[0], 16);
-        serial[port].sbuf_read_pos = 0;
-        osal_set_event(blueBasic_TaskID, BLUEBASIC_EVENT_SERIAL<<(port == HAL_UART_PORT_1));
-      }
-    } else if (event & HAL_UART_TX_EMPTY
+    osal_set_event(blueBasic_TaskID, BLUEBASIC_EVENT_SERIAL<<(port == HAL_UART_PORT_1));
+  }
+  else if (event & HAL_UART_TX_EMPTY
                && serial[port].onwrite )
-    {
-      osal_set_event(blueBasic_TaskID, BLUEBASIC_EVENT_SERIAL<<(port == HAL_UART_PORT_1));
-    }
+  {
+    osal_set_event(blueBasic_TaskID, BLUEBASIC_EVENT_SERIAL<<(port == HAL_UART_PORT_1));
   }
 }
 #endif
