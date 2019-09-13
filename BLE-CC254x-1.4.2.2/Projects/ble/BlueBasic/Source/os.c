@@ -303,7 +303,7 @@ __no_init __data uint8 JumpToImageAorB @ 0x09;
 void OS_reboot(char flash)
 {
   GAPRole_TerminateConnection();
-#ifdef HAL_UART_DMA  
+#if defined(HAL_UART_DMA) && HAL_UART_DMA  
   HAL_DMA_ABORT_CH( HAL_DMA_CH_RX );
 #endif    
 #ifdef FEATURE_OAD_HEADER
