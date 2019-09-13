@@ -2615,10 +2615,6 @@ mem:
   printmsg(memorymsg);
   printnum(0, sp - heap);
   printmsg(" bytes on heap free.");
-#if ENABLE_YIELD
-  printnum(0, OS_get_yield_overruns());
-  printmsg(" yield overruns.");
-#endif  
 #if CHECK_MIN_MEMORY
   CHECK_MIN_MEMORY();
   printnum(0, minMemory);

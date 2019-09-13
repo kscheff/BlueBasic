@@ -72,7 +72,6 @@ unsigned char prevent_sleep_flags = 0;
 
 #if ENABLE_YIELD
 unsigned short bluebasic_yield_linenum;
-long yield_overruns;
 #endif
 
 enum {
@@ -242,10 +241,6 @@ char OS_timer_start(unsigned char id, unsigned long timeout, unsigned char repea
 #if ENABLE_YIELD
 void OS_yield(unsigned short linenum)
 {
-  if (bluebasic_yield_linenum)
-  {
-    yield_overruns++;
-  }
   bluebasic_yield_linenum = linenum;
   if (linenum) 
   {
@@ -254,13 +249,7 @@ void OS_yield(unsigned short linenum)
   else
   {
     osal_clear_event( blueBasic_TaskID, BLUEBASIC_EVENT_YIELD );
-    yield_overruns = 0;
   }
-}
-
-long OS_get_yield_overruns(void)
-{
-  return yield_overruns;
 }
 
 #endif
