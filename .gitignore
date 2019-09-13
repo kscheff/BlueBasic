@@ -40,7 +40,7 @@ BLE-CC254x-1.4.0/Projects/ble/BlueBasic/Build/Petra/List/
 
 BLE-CC254x-1.4.0/Projects/ble/BlueBasicLoader/Build/CC2540/Exe/
 BLE-CC254x-1.4.0/Projects/ble/BlueBasicLoader/Build/CC2540/Obj/
-BLE-CC254x-1.4.0/Projects/ble/BlueBasicLoader/Build/CC2540/List/
+BLE-CC254x-1.4.0/Projects/ble/BlueBasicLoader/Build/List/
 
 BLE-CC254x-1.4.0/Projects/ble/BlueBasicLoader/Build/CC2541/Exe/
 BLE-CC254x-1.4.0/Projects/ble/BlueBasicLoader/Build/CC2541/Obj/
@@ -57,7 +57,6 @@ BLE-CC254x-1.4.0/Projects/ble/BlueBasicLoader/Build/CC2541-ImgA/List/
 BLE-CC254x-1.4.0/Projects/ble/BlueBasicLoader/Build/Petra/Exe/
 BLE-CC254x-1.4.0/Projects/ble/BlueBasicLoader/Build/Petra/Obj/
 BLE-CC254x-1.4.0/Projects/ble/BlueBasicLoader/Build/Petra/List/
-<<<<<<< HEAD
 *.d51
 *.sim
 *.r51
@@ -70,7 +69,6 @@ BLE-CC254x-1.4.0/Projects/ble/BlueBasicLoader/Build/Petra/List/
 *.dni
 *.dbgdt
 *.s51
-BLE-CC254x-1.4.2.2
 *.map
 BLE-CC254x-1.4.0/Projects/ble/BlueBasic/Build/BlueBattery-ImgB/Exe
 BLE-CC254x-1.4.0/Projects/ble/BlueBasic/Build/BlueBattery-ImgB/Obj
@@ -78,7 +76,6 @@ BLE-CC254x-1.4.0/Projects/ble/BlueBasic/Build/BlueBattery/Exe
 BLE-CC254x-1.4.0/Projects/ble/BlueBasic/Build/BlueBattery/Obj
 BLE-CC254x-1.4.0/Projects/ble/BlueBasic/Build/BlueSolar/Exe
 BLE-CC254x-1.4.0/Projects/ble/BlueBasic/Build/BlueSolar/Obj
-=======
 
 BLE-CC254x-1.4.2.2/Projects/ble/util/BIM/cc254x/settings/
 BLE-CC254x-1.4.2.2/Projects/ble/BlueBasic/Build/settings/
@@ -143,4 +140,4 @@ BLE-CC254x-1.4.2.2/Projects/ble/BlueBasic/Build/BlueSolar/Exe
 BLE-CC254x-1.4.2.2/Projects/ble/BlueBasic/Build/BlueSolar/Obj
 BLE-CC254x-1.4.2.2/Projects/ble/BlueBasic/Build/BlueSteca/Obj
 *.ewt
->>>>>>> BLE_1.4.2.2
+
