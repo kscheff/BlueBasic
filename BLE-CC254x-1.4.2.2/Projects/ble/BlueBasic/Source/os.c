@@ -548,15 +548,15 @@ unsigned char OS_serial_open(unsigned char port, unsigned long baud, unsigned ch
 #ifdef PROCESS_SERIAL_DATA
     serial[port].sbuf_read_pos = 16;
 #endif
-    if (onread != 0 || onwrite != 0)
-    {
 #if !(UART_USE_CALLBACK)  
+//    if (onread != 0 || onwrite != 0)
+    {
       uint32 periode = 160000UL / baud;
-      if (periode < 10)
-        periode = 10;
+      if (periode < 5)
+        periode = 5;
       osal_start_reload_timer(blueBasic_TaskID, BLUEBASIC_EVENT_SERIAL<<port , periode);
-#endif
     }
+#endif
     uart_stop_polling = 0;
     return 0;
   }
