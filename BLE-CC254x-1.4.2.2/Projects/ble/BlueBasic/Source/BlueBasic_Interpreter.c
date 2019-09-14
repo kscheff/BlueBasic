@@ -3984,13 +3984,21 @@ cmd_write:
         unsigned char* ptr = parse_variable_address(&vframe);
         if (ptr)
         {
+          unsigned char send_byte;
           if (vframe->type == VAR_DIM_BYTE)
           {
-            OS_serial_write(port, *ptr);
+            send_byte = *ptr;
+//            OS_serial_write(port, *ptr) == 0);
           }
           else
           {
-            OS_serial_write(port, *(VAR_TYPE*)ptr);
+            send_byte = *(VAR_TYPE*)ptr;
+            //OS_serial_write(port, *(VAR_TYPE*)ptr);
+          }
+          while (!OS_serial_write(port, send_byte))
+          {
+            // keep OSAL spinning
+            osal_run_system();
           }
         }
         else if (vframe)
@@ -4002,7 +4010,12 @@ cmd_write:
           ptr = (unsigned char*)vframe + sizeof(variable_frame);
           for (alen = vframe->header.frame_size - sizeof(variable_frame); alen; alen--)
           {
-            OS_serial_write(port, *ptr++);
+            for ( ; OS_serial_write(port, *ptr) == 0 ; )
+            {
+              // keep OSAL spinning
+              osal_run_system();
+            }
+            ptr++;
           }
         }
         else if (*txtpos == NL)
@@ -4016,7 +4029,11 @@ cmd_write:
           {
             GOTO_QWHAT;
           }
-          OS_serial_write(port, val);
+          while (!OS_serial_write(port, val))
+          {
+            // keep OSAL spinning
+            osal_run_system();
+          }   
         }
       }
       goto run_next_statement;
