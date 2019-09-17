@@ -93,7 +93,7 @@ static const char* const error_msgs[] =
 #if defined(MPPT_AS_VOTRONIC) && MPPT_AS_VOTRONIC
 #define MPPT_EMU_MSG " as Votronic"
 #else
-define MPPT_EMU_MSG ""
+#define MPPT_EMU_MSG ""
 #endif
 
 #if defined(MPPT_MODE_HEX) && MPPT_MODE_HEX
