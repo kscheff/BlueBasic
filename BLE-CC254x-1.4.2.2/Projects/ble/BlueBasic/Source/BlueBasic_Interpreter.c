@@ -89,14 +89,33 @@ static const char* const error_msgs[] =
   "End of file",
 };
 
+
+#if defined(MPPT_AS_VOTRONIC) && MPPT_AS_VOTRONIC
+#define MPPT_EMU_MSG " as Votronic"
+#else
+define MPPT_EMU_MSG ""
+#endif
+
+#if defined(MPPT_MODE_HEX) && MPPT_MODE_HEX
+#define MPPT_MODE_MSG " VE.Hex"
+#endif
+#if defined (MPPT_MODE_TEXT) && MPPT_MODE_TEXT
+#define MPPT_MODE_MSG " VE.Text"
+#endif  
+#ifndef MPPT_MODE_MSG
+#define MPPT_MODE_MSG ""
+#endif
+
+#define MSG_EXT MPPT_MODE_MSG MPPT_EMU_MSG
+
 #ifdef BUILD_TIMESTAMP
 #ifdef FEATURE_OAD_HEADER
-static const char initmsg[]           = "BlueBasic " BUILD_TIMESTAMP "/OAD " kVersion;
+static const char initmsg[]           = "BlueBasic " BUILD_TIMESTAMP "/OAD " kVersion MSG_EXT;
 #else
-static const char initmsg[]           = "BlueBasic " BUILD_TIMESTAMP " " kVersion;
+static const char initmsg[]           = "BlueBasic " BUILD_TIMESTAMP " " kVersion MSG_EXT;
 #endif
 #else
-static const char initmsg[]           = "BlueBasic " kVersion;
+static const char initmsg[]           = "BlueBasic " kVersion MSG_EXT;
 #endif
 //static const char urlmsg[]            = "http://blog.xojs.org/bluebasic";
 static const char urlmsg[]            = kMfrName;
