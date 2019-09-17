@@ -38,6 +38,10 @@
         <project>BlueBasic</project>
         <configuration>BlueBattery-D1</configuration>
       </member>
+      <member>
+        <project>BlueBasic</project>
+        <configuration>BlueBattery-MPPT</configuration>
+      </member>
     </batchDefinition>
     <batchDefinition>
       <name>BlueBattery &amp; BlueSolar</name>
@@ -52,6 +56,10 @@
       <member>
         <project>BlueBasic</project>
         <configuration>BlueBattery-D1</configuration>
+      </member>
+      <member>
+        <project>BlueBasic</project>
+        <configuration>BlueBattery-MPPT</configuration>
       </member>
     </batchDefinition>
   </batchBuild>

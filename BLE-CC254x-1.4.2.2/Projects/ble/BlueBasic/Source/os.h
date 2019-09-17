@@ -238,6 +238,10 @@ extern bStatus_t GAP_SetParamValue( gapParamIDs_t paramID, uint16 paramValue );
 #include "hal_flash.h"
 #include "timestamp.h"
 
+#ifdef PROCESS_MPPT
+#include "victron_mppt.h"
+#endif
+
 // Configurations
 #ifdef TARGET_PETRA
 

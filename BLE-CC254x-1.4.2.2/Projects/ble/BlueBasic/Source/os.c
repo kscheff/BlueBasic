@@ -433,7 +433,16 @@ unsigned char OS_serial_open(unsigned char port, unsigned long baud, unsigned ch
   switch (baud)
   {
     case 1000:
+#if defined MPPT_AS_VOTRONIC && MPPT_AS_VOTRONIC
+      baud = 19200;
+      cbaud = HAL_UART_BR_19200;
+      if (flow == 'V')
+      {
+        flow = 'M';
+      }      
+#else
       cbaud = HAL_UART_BR_1000;
+#endif
       break;
     case 9600:
       cbaud = HAL_UART_BR_9600;
@@ -452,8 +461,7 @@ unsigned char OS_serial_open(unsigned char port, unsigned long baud, unsigned ch
       break;
     default:
       return 2;
-  }
- 
+  } 
   // Only support port 0-1, no-parity, 8-bits, 1 stop bit
 #ifndef PROCESS_SERIAL_DATA 
   if (port > (OS_MAX_SERIAL - 1) || parity != 'N' || bits != 8 || stop != 1 || (flow != 'H' && flow != 'N'))
