@@ -67,7 +67,7 @@ static struct
   uint8  size;
   uint16 batt_volt;   // 10mV per bit
   uint16 sol_volt;    // 10mV per bit
-  uint16 sol_current; // 0.1A per bit
+  int16 sol_current; // 0.1A per bit
   uint8  status;
 } mppt = { sizeof(mppt) - sizeof(mppt.size),0,0,0,0 };
 
@@ -223,8 +223,15 @@ static void send_as_votronic(uint8 port)
   sol_frame.u_batt_msb = HI_UINT16(mppt.batt_volt);
   sol_frame.u_panel_lsb = LO_UINT16(mppt.sol_volt);
   sol_frame.u_panel_msb = HI_UINT16(mppt.sol_volt);
-  sol_frame.i_batt_lsb = LO_UINT16(mppt.sol_current);
-  sol_frame.i_batt_msb = HI_UINT16(mppt.sol_current);
+  if (mppt.sol_current >= 0)
+  {
+    sol_frame.i_batt_lsb = LO_UINT16(mppt.sol_current);
+    sol_frame.i_batt_msb = HI_UINT16(mppt.sol_current);
+  }
+  else
+  {
+    sol_frame.i_batt_lsb = sol_frame.i_batt_msb = 0;
+  }
   
   // Victron MPPT Status (0x0201)  
   // 0 not charging
@@ -391,7 +398,7 @@ static label_t label;
 struct
 {
   uint16 v;
-  uint16 i;
+  int16 i;
   uint16 vpv;
   uint16 cs;
 } txt_frame;
@@ -401,6 +408,7 @@ static const uint8 sequence[] = { 'c','k','s','u','m' };
 static uint8 in_buf[16];
 static uint8 *ptr;
 static uint8 len;
+static int8 mppt_sign;
 
 static void receive_text(uint8 port)
 {
@@ -441,6 +449,7 @@ static void receive_text(uint8 port)
       case 'I':
         state = MPPT_TAB;
         label = LABEL_I;
+        mppt_sign = 1;
         break;
       default:
         state = MPPT_IDLE;
@@ -526,6 +535,11 @@ static void receive_text(uint8 port)
         state = MPPT_IDLE;
       break;
     case MPPT_DATA_0:
+      if (c == '-')
+      {
+        mppt_sign = -1;
+        break;
+      }
     case MPPT_DATA_1:
     case MPPT_DATA_2:
     case MPPT_DATA_3:
@@ -546,7 +560,7 @@ static void receive_text(uint8 port)
           txt_frame.v = mppt_data;
           break;
         case LABEL_I:
-          txt_frame.i = mppt_data;
+          txt_frame.i = (int16)mppt_data * mppt_sign;
           break;
         case LABEL_VPV:
           txt_frame.vpv = mppt_data;
