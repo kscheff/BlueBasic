@@ -644,7 +644,7 @@ uint16 BlueBasic_ProcessEvent( uint8 task_id, uint16 events )
 #endif
           
 #ifdef PROCESS_MPPT
-        case: 'M':
+        case 'M':
           process_mppt(i, len);
           break;
 #endif        
