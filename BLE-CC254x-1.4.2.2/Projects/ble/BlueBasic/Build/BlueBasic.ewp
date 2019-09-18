@@ -11908,6 +11908,14 @@
     <file>
       <name>$PROJ_DIR$\..\Source\victron_mppt.c</name>
       <excluded>
+        <configuration>CC2541</configuration>
+        <configuration>CC2540</configuration>
+        <configuration>CC2541-ImgB</configuration>
+        <configuration>CC2540-ImgB</configuration>
+        <configuration>Petra</configuration>
+        <configuration>BlueSolar</configuration>
+        <configuration>BlueBattery</configuration>
+        <configuration>BlueSteca</configuration>
         <configuration>BlueBattery-D1</configuration>
       </excluded>
     </file>
