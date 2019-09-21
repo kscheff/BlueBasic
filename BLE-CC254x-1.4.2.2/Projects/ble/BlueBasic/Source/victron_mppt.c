@@ -245,7 +245,6 @@ static void send_as_votronic(uint8 port)
   sol_frame.status = VOT_STATUS_MPP_FLAG;
   switch (mppt.status)
   {
-  case 0:
   case 3:
     sol_frame.status |= VOT_STATUS_ACTIVE;
     break;
