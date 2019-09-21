@@ -749,12 +749,14 @@ static void bluebasic_StateNotificationCB( gaprole_States_t newState )
     //P1 &= 0xFE;
     timeSlice = 101;
     SEMAPHORE_CONN_SIGNAL();
+    SEMAPHORE_READ_SIGNAL();
     break;
     
   case GAPROLE_ADVERTISING:
     //P1 &= 0xFE;
     timeSlice = 102;
     SEMAPHORE_CONN_SIGNAL();
+    SEMAPHORE_READ_SIGNAL();
     break;
     
   case GAPROLE_CONNECTED:
@@ -766,6 +768,7 @@ static void bluebasic_StateNotificationCB( gaprole_States_t newState )
 //      SEMAPHORE_CONN_WAIT();
       osal_start_timerEx(blueBasic_TaskID, BLUEBASIC_EVENT_CON, 6000);
     }
+    SEMAPHORE_READ_SIGNAL();
     break;
     
   case GAPROLE_WAITING:
@@ -773,6 +776,7 @@ static void bluebasic_StateNotificationCB( gaprole_States_t newState )
 //    P1 &= 0xFE;
     timeSlice = 103;
     SEMAPHORE_CONN_SIGNAL();
+    SEMAPHORE_READ_SIGNAL();
     ble_init_ccc();
     break;
     
