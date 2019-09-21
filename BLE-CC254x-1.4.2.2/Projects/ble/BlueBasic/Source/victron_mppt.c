@@ -138,6 +138,7 @@ typedef enum
   MPPT_DATA_2,
   MPPT_DATA_3,
   MPPT_DATA_4,
+  MPPT_DATA_5,
   MPPT_DATA_END
 } state_mppt_t;
 #endif
@@ -150,10 +151,6 @@ static unsigned long mppt_adr;
 static unsigned long mppt_data;
 static uint8 mppt_nibs;
 static uint8 mppt_checksum;
-#endif
-
-#if MPPT_MODE_TEXT
-static uint16 mppt_data;
 #endif
 
 #if MPPT_MODE_HEX
@@ -394,25 +391,22 @@ typedef enum
 
 static label_t label;
 
-struct
+static struct
 {
-  uint16 v;
-  int16 i;
-  uint16 vpv;
+  uint16 v;   // in 10 mv 
+  int32 i;    // in 100 mA
+  uint16 vpv; // in 10 mV
   uint16 cs;
 } txt_frame;
 
-
-static const uint8 sequence[] = { 'c','k','s','u','m' };
-static uint8 in_buf[16];
-static uint8 *ptr;
-static uint8 len;
-static int8 mppt_sign;
-
 static void receive_text(uint8 port)
 {
-  ptr = in_buf;
-  len = HalUARTRead(port, ptr, sizeof(in_buf));
+  static const uint8 sequence[] = { 'c','k','s','u','m' };
+  static uint8 in_buf[16];
+  static int32 mppt_data;
+  static int8 mppt_sign;
+  uint8 *ptr = in_buf;
+  uint8 len = HalUARTRead(port, ptr, sizeof(in_buf));
   while (len--)
   {
     uint8 c = *ptr++;
@@ -513,11 +507,11 @@ static void receive_text(uint8 port)
         // valid frame received
         // copy data over
         if (txt_frame.v != 0xffff)
-          mppt.batt_volt = txt_frame.v / 10;
+          mppt.batt_volt = txt_frame.v;
         if (txt_frame.i != 0xffff)
-          mppt.sol_current = txt_frame.i / 100;
+          mppt.sol_current = txt_frame.i;
         if (txt_frame.vpv != 0xffff)
-          mppt.sol_volt = txt_frame.vpv / 10;
+          mppt.sol_volt = txt_frame.vpv;
         if (txt_frame.cs != 0xffff)
           mppt.status = LO_UINT16(txt_frame.cs);
         SEND_MPPT(port);
@@ -543,6 +537,7 @@ static void receive_text(uint8 port)
     case MPPT_DATA_2:
     case MPPT_DATA_3:
     case MPPT_DATA_4:
+    case MPPT_DATA_5:
       if (c >= '0' && c <= '9')
       {
         mppt_data = mppt_data * 10 + c - '0';
@@ -556,13 +551,13 @@ static void receive_text(uint8 port)
         switch (label)
         {
         case LABEL_V:
-          txt_frame.v = mppt_data;
+          txt_frame.v = mppt_data / 10;
           break;
         case LABEL_I:
-          txt_frame.i = (int16)mppt_data * mppt_sign;
+          txt_frame.i = mppt_data * mppt_sign / 100;
           break;
         case LABEL_VPV:
-          txt_frame.vpv = mppt_data;
+          txt_frame.vpv = mppt_data / 10;
           break;
         case LABEL_CS:
           txt_frame.cs = BUILD_UINT16(LO_UINT16(mppt_data),0);
