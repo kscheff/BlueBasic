@@ -237,10 +237,10 @@ static void send_as_votronic(uint8 port)
   // 0 not charging
   // 2 failure 
   // 3 bulk   (full current)
-  // 4 absobtion (voltage linit)
+  // 4 absobtion (voltage limit)
   // 5 float  (voltage limit)
   // 7 equalize (voltage limit)
-  // 252 ESS (volatage controlled from external)
+  // 252 ESS (voltage controlled from external)
   // 255 unavailable  
   sol_frame.status = VOT_STATUS_MPP_FLAG;
   switch (mppt.status)
