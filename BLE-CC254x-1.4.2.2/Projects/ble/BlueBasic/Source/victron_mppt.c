@@ -165,6 +165,16 @@ static void request_mppt(uint8 port)
 #endif
 
 #ifndef MPPT_TEST
+
+static void run_app(uint8 port)
+{
+  if (serial[port].onread)
+  {
+    interpreter_run(serial[port].onread, INTERPRETER_CAN_RETURN);
+  }
+}
+
+#if !MPPT_AS_VOTRONIC
 // send data to application
 static void send_app(uint8 port, uint8 *buf, uint8 len)
 {
@@ -174,11 +184,9 @@ static void send_app(uint8 port, uint8 *buf, uint8 len)
     serial[port].sbuf_read_pos = 0;
     OS_memcpy(serial[port].sbuf, buf, len);
   }
-  if (serial[port].onread)
-  {
-    interpreter_run(serial[port].onread, INTERPRETER_CAN_RETURN);
-  }
+  run_app(port);
 }
+#endif
 #else // MPPT_TEST
 static void send_app(uint8 port, uint8 *buf, uint8 len)
 {
@@ -210,25 +218,28 @@ typedef struct
   uint8 parity;
 } sol_frame_t;
 
+static_assert(sizeof(sol_frame_t) <= FIELD_SIZEOF(os_serial_t, sbuf), "sol_frame_t bigger than serial buffer");
+
 //static sol_frame_t sol_frame;
 
 static void send_as_votronic(uint8 port)
 {
-  sol_frame_t sol_frame;  // 16 bytes from stack :-/
-  sol_frame.start = 0xAA;
-  sol_frame.id = 0x1A;
-  sol_frame.u_batt_lsb = LO_UINT16(mppt.batt_volt);
-  sol_frame.u_batt_msb = HI_UINT16(mppt.batt_volt);
-  sol_frame.u_panel_lsb = LO_UINT16(mppt.sol_volt);
-  sol_frame.u_panel_msb = HI_UINT16(mppt.sol_volt);
+  // directly copy data to serial buffer
+  sol_frame_t* sol_frame = (sol_frame_t*)serial[port].sbuf;
+  sol_frame->start = 0xAA;
+  sol_frame->id = 0x1A;
+  sol_frame->u_batt_lsb = LO_UINT16(mppt.batt_volt);
+  sol_frame->u_batt_msb = HI_UINT16(mppt.batt_volt);
+  sol_frame->u_panel_lsb = LO_UINT16(mppt.sol_volt);
+  sol_frame->u_panel_msb = HI_UINT16(mppt.sol_volt);
   if (mppt.sol_current >= 0)
   {
-    sol_frame.i_batt_lsb = LO_UINT16(mppt.sol_current);
-    sol_frame.i_batt_msb = HI_UINT16(mppt.sol_current);
+    sol_frame->i_batt_lsb = LO_UINT16(mppt.sol_current);
+    sol_frame->i_batt_msb = HI_UINT16(mppt.sol_current);
   }
   else
   {
-    sol_frame.i_batt_lsb = sol_frame.i_batt_msb = 0;
+    sol_frame->i_batt_lsb = sol_frame->i_batt_msb = 0;
   }
   
   // Victron MPPT Status (0x0201)  
@@ -240,24 +251,24 @@ static void send_as_votronic(uint8 port)
   // 7 equalize (voltage limit)
   // 252 ESS (voltage controlled from external)
   // 255 unavailable  
-  sol_frame.status = VOT_STATUS_MPP_FLAG;
+  sol_frame->status = VOT_STATUS_MPP_FLAG;
   switch (mppt.status)
   {
   case 3:
-    sol_frame.status |= VOT_STATUS_ACTIVE;
+    sol_frame->status |= VOT_STATUS_ACTIVE;
     break;
   case 4:
   case 5:
   case 6:
   case 7:
   case 252:
-    sol_frame.status |= VOT_STATUS_LIMIT | VOT_STATUS_ACTIVE;
+    sol_frame->status |= VOT_STATUS_LIMIT | VOT_STATUS_ACTIVE;
     break;
   default:
     break;
   }
   //sol_frame.parity = 55; // dummy, not calculated  
-  send_app(port, (unsigned char*)&sol_frame, sizeof(sol_frame));
+  serial[port].sbuf_read_pos = 0;
 }
 #endif
 

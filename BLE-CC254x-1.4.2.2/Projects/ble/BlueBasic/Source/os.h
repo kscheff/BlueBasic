@@ -457,8 +457,7 @@ extern void interpreter_devicefound(unsigned char addtype, unsigned char* addres
 #define _GAPROLE(V)   (0x0FFF & (V))
 #define _GAPLEN(L)    ((0x7000 & (L))>>12) // length in bytes for the access
 
-
-
+#define FIELD_SIZEOF(t, f) (sizeof(((t*)0)->f))
 
 
 
