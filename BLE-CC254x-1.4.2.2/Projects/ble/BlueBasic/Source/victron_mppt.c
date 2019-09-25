@@ -662,14 +662,14 @@ uint16 test_read(void* ptr, uint16 len)
 int main(void)
 {
   printf("Starting to parse data...\n");
-  for (read_counter = 0; read_counter < sizeof(test_frame); read_counter++)
+  for (read_counter = 0; read_counter < sizeof(test_frame); )
   {
     RECEIVE_MPPT(0);
   }
   SEND_MPPT(0);
-  printf("v:   %d mV\n", mppt.batt_volt *10);
+  printf("v:   %d mV\n", mppt.batt_volt * 10);
   printf("vpv: %d mV\n", mppt.sol_volt * 10);
-  printf("i:   %d mA\n", mppt.sol_current *100);
+  printf("i:   %d mA\n", mppt.sol_current * 100);
   printf("cs:  %02x\n", mppt.status);
   return 0;
 }
