@@ -21,9 +21,18 @@
 #include <stdlib.h>
 #include <memory.h>
 
+#define MPPT_MODE_TEXT 1
+#define MPPT_MODE_HEX 0
+#define MPPT_AS_VOTRONIC 1
+#define FIELD_SIZEOF(t, f) (sizeof(((t*)0)->f))
+#define OS_MAX_SERIAL 1
+
 #define osal_memset(a,b,c) memset(a,b,c)
 #define uint8 unsigned char
 #define uint16 unsigned short
+#define int16 signed short
+#define int32 signed int
+#define int8 signed char
 #define LO_UINT16(a) ((a)&0xff)
 #define HI_UINT16(a) ((a)>>8 & 0xff)
 #define BUILD_UINT16(lo,hi) (((hi)<<8)|(lo))
@@ -187,7 +196,23 @@ static void send_app(uint8 port, uint8 *buf, uint8 len)
   run_app(port);
 }
 #endif
+
 #else // MPPT_TEST
+
+typedef struct
+{
+  unsigned short onread;
+  unsigned short onwrite;
+  unsigned char sbuf[16];
+  uint8 sbuf_read_pos; // = 16;
+#ifdef PROCESS_SERIAL_DATA
+  unsigned char sflow;
+#endif  
+} os_serial_t;
+
+os_serial_t serial[OS_MAX_SERIAL];
+
+
 static void send_app(uint8 port, uint8 *buf, uint8 len)
 {
   // dump data to console
@@ -269,6 +294,9 @@ static void send_as_votronic(uint8 port)
   }
   //sol_frame.parity = 55; // dummy, not calculated  
   serial[port].sbuf_read_pos = 0;
+#ifndef MPPT_TEST
+  run_app(port);
+#endif
 }
 #endif
 
