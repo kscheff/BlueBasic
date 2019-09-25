@@ -407,7 +407,7 @@ static void receive_text(uint8 port)
   static int32 mppt_data;
   static int8 mppt_sign;
   uint8 *ptr = in_buf;
-  uint8 len = HalUARTRead(port, ptr, sizeof(in_buf));
+  uint8 len = (uint8)HalUARTRead(port, ptr, sizeof(in_buf));
   while (len--)
   {
     uint8 c = *ptr++;
