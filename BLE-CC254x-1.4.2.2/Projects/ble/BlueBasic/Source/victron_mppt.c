@@ -120,6 +120,7 @@ typedef enum
 typedef enum
 {
   MPPT_INIT,
+  MPPT_FRAME,
   MPPT_IDLE,
   MPPT_START,
   MPPT_CHECKSUM,
@@ -416,14 +417,18 @@ static void receive_text(uint8 port)
     case MPPT_INIT:
       osal_memset((void*)&txt_frame, 0xff, sizeof(txt_frame));
       state += 1;
-      mppt_sum = c;
       // fall through
+    case MPPT_FRAME:
+      mppt_sum = c;
+      if (c == '\r')
+        state = MPPT_START;
+      break;
     case MPPT_IDLE:
-      if (c == 0x0d)
+      if (c == '\r')
         state = MPPT_START;
       break;
     case MPPT_START:
-      if (c == 0x0a)
+      if (c == '\n')
       {
         state = MPPT_LABEL_0;
       }
