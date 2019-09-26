@@ -645,9 +645,13 @@ uint16 BlueBasic_ProcessEvent( uint8 task_id, uint16 events )
           
 #ifdef PROCESS_MPPT
         case 'M':
+#if !UART_USE_CALLBACK          
           process_mppt(i, len);
-          break;
 #endif        
+          if (serial[i].sbuf_read_pos == 0 && serial[i].onread)
+            interpreter_run(serial[i].onread, INTERPRETER_CAN_RETURN);
+          break;
+#endif
         default:
           if (len > 1)
           {

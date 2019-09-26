@@ -284,7 +284,7 @@ void Hal_ProcessPoll ()
 #endif
 
 #if (defined HAL_UART) && (HAL_UART == TRUE)
-#if defined ( BLUEBATTERY ) || defined ( BLUESOLAR )
+#if (defined ( BLUEBATTERY ) || defined ( BLUESOLAR )) && !UART_USE_CALLBACK
   extern uint8 uart_stop_polling;
   {
     static uint8 count = 0;

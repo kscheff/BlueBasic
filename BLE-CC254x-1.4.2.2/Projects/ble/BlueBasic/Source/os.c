@@ -403,17 +403,27 @@ static void _uartCallback(uint8 port, uint8 event)
     return;
   }
 #endif
-  if (port != HAL_UART_PORT_0 && port != HAL_UART_PORT_1)
+  if (port > OS_MAX_SERIAL - 1)
     return;
-  if ( (Hal_UART_RxBufLen(port) > 1 )
-        && ( serial[port].sbuf_read_pos != 0 ) )
+
+#if PROCESS_MPPT 
+  if (serial[port].sflow == 'M')
   {
-    osal_set_event(blueBasic_TaskID, BLUEBASIC_EVENT_SERIAL<<(port == HAL_UART_PORT_1));
+    process_mppt(port, Hal_UART_RxBufLen(port));
   }
-  else if (event & HAL_UART_TX_EMPTY
-               && serial[port].onwrite )
+  else
+#endif
   {
-    osal_set_event(blueBasic_TaskID, BLUEBASIC_EVENT_SERIAL<<(port == HAL_UART_PORT_1));
+    if ( (Hal_UART_RxBufLen(port) > 1 )
+          && ( serial[port].sbuf_read_pos != 0 ) )
+    {
+      osal_set_event(blueBasic_TaskID, BLUEBASIC_EVENT_SERIAL<<(port == HAL_UART_PORT_1));
+    }
+    else if (event & HAL_UART_TX_EMPTY
+                 && serial[port].onwrite )
+    {
+      osal_set_event(blueBasic_TaskID, BLUEBASIC_EVENT_SERIAL<<(port == HAL_UART_PORT_1));
+    }
   }
 }
 #endif

@@ -71,14 +71,16 @@ uint16 test_read(void* ptr, uint16 len);
 #define DEBUG_LED_OFF P0&=~0x10
 #endif
 
-static struct
+typedef struct
 {
   uint8  size;
   uint16 batt_volt;   // 10mV per bit
   uint16 sol_volt;    // 10mV per bit
   int16 sol_current; // 0.1A per bit
   uint8  status;
-} mppt = { sizeof(mppt) - sizeof(mppt.size),0,0,0,0 };
+} mppt_t;
+
+static mppt_t mppt = { sizeof(mppt) - sizeof(mppt.size),0,0,0,0 };
 
 #if MPPT_MODE_HEX
 typedef struct
@@ -175,14 +177,6 @@ static void request_mppt(uint8 port)
 
 #ifndef MPPT_TEST
 
-static void run_app(uint8 port)
-{
-  if (serial[port].onread)
-  {
-    interpreter_run(serial[port].onread, INTERPRETER_CAN_RETURN);
-  }
-}
-
 #if !MPPT_AS_VOTRONIC
 // send data to application
 static void send_app(uint8 port, uint8 *buf, uint8 len)
@@ -245,8 +239,6 @@ typedef struct
 
 static_assert(sizeof(sol_frame_t) <= FIELD_SIZEOF(os_serial_t, sbuf), "sol_frame_t bigger than serial buffer");
 
-//static sol_frame_t sol_frame;
-
 static void send_as_votronic(uint8 port)
 {
   // directly copy data to serial buffer
@@ -292,11 +284,8 @@ static void send_as_votronic(uint8 port)
   default:
     break;
   }
-  //sol_frame.parity = 55; // dummy, not calculated  
   serial[port].sbuf_read_pos = 0;
-#ifndef MPPT_TEST
-  run_app(port);
-#endif
+  mppt.size = 0;
 }
 #endif
 
@@ -558,7 +547,7 @@ static void receive_text(uint8 port)
           mppt.sol_volt = txt_frame.vpv;
         if (txt_frame.cs != 0xffff)
           mppt.status = LO_UINT16(txt_frame.cs);
-        SEND_MPPT(port);
+        mppt.size = sizeof(mppt) - sizeof(mppt.size);
       }
       state = MPPT_INIT;
       break;
@@ -631,6 +620,13 @@ void process_mppt(uint8 port, uint8 len)
   {
     DEBUG_LED_ON;
     RECEIVE_MPPT(port);
+    if (serial[port].sbuf_read_pos == 16 && mppt.size)
+    {
+      SEND_MPPT(port);
+#if UART_USE_CALLBACK   
+      osal_set_event(blueBasic_TaskID, BLUEBASIC_EVENT_SERIAL<<(port == HAL_UART_PORT_1));
+#endif
+    }
     DEBUG_LED_OFF;
   }
 #if MPPT_MODE_HEX    
