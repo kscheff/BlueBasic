@@ -145,7 +145,7 @@ class Console: NSObject, NSTextViewDelegate, DeviceDelegate, ConsoleProtocol {
   func onNotification(_ success: Bool, uuid: CBUUID, data: Data) {
     switch uuid {
     case UUIDS.inputCharacteristicUUID:
-      print (String(data: data, encoding: .ascii))
+      //print (String(data: data, encoding: .ascii))
       if delegate == nil || delegate!.onNotification(uuid, data: data) {
         let str = NSString(data: data, encoding: String.Encoding.ascii.rawValue)!
         console.replaceCharacters(in: NSMakeRange(console.string!.utf16.count, 0), with: str as String)
