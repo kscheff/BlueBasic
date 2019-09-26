@@ -177,7 +177,7 @@ class Console: NSObject, NSTextViewDelegate, DeviceDelegate, ConsoleProtocol {
   }
   
   func write(_ str: String = "\n") -> Bool{
-    for ch in str.characters {
+    for ch in str {
       pending.append(ch)
       if ch == "\n" || pending.utf16.count > 19 {
         if let buf = pending.data(using: String.Encoding.ascii, allowLossyConversion: false) {
@@ -233,7 +233,7 @@ class Console: NSObject, NSTextViewDelegate, DeviceDelegate, ConsoleProtocol {
         return false
       }
     } else if affectedCharRange.location == consoleCount - 1 && pending.utf16.count > 0 {
-      pending.remove(at: pending.characters.index(before: pending.endIndex))
+      pending.remove(at: pending.index(before: pending.endIndex))
       return true
     } else {
       return false
