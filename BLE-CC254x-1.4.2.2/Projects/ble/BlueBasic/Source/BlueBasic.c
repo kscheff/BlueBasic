@@ -536,7 +536,7 @@ uint16 BlueBasic_ProcessEvent( uint8 task_id, uint16 events )
   // so we can set the time slice longer so the inzterpreter can run longer
   if ( events & BLUEBASIC_EVENT_CON )
   {
-    timeSlice = 21;
+    timeSlice = 20;
 //    P1 &= 0xFE;
     SEMAPHORE_CONN_SIGNAL();
     // we clear the event and continue
@@ -751,14 +751,14 @@ static void bluebasic_StateNotificationCB( gaprole_States_t newState )
   {
   case GAPROLE_STARTED:
     //P1 &= 0xFE;
-    timeSlice = 101;
+    timeSlice = 20;
     SEMAPHORE_CONN_SIGNAL();
     SEMAPHORE_READ_SIGNAL();
     break;
     
   case GAPROLE_ADVERTISING:
     //P1 &= 0xFE;
-    timeSlice = 102;
+    timeSlice = 20;
     SEMAPHORE_CONN_SIGNAL();
     SEMAPHORE_READ_SIGNAL();
     break;
@@ -778,7 +778,7 @@ static void bluebasic_StateNotificationCB( gaprole_States_t newState )
   case GAPROLE_WAITING:
     // Link terminated
 //    P1 &= 0xFE;
-    timeSlice = 103;
+    timeSlice = 20;
     SEMAPHORE_CONN_SIGNAL();
     SEMAPHORE_READ_SIGNAL();
     ble_init_ccc();
