@@ -769,7 +769,7 @@ unsigned char OS_i2c_available(unsigned char port, unsigned char ch)
 // read temperature adc
 int16 read_temperature_adc(void)
 {
-  int32 top;
+  uint16 top;  // FIXME: do we need 32 bits here? 49 bytes more!
   halIntState_t intState;
   
   HAL_ENTER_CRITICAL_SECTION(intState);
@@ -816,7 +816,7 @@ int16 read_temperature_adc(void)
     factoryAdc = 1480<<4;
     factoryTemp = 25;
   }
-  return ((top - factoryAdc) * 10 + 3) / 7 + 100 * factoryTemp;
+  return (10l * (top - factoryAdc) + 3) / 7 + 100 * factoryTemp;
 }
 
 // return temperture in °C * 100
