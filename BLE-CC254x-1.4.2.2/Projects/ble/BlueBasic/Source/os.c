@@ -440,33 +440,35 @@ unsigned char OS_serial_open(unsigned char port, unsigned long baud, unsigned ch
   {
     return 1;
   }
-  switch (baud)
+// saves some bytes due to simplier compare uint8
+#define BAUD_RIGHT_SHIFT 9
+  switch ((uint8)(baud>>BAUD_RIGHT_SHIFT))
   {
-    case 1000:
+    case 1000>>BAUD_RIGHT_SHIFT:
 #if defined MPPT_AS_VOTRONIC && MPPT_AS_VOTRONIC
-      baud = 19200;
-      cbaud = HAL_UART_BR_19200;
       if (flow == 'V')
       {
+        baud = 19200;
+        cbaud = HAL_UART_BR_19200;
         flow = 'M';
       }      
 #else
       cbaud = HAL_UART_BR_1000;
 #endif
       break;
-    case 9600:
+    case 9600>>BAUD_RIGHT_SHIFT:
       cbaud = HAL_UART_BR_9600;
       break;
-    case 19200:
+    case 19200>>BAUD_RIGHT_SHIFT:
       cbaud = HAL_UART_BR_19200;
       break;
-    case 38400:
+    case 38400>>BAUD_RIGHT_SHIFT:
       cbaud = HAL_UART_BR_38400;
       break;
-    case 57600:
+    case 57600>>BAUD_RIGHT_SHIFT:
       cbaud = HAL_UART_BR_57600;
       break;
-    case 115200:
+    case 115200>>BAUD_RIGHT_SHIFT:
       cbaud = HAL_UART_BR_115200;
       break;
     default:
