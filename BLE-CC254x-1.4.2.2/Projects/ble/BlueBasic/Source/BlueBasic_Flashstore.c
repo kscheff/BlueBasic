@@ -404,7 +404,7 @@ unsigned char** flashstore_deleteline(unsigned short id)
 //
 unsigned char** flashstore_deleteall(void)
 {
-  unsigned char pg;
+  static unsigned char pg;
   for (pg = 0; pg < FLASHSTORE_NRPAGES; pg++)
   {
     if (orderedpages[pg].free != FLASHSTORE_PAGESIZE - sizeof(flashpage_age))
@@ -448,9 +448,9 @@ void flashstore_compact(unsigned char len, unsigned char* tempmemstart, unsigned
   const unsigned short available = tempmemend - tempmemstart;
     
   // Find the lowest age page which this will fit in.
-  unsigned char pg;
+  static unsigned char pg;
   unsigned char selected = 0;
-  unsigned short occupied;
+  static unsigned short occupied;
   flashpage_age age = 0xFFFFFFFF;
   len = FLASHSTORE_PADDEDSIZE(len);
   for (pg = 0; pg < FLASHSTORE_NRPAGES; pg++)
@@ -480,7 +480,7 @@ void flashstore_compact(unsigned char len, unsigned char* tempmemstart, unsigned
     // Copy required page data into RAM
     unsigned char* ram = tempmemstart;
     unsigned char* flash = (unsigned char*)FLASHSTORE_PAGEBASE(selected);
-    unsigned char* ptr;
+    static unsigned char* ptr;
     unsigned short mem_length = 0;
     char deleted = 0;
     unsigned short *special = 0;
@@ -542,7 +542,7 @@ void flashstore_compact(unsigned char len, unsigned char* tempmemstart, unsigned
 //
 static void flashstore_invalidate(unsigned short* mem)
 {
-  struct
+  static struct
   {
     unsigned short invalid;
     unsigned char len;
