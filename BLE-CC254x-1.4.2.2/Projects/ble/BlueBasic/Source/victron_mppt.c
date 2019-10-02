@@ -40,6 +40,10 @@
 uint16 test_read(void* ptr, uint16 len);
 #endif // MPPT_TEST
 
+// the douuble buffer is recommended by Victron in TEXT mode
+// when assuming BASIC app fetches the data before the next Frame
+// then its not needed, the frames comes in 1 second intervals
+#define MPPT_DOUBLE_BUF FALSE
 
 #if MPPT_MODE_TEXT
 #define RECEIVE_MPPT(port) receive_text(port)
@@ -181,13 +185,8 @@ static void request_mppt(uint8 port)
 // send data to application
 static void send_app(uint8 port, uint8 *buf, uint8 len)
 {
-  // check if buffer has space
-  if (serial[port].sbuf_read_pos >= len)
-  {
-    serial[port].sbuf_read_pos = 0;
-    OS_memcpy(serial[port].sbuf, buf, len);
-  }
-  run_app(port);
+  serial[port].sbuf_read_pos = 0;
+  OS_memcpy(serial[port].sbuf, buf, len);
 }
 #endif
 
@@ -420,6 +419,7 @@ typedef enum
 
 static label_t label;
 
+#if MPPT_DOUBLE_BUF
 static struct
 {
   uint16 v;   // in 10 mv 
@@ -427,6 +427,7 @@ static struct
   uint16 vpv; // in 10 mV
   uint16 cs;
 } txt_frame;
+#endif
 
 static void receive_text(uint8 port)
 {
@@ -443,7 +444,9 @@ static void receive_text(uint8 port)
     switch (state)
     {
     case MPPT_INIT:
-      osal_memset((void*)&txt_frame, 0xff, sizeof(txt_frame));
+#if MPPT_DOUBLE_BUF
+//      osal_memset((void*)&txt_frame, 0xff, sizeof(txt_frame));
+#endif
       state += 1;
       // fall through
     case MPPT_FRAME:
@@ -538,15 +541,18 @@ static void receive_text(uint8 port)
       if (mppt_sum == 0)
       {
         // valid frame received
-        // copy data over
-        if (txt_frame.v != 0xffff)
+#if MPPT_DOUBLE_BUF
+        // copy data over  
+//        if (txt_frame.v != 0xffff)
           mppt.batt_volt = txt_frame.v;
-        if (txt_frame.i != 0xffff)
+//        if (txt_frame.i != 0xffff)         
           mppt.sol_current = txt_frame.i;
-        if (txt_frame.vpv != 0xffff)
+//        if (txt_frame.vpv != 0xffff)
           mppt.sol_volt = txt_frame.vpv;
-        if (txt_frame.cs != 0xffff)
+//        if (txt_frame.cs != 0xffff)
           mppt.status = LO_UINT16(txt_frame.cs);
+#endif
+        // indicate valid data
         mppt.size = sizeof(mppt) - sizeof(mppt.size);
       }
       state = MPPT_INIT;
@@ -583,6 +589,7 @@ static void receive_text(uint8 port)
       {
         switch (label)
         {
+#if MPPT_DOUBLE_BUF
         case LABEL_V:
           txt_frame.v = mppt_data / 10;
           break;
@@ -595,6 +602,20 @@ static void receive_text(uint8 port)
         case LABEL_CS:
           txt_frame.cs = BUILD_UINT16(LO_UINT16(mppt_data),0);
           break;
+#else         
+        case LABEL_V:
+          mppt.batt_volt = mppt_data / 10;
+          break;
+        case LABEL_I:
+          mppt.sol_current = mppt_data * mppt_sign / 100;
+          break;
+        case LABEL_VPV:
+          mppt.sol_volt = mppt_data / 10;
+          break;
+        case LABEL_CS:
+          mppt.status = LO_UINT16(mppt_data);
+          break;
+#endif                  
         default:
           // empty
           break;
