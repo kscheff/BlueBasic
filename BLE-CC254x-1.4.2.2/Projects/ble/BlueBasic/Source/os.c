@@ -434,7 +434,7 @@ static void _uartCallback(uint8 port, uint8 event)
 unsigned char OS_serial_open(unsigned char port, unsigned long baud, unsigned char parity, unsigned char bits, unsigned char stop, unsigned char flow, unsigned short onread, unsigned short onwrite)
 {
 #if HAL_UART
-  halUARTCfg_t config;
+  static halUARTCfg_t config;
   int cbaud;
   if (port > OS_MAX_SERIAL - 1)
   {
