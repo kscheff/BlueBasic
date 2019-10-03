@@ -452,13 +452,9 @@ static void receive_text(uint8 port)
       break;
     case MPPT_START:
       if (c == '\n')
-      {
         state = MPPT_LABEL_0;
-      }
       else
-      {
         state = MPPT_IDLE;
-      }
       break;
     case MPPT_LABEL_0:
       switch (c)
