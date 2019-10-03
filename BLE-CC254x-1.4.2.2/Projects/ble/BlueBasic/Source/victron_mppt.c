@@ -412,8 +412,7 @@ typedef enum
   LABEL_V,
   LABEL_I,
   LABEL_VPV,
-  LABEL_CS,
-  LABEL_CHECKSUM
+  LABEL_CS
 } label_t;
 
 static label_t label;
@@ -523,10 +522,7 @@ static void receive_text(uint8 port)
       break;
     case MPPT_LABEL_END:
       if (c == 9)
-      {
-        label = LABEL_CHECKSUM;
         state = MPPT_CHECKSUM;
-      }
       else
         state = MPPT_IDLE;
       break;
