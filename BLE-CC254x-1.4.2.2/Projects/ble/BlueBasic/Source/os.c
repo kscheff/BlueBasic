@@ -816,7 +816,10 @@ int16 read_temperature_adc(void)
     factoryAdc = 1480<<4;
     factoryTemp = 25;
   }
-  return (10l * (top - factoryAdc) + 3) / 7 + 100 * factoryTemp;
+  // 4.5 bits per 1 °C means  4.5<<16 = 72
+  // factor is 100/72 --> 25/18
+  // splitting this in /9*25/2 keeps the calculation within 16 bits
+  return (int16)(top - factoryAdc + 4) / 9 * 25 / 2 + 100 * factoryTemp;
 }
 
 // return temperture in °C * 100
