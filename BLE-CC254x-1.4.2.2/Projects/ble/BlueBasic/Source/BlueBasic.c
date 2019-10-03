@@ -624,14 +624,13 @@ uint16 BlueBasic_ProcessEvent( uint8 task_id, uint16 events )
             HalUARTRead(i, ptr, 1);
             if (*ptr == 0xAA)
             {
-              HalUARTRead(i, ptr + 1, 15);
+              HalUARTRead(i, ++ptr, 15);
               uint8 cnt = 0;
-              uint8 parity = ptr[++cnt];
-              while(++cnt < 16)
+              uint8 parity = 0; //*ptr;
+              while(cnt < 15)
               {
-                parity ^= ptr[cnt];
+                parity ^= ptr[cnt++];
               }
-              //only send serial data when frame has no parity error
               if (!parity)
               {
                 serial[i].sbuf_read_pos = 0;
