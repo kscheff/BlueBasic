@@ -657,18 +657,16 @@ uint16 BlueBasic_ProcessEvent( uint8 task_id, uint16 events )
             // copy data when space is available
             //if (serial[i].sbuf_read_pos != 0)
             {
-              uint16 free = serial[i].sbuf_read_pos;
-              uint16 max = len > free ? free : len;
-              uint16 busy = 16 - free;
+              uint8 free = serial[i].sbuf_read_pos;
+              len = len > free ? free : len;
+              uint8 busy = 16 - free;
               if (busy > 0)
-                OS_memcpy(&serial[i].sbuf[serial[i].sbuf_read_pos - max], &serial[i].sbuf[serial[i].sbuf_read_pos], busy);
-              if (max > 0)
+                OS_memcpy(&serial[i].sbuf[serial[i].sbuf_read_pos - len], &serial[i].sbuf[serial[i].sbuf_read_pos], busy);
+              if (len > 0)
               {
-                uint16 length = HalUARTRead(i, &serial[i].sbuf[16 - max], max);
-                serial[i].sbuf_read_pos -= length;
+                serial[i].sbuf_read_pos -=  HalUARTRead(i, &serial[i].sbuf[16 - len], len);;
               }
             }           
-            // send only full buffer to app
             if (serial[i].onread /*&& serial[i].sbuf_read_pos != 16*/)
               interpreter_run(serial[i].onread, INTERPRETER_CAN_RETURN);    
           }
