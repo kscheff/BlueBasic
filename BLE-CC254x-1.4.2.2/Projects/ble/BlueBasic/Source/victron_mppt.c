@@ -639,7 +639,7 @@ void process_mppt(uint8 port, uint8 len)
 {
   if (len)
   {
-    DEBUG_LED_ON;
+    //DEBUG_LED_ON;
     RECEIVE_MPPT(port);
     if (serial[port].sbuf_read_pos == 16 && mppt.size)
     {
@@ -648,7 +648,7 @@ void process_mppt(uint8 port, uint8 len)
       osal_set_event(blueBasic_TaskID, BLUEBASIC_EVENT_SERIAL<<(port == HAL_UART_PORT_1));
 #endif
     }
-    DEBUG_LED_OFF;
+    //DEBUG_LED_OFF;
   }
 #if MPPT_MODE_HEX    
   else
