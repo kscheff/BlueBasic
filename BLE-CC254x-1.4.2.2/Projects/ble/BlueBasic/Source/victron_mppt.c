@@ -134,7 +134,6 @@ typedef enum
 #if MPPT_MODE_TEXT
 typedef enum
 {
-  MPPT_INIT,
   MPPT_FRAME,
   MPPT_IDLE,
   MPPT_START,
@@ -443,12 +442,6 @@ static void receive_text(uint8 port)
     mppt_sum += c;
     switch (state)
     {
-    case MPPT_INIT:
-#if MPPT_DOUBLE_BUF
-//      osal_memset((void*)&txt_frame, 0xff, sizeof(txt_frame));
-#endif
-      state += 1;
-      // fall through
     case MPPT_FRAME:
       mppt_sum = c;
       if (c == '\r')
@@ -543,19 +536,16 @@ static void receive_text(uint8 port)
         // valid frame received
 #if MPPT_DOUBLE_BUF
         // copy data over  
-//        if (txt_frame.v != 0xffff)
-          mppt.batt_volt = txt_frame.v;
-//        if (txt_frame.i != 0xffff)         
-          mppt.sol_current = txt_frame.i;
-//        if (txt_frame.vpv != 0xffff)
-          mppt.sol_volt = txt_frame.vpv;
-//        if (txt_frame.cs != 0xffff)
-          mppt.status = LO_UINT16(txt_frame.cs);
+        // assume frame contained all below info
+        mppt.batt_volt = txt_frame.v;
+        mppt.sol_current = txt_frame.i;
+        mppt.sol_volt = txt_frame.vpv;
+        mppt.status = LO_UINT16(txt_frame.cs);
 #endif
         // indicate valid data
         mppt.size = sizeof(mppt) - sizeof(mppt.size);
       }
-      state = MPPT_INIT;
+      state = MPPT_FRAME;
       break;
     case MPPT_TAB:
       if (c == 0x09)
@@ -626,7 +616,7 @@ static void receive_text(uint8 port)
         state = MPPT_IDLE;
       break;
     default:
-      state = MPPT_INIT;
+      state = MPPT_FRAME;
     }
   }
 }
