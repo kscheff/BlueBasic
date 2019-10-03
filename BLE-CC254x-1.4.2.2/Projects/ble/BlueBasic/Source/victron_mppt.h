@@ -32,9 +32,9 @@ extern "C"
 //#define MPPT_FORWARD_ASYNC
 //#define MPPT_FORWARD_UNKNOWN
 
-#ifndef MPPT_AS_VOTRONIC
-// emulate data like Votronic
-#define MPPT_AS_VOTRONIC  0
+#ifndef MPPT_AS_VOT
+// emulate data like Vot
+#define MPPT_AS_VOT  0
 #endif
 
 #if defined(MPPT_MODE_TEXT) && defined(MPPT_MODE_HEX) && (MPPT_MODE_HEX) && (MPPT_MODE_TEXT)

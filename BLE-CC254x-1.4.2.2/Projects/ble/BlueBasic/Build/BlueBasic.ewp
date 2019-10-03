@@ -10721,7 +10721,7 @@
           <state>UART_USE_CALLBACK=1</state>
           <state>PROCESS_SERIAL_DATA</state>
           <state>PROCESS_MPPT</state>
-          <state>MPPT_AS_VOTRONIC=0</state>
+          <state>MPPT_AS_VOT=0</state>
           <state>xOSALMEM_METRICS=TRUE</state>
           <state>ENABLE_SNV=1</state>
           <state>ENABLE_SPI=0</state>
@@ -12109,7 +12109,7 @@
             <name>$PROJ_DIR$\..\..\..\..\Components\hal\target\CC2540EB\hal_crc.h</name>
           </file>
           <file>
-            <name>$PROJ_DIR$\..\..\..\..\Components\hal\target\CC2540EB\hal_dma.h</name>
+            <name>$PROJ_DIR$\..\..\..\..\COMPONENTS\hal\target\CC2540EB\hal_dma.h</name>
           </file>
           <file>
             <name>$PROJ_DIR$\..\..\..\..\Components\hal\target\CC2540EB\hal_mcu.h</name>
@@ -12211,10 +12211,10 @@
       <name>$PROJ_DIR$\..\..\..\..\COMPONENTS\osal\common\OSAL.c</name>
     </file>
     <file>
-      <name>$PROJ_DIR$\..\..\..\..\Components\osal\common\osal_bufmgr.c</name>
+      <name>$PROJ_DIR$\..\..\..\..\COMPONENTS\osal\common\osal_bufmgr.c</name>
     </file>
     <file>
-      <name>$PROJ_DIR$\..\..\..\..\Components\osal\common\osal_cbtimer.c</name>
+      <name>$PROJ_DIR$\..\..\..\..\COMPONENTS\osal\common\osal_cbtimer.c</name>
     </file>
     <file>
       <name>$PROJ_DIR$\..\..\..\..\COMPONENTS\osal\common\OSAL_ClockBLE.c</name>

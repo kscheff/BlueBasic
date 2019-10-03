@@ -445,7 +445,7 @@ unsigned char OS_serial_open(unsigned char port, unsigned long baud, unsigned ch
   switch ((uint8)(baud>>BAUD_RIGHT_SHIFT))
   {
     case 1000>>BAUD_RIGHT_SHIFT:
-#if defined MPPT_AS_VOTRONIC && MPPT_AS_VOTRONIC
+#if defined MPPT_AS_VOT && MPPT_AS_VOT
       if (flow == 'V')
       {
         baud = 19200;

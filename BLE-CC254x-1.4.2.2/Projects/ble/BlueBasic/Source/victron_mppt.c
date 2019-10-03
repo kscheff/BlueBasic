@@ -23,7 +23,7 @@
 
 #define MPPT_MODE_TEXT 1
 #define MPPT_MODE_HEX 0
-#define MPPT_AS_VOTRONIC 1
+#define MPPT_AS_VOT 1
 #define FIELD_SIZEOF(t, f) (sizeof(((t*)0)->f))
 #define OS_MAX_SERIAL 1
 
@@ -51,13 +51,13 @@ uint16 test_read(void* ptr, uint16 len);
 #define RECEIVE_MPPT(port) receive_mppt(port)
 #endif
 
-#if !MPPT_AS_VOTRONIC
+#if !MPPT_AS_VOT
 // send MPPT data
 #define SEND_MPPT(a) send_app(a,(void*)&mppt,sizeof(mppt))
 #define SCAN_INTERVAL 2000
 #else
 // send data like Votroic
-#define SEND_MPPT(a) send_as_votronic(a)
+#define SEND_MPPT(a) send_as_vot(a)
 #define SCAN_INTERVAL 200
 #endif
 
@@ -180,7 +180,7 @@ static void request_mppt(uint8 port)
 
 #ifndef MPPT_TEST
 
-#if !MPPT_AS_VOTRONIC
+#if !MPPT_AS_VOT
 // send data to application
 static void send_app(uint8 port, uint8 *buf, uint8 len)
 {
@@ -215,7 +215,7 @@ static void send_app(uint8 port, uint8 *buf, uint8 len)
 
 #endif //MPPT_TEST
 
-#if MPPT_AS_VOTRONIC
+#if MPPT_AS_VOT
 #define VOT_STATUS_MPP_FLAG 0x01
 #define VOT_STATUS_ACTIVE 0x8
 #define VOT_STATUS_LIMIT 0x10
@@ -237,7 +237,7 @@ typedef struct
 
 static_assert(sizeof(sol_frame_t) <= FIELD_SIZEOF(os_serial_t, sbuf), "sol_frame_t bigger than serial buffer");
 
-static void send_as_votronic(uint8 port)
+static void send_as_vot(uint8 port)
 {
   // directly copy data to serial buffer
   sol_frame_t* sol_frame = (sol_frame_t*)serial[port].sbuf;

@@ -9,14 +9,14 @@
 //
 
 
-#define kVersion "v0.14"
+#define kVersion "v0.15"
 
 #ifndef kProduct
 #define kProduct "BlueBasic"
 #endif
 
 #ifndef kMfrName
-#define kMfrName "https://github.com/kscheff/BlueBasic"
+#define kMfrName "https://blue-battery.com"
 #endif
 
 #if !__APPLE__

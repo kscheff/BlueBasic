@@ -90,8 +90,8 @@ static const char* const error_msgs[] =
 };
 
 
-#if defined(MPPT_AS_VOTRONIC) && MPPT_AS_VOTRONIC
-#define MPPT_EMU_MSG " as Votronic"
+#if defined(MPPT_AS_VOT) && MPPT_AS_VOT
+#define MPPT_EMU_MSG " as Vot"
 #else
 #define MPPT_EMU_MSG ""
 #endif
@@ -106,7 +106,10 @@ static const char* const error_msgs[] =
 #define MPPT_MODE_MSG ""
 #endif
 
-#define MSG_EXT MPPT_MODE_MSG MPPT_EMU_MSG
+#define STR_EXPAND(number) #number
+#define STR(number) STR_EXPAND(number)
+
+#define MSG_EXT MPPT_MODE_MSG MPPT_EMU_MSG "\nUARTs:" STR(OS_MAX_SERIAL)
 
 #ifdef BUILD_TIMESTAMP
 #ifdef FEATURE_OAD_HEADER
