@@ -37,8 +37,8 @@
                         <rect key="frame" x="0.0" y="0.0" width="375" height="667"/>
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                         <subviews>
-                            <textView clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="scaleToFill" showsHorizontalScrollIndicator="NO" keyboardDismissMode="onDrag" editable="NO" translatesAutoresizingMaskIntoConstraints="NO" id="Uej-rh-cp8">
-                                <rect key="frame" x="0.0" y="0.0" width="375" height="667"/>
+                            <textView clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="scaleToFill" showsHorizontalScrollIndicator="NO" keyboardDismissMode="interactive" editable="NO" translatesAutoresizingMaskIntoConstraints="NO" id="Uej-rh-cp8">
+                                <rect key="frame" x="0.0" y="64" width="375" height="595"/>
                                 <color key="backgroundColor" red="1" green="1" blue="1" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
                                 <fontDescription key="fontDescription" name="Menlo-Regular" family="Menlo" pointSize="14"/>
                                 <textInputTraits key="textInputTraits" autocorrectionType="no" spellCheckingType="no" keyboardType="alphabet"/>
@@ -46,16 +46,17 @@
                         </subviews>
                         <color key="backgroundColor" red="1" green="1" blue="1" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
                         <constraints>
-                            <constraint firstItem="Uej-rh-cp8" firstAttribute="top" secondItem="svH-Pt-448" secondAttribute="top" id="YgI-jO-bBZ"/>
-                            <constraint firstAttribute="trailing" secondItem="Uej-rh-cp8" secondAttribute="trailing" id="kZj-zI-f6e"/>
-                            <constraint firstItem="Uej-rh-cp8" firstAttribute="leading" secondItem="svH-Pt-448" secondAttribute="leading" id="lbV-5s-yVD"/>
-                            <constraint firstItem="Uej-rh-cp8" firstAttribute="bottom" secondItem="GAO-Cl-Wes" secondAttribute="top" id="yA2-FE-r21"/>
+                            <constraint firstItem="Uej-rh-cp8" firstAttribute="leading" secondItem="svH-Pt-448" secondAttribute="leading" id="EzO-fb-Gtb"/>
+                            <constraint firstItem="GAO-Cl-Wes" firstAttribute="top" secondItem="Uej-rh-cp8" secondAttribute="bottom" constant="8" id="OI8-Wh-FiU"/>
+                            <constraint firstAttribute="trailing" secondItem="Uej-rh-cp8" secondAttribute="trailing" id="dUb-Yv-Bjr"/>
+                            <constraint firstItem="Uej-rh-cp8" firstAttribute="top" secondItem="SYR-Wa-9uf" secondAttribute="bottom" id="v29-mb-ucS"/>
                         </constraints>
                     </view>
                     <toolbarItems/>
                     <navigationItem key="navigationItem" title="Not connected" id="mOI-FS-AaM"/>
                     <connections>
                         <outlet property="console" destination="Uej-rh-cp8" id="PWK-qZ-mU3"/>
+                        <outlet property="constrainBottom" destination="OI8-Wh-FiU" id="Deh-cf-mNC"/>
                     </connections>
                 </viewController>
                 <placeholder placeholderIdentifier="IBFirstResponder" id="FJe-Yq-33r" sceneMemberID="firstResponder"/>

@@ -15,13 +15,14 @@ var _currentOwner: UIViewController?
 class DetailViewController: UIViewController, UITextViewDelegate, DeviceDelegate, ConsoleProtocol {
 
   @IBOutlet weak var console: UITextView!
-
+  @IBOutlet weak var constrainBottom: NSLayoutConstraint!
+  
   var inputCharacteristic: CBCharacteristic?
   var outputCharacteristic: CBCharacteristic?
   var pending = ""
   var linebuffer = ""
   
-  var keyboardOpen: CGRect? = nil
+  var keyboardOpen: CGFloat? = nil
   
   var delegate: ConsoleDelegate?
   
@@ -74,7 +75,7 @@ class DetailViewController: UIViewController, UITextViewDelegate, DeviceDelegate
   override func viewWillAppear(_ animated: Bool) {
     super.viewWillAppear(animated)
     NotificationCenter.default.addObserver(self, selector: #selector(DetailViewController.keyboardDidShow(_:)), name: NSNotification.Name.UIKeyboardDidShow, object: nil)
-    NotificationCenter.default.addObserver(self, selector: #selector(DetailViewController.keyboardDidHide(_:)), name: NSNotification.Name.UIKeyboardDidHide, object: nil)
+    NotificationCenter.default.addObserver(self, selector: #selector(DetailViewController.keyboardWillHide(_:)), name: NSNotification.Name.UIKeyboardWillHide, object: nil)
   }
   
   override func viewDidAppear(_ animated: Bool) {
@@ -87,14 +88,14 @@ class DetailViewController: UIViewController, UITextViewDelegate, DeviceDelegate
   override func viewWillDisappear(_ animated: Bool) {
     super.viewWillDisappear(animated)
     NotificationCenter.default.removeObserver(self, name: NSNotification.Name.UIKeyboardDidShow, object: nil)
-    NotificationCenter.default.removeObserver(self, name: NSNotification.Name.UIKeyboardDidHide, object: nil)
+    NotificationCenter.default.removeObserver(self, name: NSNotification.Name.UIKeyboardWillHide, object: nil)
     resignActive()
   }
 
   override func didReceiveMemoryWarning() {
     super.didReceiveMemoryWarning()
   }
-
+  
   // MARK: - Console mechanics
   
   var status: String = "Not connected" {
@@ -345,23 +346,18 @@ class DetailViewController: UIViewController, UITextViewDelegate, DeviceDelegate
   
   @objc func keyboardDidShow(_ notification: Notification) {
     if keyboardOpen == nil {
-      let info = notification.userInfo?[UIKeyboardFrameEndUserInfoKey] as! NSValue
-      let size = info.cgRectValue.size
-
-      var frame = console.frame
-      keyboardOpen = frame
-      let bottom = UIScreen.main.bounds.size.height - (frame.origin.y + frame.size.height)
-      frame.size.height -= (size.height - bottom) + (console.font?.lineHeight)!
-      console.frame = frame
-
-      console.selectedRange = NSMakeRange(console.text!.utf16.count, 0)
-      console.scrollRangeToVisible(NSMakeRange(console.text.utf16.count, 0))
+      let kbInfo = (notification.userInfo?[UIKeyboardFrameEndUserInfoKey] as! NSValue).cgRectValue
+      keyboardOpen = constrainBottom.constant
+      let adjustHeight =  console.frame.origin.y + console.frame.size.height - kbInfo.origin.y
+      constrainBottom.constant += adjustHeight
+      console.selectedRange = NSMakeRange(console.text.count, 0)
+      console.scrollRangeToVisible(NSMakeRange(console.text.count, 0))
     }
   }
   
-  @objc func keyboardDidHide(_ notification: Notification) {
+  @objc func keyboardWillHide(_ notification: Notification) {
     if keyboardOpen != nil {
-      self.console.frame.size.height = self.keyboardOpen!.size.height
+      constrainBottom.constant = keyboardOpen!
       self.keyboardOpen = nil
       self.console.scrollRangeToVisible(NSMakeRange(self.console.text.utf16.count, 0))
     }
