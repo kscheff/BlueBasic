@@ -84,6 +84,7 @@
 //
 -D_BANK5_BEG=0x58000           // Pages 0-1 of Bank 5.
 -D_BANK5_END=0x58FFF
+//-D_BANK5_END=0x5AFFF // use old 8KB Flashstore
 //old Flashstore location is now unused in order not keep image B size to 148KB
 //-D_FLASHSTORE_BEG=0x59000      // Pages 2-5 of Bank 5 for flashstore
 //-D_FLASHSTORE_END=0x5AFFF

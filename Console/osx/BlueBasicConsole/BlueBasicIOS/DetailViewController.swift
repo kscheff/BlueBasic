@@ -73,8 +73,8 @@ class DetailViewController: UIViewController, UITextViewDelegate, DeviceDelegate
   
   override func viewWillAppear(_ animated: Bool) {
     super.viewWillAppear(animated)
-    NotificationCenter.default.addObserver(self, selector: #selector(DetailViewController.keyboardDidShow(_:)), name: NSNotification.Name(rawValue: "UIKeyboardDidShowNotification"), object: nil)
-    NotificationCenter.default.addObserver(self, selector: #selector(DetailViewController.keyboardDidHide(_:)), name: NSNotification.Name(rawValue: "UIKeyboardDidHideNotification"), object: nil)
+    NotificationCenter.default.addObserver(self, selector: #selector(DetailViewController.keyboardDidShow(_:)), name: NSNotification.Name.UIKeyboardDidShow, object: nil)
+    NotificationCenter.default.addObserver(self, selector: #selector(DetailViewController.keyboardDidHide(_:)), name: NSNotification.Name.UIKeyboardDidHide, object: nil)
   }
   
   override func viewDidAppear(_ animated: Bool) {
@@ -86,8 +86,8 @@ class DetailViewController: UIViewController, UITextViewDelegate, DeviceDelegate
 
   override func viewWillDisappear(_ animated: Bool) {
     super.viewWillDisappear(animated)
-    NotificationCenter.default.removeObserver(self, name: NSNotification.Name(rawValue: "UIKeyboardDidShowNotification"), object: nil)
-    NotificationCenter.default.removeObserver(self, name: NSNotification.Name(rawValue: "UIKeyboardDidHideNotification"), object: nil)
+    NotificationCenter.default.removeObserver(self, name: NSNotification.Name.UIKeyboardDidShow, object: nil)
+    NotificationCenter.default.removeObserver(self, name: NSNotification.Name.UIKeyboardDidHide, object: nil)
     resignActive()
   }
 

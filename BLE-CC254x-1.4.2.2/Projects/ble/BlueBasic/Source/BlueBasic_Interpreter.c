@@ -6072,12 +6072,18 @@ void ble_connection_status(unsigned short connHandle, unsigned char changeType, 
     {
       if (vframe->connect)
       {
+#if !defined(BLUEBATTERY) && !BLUEBATTERY
         if (VARIABLE_IS_EXTENDED('H') || VARIABLE_IS_EXTENDED('S') || VARIABLE_IS_EXTENDED('V'))
         {
           continue; // Silently fail
         }
         VARIABLE_INT_SET('H', connHandle);
         VARIABLE_INT_SET('S', changeType);
+#else
+        static uint16 data[3];
+        data[0] = connHandle;
+        data[1] = changeType;       
+#endif        
         if (changeType == LINKDB_STATUS_UPDATE_STATEFLAGS)
         {
           f = 0;
@@ -6088,12 +6094,23 @@ void ble_connection_status(unsigned short connHandle, unsigned char changeType, 
               f |= j;
             }
           }
+#if !defined(BLUEBATTERY) && !BLUEBATTERY
           VARIABLE_INT_SET('V', f);
+#else
+          data[2] = f;
+#endif
         }
         else if (changeType == LINKDB_STATUS_UPDATE_RSSI)
         {
+#if !defined(BLUEBATTERY) && !BLUEBATTERY
           VARIABLE_INT_SET('V', rssi);
+#else
+          data[2] = rssi;
+#endif
         }
+#if defined(BLUEBATTERY) && BLUEBATTERY
+        create_dim('V',sizeof(data), (unsigned char*)data);
+#endif        
         interpreter_run(vframe->connect, INTERPRETER_CAN_RETURN);
       }
       if (changeType == LINKDB_STATUS_UPDATE_REMOVED || (changeType == LINKDB_STATUS_UPDATE_STATEFLAGS && !linkDB_Up(connHandle)))

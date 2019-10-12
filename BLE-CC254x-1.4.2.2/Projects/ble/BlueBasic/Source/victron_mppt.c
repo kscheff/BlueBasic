@@ -158,7 +158,9 @@ typedef enum
 } state_mppt_t;
 #endif
 
+#if defined(MPPT_MODE_TEXT) || defined (MPPT_MODE_HEX)
 static state_mppt_t state;
+#endif
 static uint8 mppt_sum;
 
 #if MPPT_MODE_HEX
