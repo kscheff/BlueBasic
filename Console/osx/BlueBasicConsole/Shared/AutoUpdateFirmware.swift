@@ -61,7 +61,7 @@ class AutoUpdateFirmware {
     } else {
       let session = URLSession(configuration: URLSessionConfiguration.default)
 
-      var versionParts = currentVersion.components(separatedBy: "/")
+      let versionParts = currentVersion.components(separatedBy: "/")
       (session.dataTask(with: URL(string: baseURL + versionParts[0] + ".version")!, completionHandler: {
         data, response, error in
         if error != nil || data == nil || data!.count < 14 {
