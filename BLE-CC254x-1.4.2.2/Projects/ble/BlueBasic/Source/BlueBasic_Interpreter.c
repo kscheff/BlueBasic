@@ -3616,9 +3616,10 @@ cmd_open:
         if (bSnv)
           GOTO_QWHAT;
         file->action = 'W';
-        for (unsigned long special = FS_MAKE_FILE_SPECIAL(file->filename, 0); flashstore_findspecial(special); special++)
+        unsigned short limit = file->record;
+        for (unsigned long special = FS_MAKE_FILE_SPECIAL(file->filename, 0); flashstore_findspecial(special); special++, file->record++)
         {
-          if (hasOffset && (unsigned short) (special & 0xffff) >= file->record)
+          if (hasOffset && (unsigned short) (special & 0xffff) >= limit)
           {
             break;
           }
