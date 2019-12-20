@@ -164,7 +164,7 @@ static uint8 devInfoSystemId[DEVINFO_SYSTEM_ID_LEN] = {0, 0, 0, 0, 0, 0, 0, 0};
 
 // Model Number String characteristic
 static CONST uint8 devInfoModelNumberProps = GATT_PROP_READ;
-static CONST uint8 devInfoModelNumber[] = "BLE-1.4.2.2";
+static CONST uint8 devInfoModelNumber[] = "BLE-1.5.0.16";
 
 #ifndef DEVINFO_SHORTER_HEADER
 // Serial Number String characteristic
