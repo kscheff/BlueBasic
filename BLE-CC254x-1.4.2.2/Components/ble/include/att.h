@@ -9,7 +9,7 @@
 
  ******************************************************************************
  
- Copyright (c) 2009-2016, Texas Instruments Incorporated
+ Copyright (c) 2009-2019, Texas Instruments Incorporated
  All rights reserved.
 
  IMPORTANT: Your use of this Software is limited to those specific rights
@@ -41,8 +41,8 @@
  contact Texas Instruments Incorporated at www.TI.com.
 
  ******************************************************************************
- Release Name: ble_sdk_1.4.2.2
- Release Date: 2016-06-09 06:57:09
+ Release Name: ble_sdk_1.5.0.16
+ Release Date: 2019-04-18 08:53:30
  *****************************************************************************/
 
 #ifndef ATT_H
@@ -65,14 +65,14 @@ extern "C"
  * CONSTANTS
  */
 
-// The Exchanging MTU Size is defined as the maximum size of any packet 
+// The Exchanging MTU Size is defined as the maximum size of any packet
 // transmitted between a client and a server. A higher layer specification
 // defines the default ATT MTU value. The ATT MTU value should be within
 // the range 23 to 517 inclusive.
 #define ATT_MTU_SIZE                     L2CAP_MTU_SIZE //!< Minimum ATT MTU size
 #define ATT_MAX_MTU_SIZE                 517            //!< Maximum ATT MTU size
 
-/** @defgroup ATT_METHOD_DEFINES ATT Methods 
+/** @defgroup ATT_METHOD_DEFINES ATT Methods
  * @{
  */
 
@@ -102,6 +102,7 @@ extern "C"
 #define ATT_HANDLE_VALUE_NOTI            0x1b //!< ATT Handle Value Notification
 #define ATT_HANDLE_VALUE_IND             0x1d //!< ATT Handle Value Indication
 #define ATT_HANDLE_VALUE_CFM             0x1e //!< ATT Handle Value Confirmation
+#define ATT_UNSUPPORTED_METHOD           0x20 //!< Garbage ATT opcode used for negative testing
 
 #define ATT_WRITE_CMD                    0x52 //!< ATT Write Command
 #define ATT_SIGNED_WRITE_CMD             0xD2 //!< ATT Signed Write Command
@@ -115,7 +116,7 @@ extern "C"
 #define ATT_MTU_UPDATED_EVENT           0x7F //!< Sent when MTU is updated for a connection.  This event is sent as an OSAL message defined as attMtuUpdatedEvt_t.
 
 /** @} End ATT_MSG_EVENT_DEFINES */
-  
+
 /*** Opcode fields: bitmasks ***/
 // Method (bits 5-0)
 #define ATT_METHOD_BITS                  0x3f
@@ -128,10 +129,10 @@ extern "C"
 
 // Size of 16-bit Bluetooth UUID
 #define ATT_BT_UUID_SIZE                 2
-  
+
 // Size of 128-bit UUID
 #define ATT_UUID_SIZE                    16
-  
+
 // ATT Response or Confirmation timeout
 #define ATT_MSG_TIMEOUT                  30
 
@@ -171,7 +172,7 @@ extern "C"
 /*** Application error code defined by a higher layer specification: 0x80-0x9F ***/
 
 #define ATT_ERR_INVALID_VALUE            0x80 //!< The attribute value is invalid for the operation
-  
+
 /** @} End ATT_ERR_CODE_DEFINES */
 
 /*********************************************************************
@@ -179,7 +180,7 @@ extern "C"
  */
   // Handle and 16-bit Bluetooth UUID
 #define ATT_HANDLE_BT_UUID_TYPE          0x01
-  
+
   // Handle and 128-bit UUID
 #define ATT_HANDLE_UUID_TYPE             0x02
 
@@ -194,7 +195,7 @@ extern "C"
  */
   // Cancel all prepared writes
 #define ATT_CANCEL_PREPARED_WRITES       0x00
-  
+
   // Immediately write all pending prepared values
 #define ATT_WRITE_PREPARED_VALUES        0x01
 
@@ -202,6 +203,8 @@ extern "C"
   // ATT Test Modes
   #define ATT_TESTMODE_OFF               0 // Test mode off
   #define ATT_TESTMODE_UNAUTHEN_SIG      1 // Do not authenticate incoming signature
+  #define ATT_TESTMODE_SEND_UNS_REQ      2 //!< Send ATT request with unsupported opcode
+  #define ATT_TESTMODE_SEND_UNS_CMD      3 //!< Send ATT command with unsupported opcode
 #endif
 
 /*********************************************************************
@@ -218,7 +221,7 @@ extern "C"
 #define ATT_EXCHANGE_MTU_RSP_SIZE              2
 
 // Length of Error Response: Command opcode in error (1) + Attribute handle in error (2) + Status code (1)
-#define ATT_ERROR_RSP_SIZE                     4  
+#define ATT_ERROR_RSP_SIZE                     4
 
 // Length of Find Information Request's fixed fields: First handle number (2) + Last handle number (2)
 #define ATT_FIND_INFO_REQ_FIXED_SIZE           4
@@ -234,18 +237,18 @@ extern "C"
 // Length of Read By Type Request's fixed fields: First handle number (2) + Last handle number (2)
 #define ATT_READ_BY_TYPE_REQ_FIXED_SIZE        4
 #define ATT_READ_BY_TYPE_REQ_HDR_SIZE          ( ATT_OPCODE_SIZE + ATT_READ_BY_TYPE_REQ_FIXED_SIZE )
-  
+
 // Length of Read By Type Response's fixed fields: Length (1)
 #define ATT_READ_BY_TYPE_RSP_FIXED_SIZE        1
 #define ATT_READ_BY_TYPE_RSP_HDR_SIZE          ( ATT_OPCODE_SIZE + ATT_READ_BY_TYPE_RSP_FIXED_SIZE )
-  
+
 // Length of Read Request: Attribute Handle (2)
 #define ATT_READ_REQ_SIZE                      2
 
 // Length of Read By Type Response's fixed fields: Length (1)
 #define ATT_READ_BY_GRP_TYPE_RSP_FIXED_SIZE    1
 #define ATT_READ_BY_GRP_TYPE_RSP_HDR_SIZE      ( ATT_OPCODE_SIZE + ATT_READ_BY_GRP_TYPE_RSP_FIXED_SIZE )
-  
+
 // Length of Write Request's fixed field: Attribute Handle (2)
 #define ATT_WRITE_REQ_FIXED_SIZE               2
 
@@ -259,7 +262,7 @@ extern "C"
 // Length of Prepare Write Request's fixed fields: Attribute Handle (2) + Value Offset (2)
 #define ATT_PREPARE_WRITE_REQ_FIXED_SIZE       4
 #define ATT_PREPARE_WRITE_REQ_HDR_SIZE         ( ATT_OPCODE_SIZE + ATT_PREPARE_WRITE_REQ_FIXED_SIZE )
-  
+
 // Length of Prepare Write Response's fixed size: Attribute Handle (2) + Value Offset (2)
 #define ATT_PREPARE_WRITE_RSP_FIXED_SIZE       4
 
@@ -269,10 +272,10 @@ extern "C"
 // Length of Handle Value Indication's fixed size: Attribute Handle (2)
 #define ATT_HANDLE_VALUE_IND_FIXED_SIZE        2
 #define ATT_HANDLE_VALUE_IND_HDR_SIZE          ( ATT_OPCODE_SIZE + ATT_HANDLE_VALUE_IND_FIXED_SIZE )
-  
+
 // Length of Authentication Signature field
 #define ATT_AUTHEN_SIG_LEN                     12
-  
+
 /*********************************************************************
  * VARIABLES
  */
@@ -374,7 +377,7 @@ typedef struct
  */
 typedef struct
 {
-  uint16 clientRxMTU; //!< Client receive MTU size 
+  uint16 clientRxMTU; //!< Client receive MTU size
 } attExchangeMTUReq_t;
 
 /**
@@ -382,7 +385,7 @@ typedef struct
  */
 typedef struct
 {
-  uint16 serverRxMTU; //!< Server receive MTU size 
+  uint16 serverRxMTU; //!< Server receive MTU size
 } attExchangeMTURsp_t;
 
 /**
@@ -609,7 +612,7 @@ typedef struct
 } attHandleValueInd_t;
 
 /**
- * The following two ATT events are generated locally (not received OTA) by 
+ * The following two ATT events are generated locally (not received OTA) by
  * the ATT Server or Client.
  */
 
@@ -620,7 +623,7 @@ typedef struct
  * All subsequent ATT Requests and Indications received by the local ATT Server
  * and Client respectively will be dropped.
  *
- * This message is to inform the app (that has registered with GAP by calling 
+ * This message is to inform the app (that has registered with GAP by calling
  * GAP_RegisterForMsgs()) in case it wants to drop the connection.
  */
 typedef struct
@@ -634,7 +637,7 @@ typedef struct
  * by the local ATT Server or Client when the ATT MTU size is updated for a
  * connection. The default ATT MTU size is 23 octets.
  *
- * This message is to inform the app (that has registered with GAP by calling 
+ * This message is to inform the app (that has registered with GAP by calling
  * GAP_RegisterForMsgs()) about the new ATT MTU size negotiated for a connection.
  */
 typedef struct
@@ -677,7 +680,7 @@ typedef union
   // Indication and Notification messages
   attHandleValueNoti_t handleValueNoti;       //!< ATT Handle Value Notification
   attHandleValueInd_t handleValueInd;         //!< ATT Handle Value Indication
-  
+
   // Locally-generated event messages
   attFlowCtrlViolatedEvt_t flowCtrlEvt;       //!< ATT Flow Control Violated Event
   attMtuUpdatedEvt_t mtuEvt;                  //!< ATT MTU Updated Event
@@ -706,7 +709,7 @@ extern uint8 ATT_ParsePacket( l2capDataEvent_t *pL2capMsg, attPacket_t *pPkt );
 /*
  * Compare two UUIDs. The UUIDs are converted if necessary.
  */
-extern uint8 ATT_CompareUUID( const uint8 *pUUID1, uint16 len1, 
+extern uint8 ATT_CompareUUID( const uint8 *pUUID1, uint16 len1,
                               const uint8 *pUUID2, uint16 len2 );
 /*
  * Convert a 16-bit UUID to 128-bit UUID.
@@ -960,7 +963,7 @@ extern bStatus_t ATT_ParseHandleValueCfm( uint8 *pParams, uint16 len, attMsg_t *
 
 /**
  * @defgroup ATT_CLIENT_API ATT Client API Functions
- * 
+ *
  * @{
  */
 
@@ -1142,7 +1145,7 @@ extern bStatus_t ATT_HandleValueCfm( uint16 connHandle );
 
 /**
  * @defgroup ATT_SERVER_API ATT Server API Functions
- * 
+ *
  * @{
  */
 
@@ -1350,7 +1353,7 @@ extern bStatus_t ATT_HandleValueInd( uint16 connHandle, attHandleValueInd_t *pIn
 
 /**
  * @defgroup ATT_COMMON_API ATT Server Common Functions
- * 
+ *
  * @{
  */
 
@@ -1379,7 +1382,7 @@ extern uint16 ATT_GetMTU( uint16 connHandle );
  */
 
 /**
- * @brief   Set a ATT Parameter value.  Use this function to change 
+ * @brief   Set a ATT Parameter value.  Use this function to change
  *          the default ATT parameter values.
  *
  * @param   value - new param value

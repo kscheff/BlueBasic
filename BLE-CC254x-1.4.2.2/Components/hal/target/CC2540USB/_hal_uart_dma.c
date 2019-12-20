@@ -17,7 +17,7 @@
 
  ******************************************************************************
  
- Copyright (c) 2006-2016, Texas Instruments Incorporated
+ Copyright (c) 2006-2019, Texas Instruments Incorporated
  All rights reserved.
 
  IMPORTANT: Your use of this Software is limited to those specific rights
@@ -49,8 +49,8 @@
  contact Texas Instruments Incorporated at www.TI.com.
 
  ******************************************************************************
- Release Name: ble_sdk_1.4.2.2
- Release Date: 2016-06-09 06:57:09
+ Release Name: ble_sdk_1.5.0.16
+ Release Date: 2019-04-18 08:53:30
  *****************************************************************************/
 
 /* ------------------------------------------------------------------------------------------------
@@ -679,8 +679,8 @@ static uint16 HalUARTWriteDMA(uint8 *buf, uint16 len)
   // If there is no ongoing DMA Tx, then the channel must be armed here.
   if (dmaCfg.txIdx[(txSel ^ 1)] == 0)
   {
-    HAL_EXIT_CRITICAL_SECTION(his);
     HalUARTArmTxDMA();
+    HAL_EXIT_CRITICAL_SECTION(his);
   }
   else
   {
@@ -706,6 +706,9 @@ static void HalUARTPollDMA(void)
 {
   uint8 evt = 0;
   uint16 cnt;
+#if !HAL_UART_TX_BY_ISR
+  halIntState_t his;
+#endif
 
 #if DMA_PM
   PxIEN &= ~DMA_RDYIn_BIT;  // Clear to not race with DMA_RDY_IN ISR.
@@ -744,7 +747,9 @@ static void HalUARTPollDMA(void)
 #endif
 
 #if !HAL_UART_TX_BY_ISR
+  HAL_ENTER_CRITICAL_SECTION(his);
   HalUARTPollTxTrigDMA();
+  HAL_EXIT_CRITICAL_SECTION(his);
 #endif
 
 

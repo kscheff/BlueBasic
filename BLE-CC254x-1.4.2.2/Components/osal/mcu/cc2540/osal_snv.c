@@ -9,7 +9,7 @@
 
  ******************************************************************************
  
- Copyright (c) 2009-2016, Texas Instruments Incorporated
+ Copyright (c) 2009-2019, Texas Instruments Incorporated
  All rights reserved.
 
  IMPORTANT: Your use of this Software is limited to those specific rights
@@ -41,8 +41,8 @@
  contact Texas Instruments Incorporated at www.TI.com.
 
  ******************************************************************************
- Release Name: ble_sdk_1.4.2.2
- Release Date: 2016-06-09 06:57:09
+ Release Name: ble_sdk_1.5.0.16
+ Release Date: 2019-04-18 08:53:30
  *****************************************************************************/
 
 #if !defined(ENABLE_SNV) || (ENABLE_SNV && OAD_KEEP_NV_PAGES)
@@ -357,20 +357,42 @@ static void erasePage( uint8 pg )
 
   HalFlashErase(pg);
 
+  // Verify the erase operation
   {
-    // Verify the erase operation
     uint16 offset;
-    uint8 tmp;
+    // Calculate the offset into the containing flash bank as it gets mapped into XDATA.
+    uint8 *ptr = (uint8 *) HAL_FLASH_PAGE_MAP +
+                 ((pg % HAL_FLASH_PAGE_PER_BANK) * HAL_FLASH_PAGE_SIZE);
+    uint8 memctr = MEMCTR;  // Save to restore.
+    
+#if !defined HAL_OAD_BOOT_CODE
+    halIntState_t is;
+#endif
 
-    for (offset = 0; offset < OSAL_NV_PAGE_SIZE; offset ++)
+    pg /= HAL_FLASH_PAGE_PER_BANK;  // Calculate the flash bank from the flash page.
+    
+#if !defined HAL_OAD_BOOT_CODE
+    HAL_ENTER_CRITICAL_SECTION(is);
+#endif
+    
+    // Calculate and map the containing flash bank into XDATA.
+    MEMCTR = (MEMCTR & 0xF8) | pg;
+
+
+    for (offset = 0; offset < OSAL_NV_PAGE_SIZE; offset++)
     {
-      HalFlashRead(pg, offset, &tmp, 1);
-      if (tmp != OSAL_NV_ERASED)
+      if (*ptr++ != OSAL_NV_ERASED)
       {
         failF = TRUE;
         break;
       }
     }
+
+    MEMCTR = memctr;
+
+#if !defined HAL_OAD_BOOT_CODE
+    HAL_EXIT_CRITICAL_SECTION(is);
+#endif
   }
 }
 
@@ -450,19 +472,35 @@ static uint16 findItem(uint8 pg, uint16 offset, osalSnvId_t id)
   // Calculate the offset into the containing flash bank as it gets mapped into XDATA.
   uint8 *ptrBase = (uint8 *)(HAL_FLASH_PAGE_MAP) +
                ((pg % HAL_FLASH_PAGE_PER_BANK) * HAL_FLASH_PAGE_SIZE);
-  uint8 memctr = MEMCTR;  // Save to restore.
+
+  // Save to restore
+  uint8 memctr;
+
   pg /= HAL_FLASH_PAGE_PER_BANK;
   
- 
   while (offset >= OSAL_NV_PAGE_HDR_SIZE)
   {
     osalNvItemHdr_t hdr;
+    uint8 *ptr;
+    uint8 *ptrHdr;
 
+    ptr = ptrBase + offset;
+    ptrHdr = (uint8*) &hdr;
+    
     HAL_ENTER_CRITICAL_SECTION(is);
-    //HalFlashRead(pg, offset, (uint8 *) &hdr, OSAL_NV_WORD_SIZE);
-    MEMCTR = (MEMCTR & 0xF8) | pg;
+    memctr = MEMCTR;
+    MEMCTR = (memctr & 0xF8) | pg;
+#if (OSAL_NV_WORD_SIZE == 4)
+    *ptrHdr++ = *ptr++;
+    *ptrHdr++ = *ptr++;
+    *ptrHdr++ = *ptr++;
+    *ptrHdr   = *ptr;
+#else
     for (uint8 i = 0; i < OSAL_NV_WORD_SIZE; ++i)
-      ((uint8*)&hdr)[i] = ptrBase[offset + i];
+    {
+      *ptrHdr++ = *ptr++;
+    }
+#endif
     MEMCTR = memctr;
     HAL_EXIT_CRITICAL_SECTION(is);
 
@@ -690,21 +728,52 @@ static void compactPage( uint8 srcPg )
  */
 static void verifyWordM( uint8 pg, uint16 offset, uint8 *pBuf, osalSnvLen_t cnt )
 {
-  uint8 tmp[OSAL_NV_WORD_SIZE];
+  // Calculate the offset into the containing flash bank as it gets mapped into XDATA.
+  uint8 *ptr = (uint8 *)(offset + HAL_FLASH_PAGE_MAP) +
+               ((pg % HAL_FLASH_PAGE_PER_BANK) * HAL_FLASH_PAGE_SIZE);
+  uint8 memctr = MEMCTR;  // Save to restore.
+
+#if !defined HAL_OAD_BOOT_CODE
+  halIntState_t is;
+#endif
+
+  pg /= HAL_FLASH_PAGE_PER_BANK;  // Calculate the flash bank from the flash page.
+
+#if !defined HAL_OAD_BOOT_CODE
+  HAL_ENTER_CRITICAL_SECTION(is);
+#endif
+
+  // Calculate and map the containing flash bank into XDATA.
+  MEMCTR = (MEMCTR & 0xF8) | pg;
 
   while (cnt--)
   {
-    // Reading byte per byte will reduce code size but will slow down
-    // and not sure it will meet the timing requirements.
-    HalFlashRead(pg, offset, tmp, OSAL_NV_WORD_SIZE);
-    if (FALSE == osal_memcmp(tmp, pBuf, OSAL_NV_WORD_SIZE))
+#if (OSAL_NV_WORD_SIZE == 4)
+    if ((ptr[0] != pBuf[0]) ||
+        (ptr[1] != pBuf[1]) ||
+        (ptr[2] != pBuf[2]) ||
+        (ptr[3] != pBuf[3]))
     {
       failF = TRUE;
-      return;
+      break;
     }
-    offset += OSAL_NV_WORD_SIZE;
+#else
+    if (FALSE == osal_memcmp(ptr, pBuf, OSAL_NV_WORD_SIZE))
+    {
+      failF = TRUE;
+      break;
+    }
+#endif
+
+    ptr += OSAL_NV_WORD_SIZE;
     pBuf += OSAL_NV_WORD_SIZE;
   }
+
+  MEMCTR = memctr;
+
+#if !defined HAL_OAD_BOOT_CODE
+  HAL_EXIT_CRITICAL_SECTION(is);
+#endif
 }
 
 /*********************************************************************

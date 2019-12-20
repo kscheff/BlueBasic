@@ -11,7 +11,7 @@
 
  ******************************************************************************
  
- Copyright (c) 2009-2016, Texas Instruments Incorporated
+ Copyright (c) 2009-2019, Texas Instruments Incorporated
  All rights reserved.
 
  IMPORTANT: Your use of this Software is limited to those specific rights
@@ -43,8 +43,8 @@
  contact Texas Instruments Incorporated at www.TI.com.
 
  ******************************************************************************
- Release Name: ble_sdk_1.4.2.2
- Release Date: 2016-06-09 06:57:09
+ Release Name: ble_sdk_1.5.0.16
+ Release Date: 2019-04-18 08:53:30
  *****************************************************************************/
 
 
@@ -461,7 +461,7 @@ extern void GATT_RegisterForReq( uint8 taskId );
  * @brief   Verify the permissions of an attribute for reading.
  *
  * @param   connHandle - connection to use
- * @param   permissions - attribute permissions
+ * @param   pAttr - pointer to attribute
  * @param   service - service handle
  *
  * @return  SUCCESS: Attribute can be read.<BR>
@@ -470,13 +470,15 @@ extern void GATT_RegisterForReq( uint8 taskId );
  *          ATT_ERR_INSUFFICIENT_KEY_SIZE: Key Size used for encrypting is insufficient.<BR>
  *          ATT_ERR_INSUFFICIENT_ENCRYPT: Attribute requires encryption.<BR>
  */
-extern bStatus_t GATT_VerifyReadPermissions( uint16 connHandle, uint8 permissions, uint16 service );
+extern bStatus_t GATT_VerifyReadPermissions( uint16 connHandle,
+                                             gattAttribute_t *pAttr,
+                                             uint16 service );
 
 /**
  * @brief   Verify the permissions of an attribute for writing.
  *
  * @param   connHandle - connection to use
- * @param   permissions - attribute permissions
+ * @param   pAttr - pointer to attribute
  * @param   service - service handle
  * @param   pReq - pointer to write request
  *
@@ -486,8 +488,10 @@ extern bStatus_t GATT_VerifyReadPermissions( uint16 connHandle, uint8 permission
  *          ATT_ERR_INSUFFICIENT_KEY_SIZE: Key Size used for encrypting is insufficient.<BR>
  *          ATT_ERR_INSUFFICIENT_ENCRYPT: Attribute requires encryption.<BR>
  */
-extern bStatus_t GATT_VerifyWritePermissions( uint16 connHandle, uint8 permissions,
-                                              uint16 service, attWriteReq_t *pReq );
+extern bStatus_t GATT_VerifyWritePermissions( uint16 connHandle,
+                                              gattAttribute_t *pAttr,
+                                              uint16 service,
+                                              attWriteReq_t *pReq );
 
 /**
  * @brief   Send out a Service Changed Indication.
