@@ -8967,7 +8967,7 @@
                 </option>
                 <option>
                     <name>XclFile</name>
-                    <state>E:\github\BlueBasic\BLE-CC254x-1.4.2.2\Projects\ble\common\cc2540\cc254x_f256_imgB.xcl</state>
+                    <state>$PROJ_DIR$\..\..\common\cc2540\cc254x_f256_imgB.xcl</state>
                 </option>
                 <option>
                     <name>XclFileSlave</name>
@@ -12163,7 +12163,7 @@
                         <name>$PROJ_DIR$\..\..\..\..\Components\hal\target\CC2540EB\hal_crc.h</name>
                     </file>
                     <file>
-                        <name>$PROJ_DIR$\..\..\..\..\COMPONENTS\hal\target\CC2540EB\hal_dma.h</name>
+                        <name>$PROJ_DIR$\..\..\..\..\Components\hal\target\CC2540EB\hal_dma.h</name>
                     </file>
                     <file>
                         <name>$PROJ_DIR$\..\..\..\..\Components\hal\target\CC2540EB\hal_mcu.h</name>
@@ -12190,7 +12190,7 @@
                 <group>
                     <name>Includes</name>
                     <file>
-                        <name>$PROJ_DIR$\..\..\..\..\Components\hal\target\CC2541ARC\hal_i2c.h</name>
+                        <name>$PROJ_DIR$\..\..\..\..\COMPONENTS\hal\target\CC2541ARC\hal_i2c.h</name>
                     </file>
                 </group>
             </group>
