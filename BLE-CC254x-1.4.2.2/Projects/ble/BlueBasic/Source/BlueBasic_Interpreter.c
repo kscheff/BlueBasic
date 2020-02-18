@@ -574,8 +574,8 @@ static unsigned short err_line = 0;
 
 #define GOTO_QWHAT {SET_ERR_LINE; goto qwhat;}
 
-#define CHECK_SP_OOM(S,E)   if (sp - (S) < heap) {SET_ERR_LINE ; goto E;} else {sp -= (S); CHECK_MIN_MEMORY();}
-#define CHECK_HEAP_OOM(S,E) if (heap + (S) > sp) {SET_ERR_LINE ; goto E;} else {heap += (S); CHECK_MIN_MEMORY();}
+#define CHECK_SP_OOM(S,E)   if (sp - (S) < heap) {SET_MIN_MEMORY(0); SET_ERR_LINE ; goto E;} else {sp -= (S); CHECK_MIN_MEMORY();}
+#define CHECK_HEAP_OOM(S,E) if (heap + (S) > sp) {SET_MIN_MEMORY(0); SET_ERR_LINE ; goto E;} else {heap += (S); CHECK_MIN_MEMORY();}
 
 #ifdef SIMULATE_PINS
 static unsigned char P0DIR, P1DIR, P2DIR;
