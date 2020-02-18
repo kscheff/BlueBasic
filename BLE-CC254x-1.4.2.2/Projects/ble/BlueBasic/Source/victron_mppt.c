@@ -578,7 +578,7 @@ static void receive_text(uint8 port)
           txt_frame.v = mppt_data / 10;
           break;
         case LABEL_I:
-          txt_frame.i = mppt_data * mppt_sign / 100;
+          txt_frame.i = (mppt_sign == 1) ? mppt_data / 100 : 0;
           break;
         case LABEL_VPV:
           txt_frame.vpv = mppt_data / 10;
@@ -591,7 +591,8 @@ static void receive_text(uint8 port)
           mppt.batt_volt = mppt_data / 10;
           break;
         case LABEL_I:
-          mppt.sol_current = mppt_data * mppt_sign / 100;
+          // clip negative values to 0 to avoid overflow
+          mppt.sol_current = (mppt_sign == 1) ? mppt_data / 100 : 0;
           break;
         case LABEL_VPV:
           mppt.sol_volt = mppt_data / 10;
