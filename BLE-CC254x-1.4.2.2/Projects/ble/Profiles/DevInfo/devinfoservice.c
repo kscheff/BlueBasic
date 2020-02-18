@@ -182,6 +182,7 @@ static CONST uint8 devInfoHardwareRevProps = GATT_PROP_READ;
 static CONST uint8 devInfoHardwareRev[] = "-";
 #endif
 
+#ifndef DEVINFO_SHORTER_HEADER
 // Software Revision String characteristic
 static CONST uint8 devInfoSoftwareRevProps = GATT_PROP_READ;
 #ifdef kVersion
@@ -189,6 +190,7 @@ static const uint8 devInfoSoftwareRev[] = kProduct " " kVersion;
 #else
 static const uint8 devInfoSoftwareRev[] = kProduct "Loader";
 #endif
+#endif // DEVINFO_SHORTER_HEADER
 
 // Manufacturer Name String characteristic
 static CONST uint8 devInfoMfrNameProps = GATT_PROP_READ;
@@ -327,6 +329,7 @@ static gattAttribute_t devInfoAttrTbl[] =
       },
 #endif
       
+#ifndef DEVINFO_SHORTER_HEADER      
     // Software Revision String Declaration
     {
       { ATT_BT_UUID_SIZE, characterUUID },
@@ -342,7 +345,8 @@ static gattAttribute_t devInfoAttrTbl[] =
         0,
         (uint8 *) devInfoSoftwareRev
       },
-
+#endif
+      
     // Manufacturer Name String Declaration
     {
       { ATT_BT_UUID_SIZE, characterUUID },
@@ -515,6 +519,7 @@ bStatus_t DevInfo_GetParameter( uint8 param, void *value )
       break;
 #endif
 
+#ifndef DEVINFO_SHORTER_HEADER      
     case DEVINFO_SOFTWARE_REV:
       memcpy(value, devInfoSoftwareRev, sizeof(devInfoSoftwareRev));
       break;
@@ -522,6 +527,7 @@ bStatus_t DevInfo_GetParameter( uint8 param, void *value )
     case DEVINFO_MANUFACTURER_NAME:
       memcpy(value, devInfoMfrName, sizeof(devInfoMfrName));
       break;
+#endif // DEVINFO_SHORTER_HEADER      
 
 #ifndef DEVINFO_SHORTER_HEADER
     case DEVINFO_11073_CERT_DATA:
@@ -652,7 +658,8 @@ static bStatus_t devInfo_ReadAttrCB( uint16 connHandle, gattAttribute_t *pAttr,
       break;
 #endif
       
-    case SOFTWARE_REV_UUID:
+#ifndef DEVINFO_SHORTER_HEADER       
+  case SOFTWARE_REV_UUID:
       // verify offset
       if (offset > (sizeof(devInfoSoftwareRev) - 1))
       {
@@ -667,7 +674,8 @@ static bStatus_t devInfo_ReadAttrCB( uint16 connHandle, gattAttribute_t *pAttr,
         memcpy(pValue, &devInfoSoftwareRev[offset], *pLen);
       }
       break;
-
+#endif
+      
     case MANUFACTURER_NAME_UUID:
       // verify offset
       if (offset > (sizeof(devInfoMfrName) - 1))
