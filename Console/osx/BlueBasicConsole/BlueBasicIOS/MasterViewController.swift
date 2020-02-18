@@ -52,7 +52,7 @@ class MasterViewController: UITableViewController {
   
   @objc func pullToRefresh(_ sender: UIRefreshControl) {
     resignActive()
-    names.removeAll(keepingCapacity: true)
+    names.removeAll(keepingCapacity: false)
     tableView.reloadData();
     sender.endRefreshing()
   }
