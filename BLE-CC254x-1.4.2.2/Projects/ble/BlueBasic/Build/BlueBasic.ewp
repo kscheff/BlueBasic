@@ -6062,8 +6062,8 @@
                     <state>kProduct="BlueSolar"</state>
                     <state>kMfrName="blue-battery.com"</state>
                     <state>BLUESOLAR=TRUE</state>
-                    <state>INT_HEAP_LEN=4352</state>
-                    <state>BLUEBASIC_MEM=3328</state>
+                    <state>INT_HEAP_LEN=4400</state>
+                    <state>BLUEBASIC_MEM=3072</state>
                     <state>BLUEBASIC=TRUE</state>
                     <state>HALNODEBUG</state>
                     <state>OSAL_CBTIMER_NUM_TASKS=1</state>
@@ -6092,7 +6092,7 @@
                     <state>FEATURE_BOOST_CONVERTER=P2_0</state>
                     <state>UART_USE_CALLBACK=0</state>
                     <state>PROCESS_SERIAL_DATA</state>
-                    <state>xOSALMEM_METRICS=TRUE</state>
+                    <state>OSALMEM_METRICS=FALSE</state>
                     <state>ENABLE_SNV=1</state>
                     <state>ENABLE_SPI=0</state>
                     <state>ENABLE_WIRE=0</state>
@@ -7232,8 +7232,8 @@
                     <state>kProduct="BlueBattery"</state>
                     <state>kMfrName="blue-battery.com"</state>
                     <state>BLUEBATTERY=TRUE</state>
-                    <state>INT_HEAP_LEN=4352</state>
-                    <state>BLUEBASIC_MEM=3328</state>
+                    <state>INT_HEAP_LEN=4400</state>
+                    <state>BLUEBASIC_MEM=3072</state>
                     <state>BLUEBASIC=TRUE</state>
                     <state>HALNODEBUG</state>
                     <state>OSAL_CBTIMER_NUM_TASKS=1</state>
@@ -7261,7 +7261,7 @@
                     <state>FEATURE_BOOST_CONVERTER=P2_0</state>
                     <state>UART_USE_CALLBACK=0</state>
                     <state>PROCESS_SERIAL_DATA</state>
-                    <state>xOSALMEM_METRICS=TRUE</state>
+                    <state>OSALMEM_METRICS=FALSE</state>
                     <state>ENABLE_SNV=1</state>
                     <state>ENABLE_SPI=0</state>
                     <state>ENABLE_WIRE=0</state>
@@ -8402,7 +8402,7 @@
                     <state>DEVINFO_PID=0x0500</state>
                     <state>BLUESOLAR=TRUE</state>
                     <state>BLUESTECA=TRUE</state>
-                    <state>INT_HEAP_LEN=4096</state>
+                    <state>INT_HEAP_LEN=4400</state>
                     <state>BLUEBASIC_MEM=3072</state>
                     <state>BLUEBASIC=TRUE</state>
                     <state>HALNODEBUG</state>
@@ -9568,8 +9568,8 @@
                     <state>kProduct="BlueBattery"</state>
                     <state>kMfrName="blue-battery.com"</state>
                     <state>BLUEBATTERY=TRUE</state>
-                    <state>INT_HEAP_LEN=4480</state>
-                    <state>BLUEBASIC_MEM=3328</state>
+                    <state>INT_HEAP_LEN=4400</state>
+                    <state>BLUEBASIC_MEM=3072</state>
                     <state>BLUEBASIC=TRUE</state>
                     <state>HALNODEBUG</state>
                     <state>OSAL_CBTIMER_NUM_TASKS=1</state>
@@ -9598,7 +9598,7 @@
                     <state>FEATURE_BOOST_CONVERTER=P2_0</state>
                     <state>UART_USE_CALLBACK=0</state>
                     <state>PROCESS_SERIAL_DATA</state>
-                    <state>xOSALMEM_METRICS=TRUE</state>
+                    <state>OSALMEM_METRICS=FALSE</state>
                     <state>ENABLE_SNV=1</state>
                     <state>ENABLE_SPI=0</state>
                     <state>ENABLE_WIRE=0</state>
@@ -10738,8 +10738,8 @@
                     <state>kProduct="BlueBattery"</state>
                     <state>kMfrName="blue-battery.com"</state>
                     <state>BLUEBATTERY=TRUE</state>
-                    <state>INT_HEAP_LEN=4352</state>
-                    <state>BLUEBASIC_MEM=3328</state>
+                    <state>INT_HEAP_LEN=4400</state>
+                    <state>BLUEBASIC_MEM=3072</state>
                     <state>BLUEBASIC=TRUE</state>
                     <state>HALNODEBUG</state>
                     <state>OSAL_CBTIMER_NUM_TASKS=1</state>
@@ -10769,8 +10769,8 @@
                     <state>UART_USE_CALLBACK=1</state>
                     <state>PROCESS_SERIAL_DATA</state>
                     <state>PROCESS_MPPT</state>
-                    <state>MPPT_AS_VOT=1</state>
-                    <state>xOSALMEM_METRICS=TRUE</state>
+                    <state>MPPT_AS_VOT=0</state>
+                    <state>OSALMEM_METRICS=FALSE</state>
                     <state>ENABLE_SNV=1</state>
                     <state>ENABLE_SPI=0</state>
                     <state>ENABLE_WIRE=0</state>
@@ -12163,7 +12163,7 @@
                         <name>$PROJ_DIR$\..\..\..\..\Components\hal\target\CC2540EB\hal_crc.h</name>
                     </file>
                     <file>
-                        <name>$PROJ_DIR$\..\..\..\..\Components\hal\target\CC2540EB\hal_dma.h</name>
+                        <name>$PROJ_DIR$\..\..\..\..\COMPONENTS\hal\target\CC2540EB\hal_dma.h</name>
                     </file>
                     <file>
                         <name>$PROJ_DIR$\..\..\..\..\Components\hal\target\CC2540EB\hal_mcu.h</name>

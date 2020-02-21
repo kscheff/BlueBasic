@@ -445,8 +445,7 @@ unsigned int flashstore_freemem(void)
 
 void flashstore_compact(unsigned char len, unsigned char* tempmemstart, unsigned char* tempmemend)
 {
-  const unsigned short available = tempmemend - tempmemstart;
-    
+  const unsigned short available = tempmemend - tempmemstart + (unsigned char*)lineindexend - (unsigned char*)lineindexstart;  
   // Find the lowest age page which this will fit in.
   static unsigned char pg;
   unsigned char selected = 0;
@@ -466,13 +465,25 @@ void flashstore_compact(unsigned char len, unsigned char* tempmemstart, unsigned
   }
   occupied = FLASHSTORE_PAGESIZE - orderedpages[selected].free - orderedpages[selected].waste;
   
+  unsigned short heap_len = 0;
+  char corrupted = 0;
   // Need at least FLASHSTORE_PAGESIZE
-  if (occupied > available)
+  if (occupied > tempmemend - tempmemstart)  
   {
-    return;
+    if (occupied > available)
+      return;
+    // use additionally index area for compacting
+    // by moving heap to to beginning
+    // Attention: this assumes that tempmemstart is the current heap end!
+    heap_len = tempmemstart - (unsigned char*)lineindexend;
+    if (heap_len)
+    {
+      OS_memcpy((void*)lineindexstart, (void*)lineindexend, heap_len);
+      tempmemstart = (unsigned char*) lineindexstart + heap_len;
+      corrupted = 1; // since we use the index area it is definitly corrupted
+    }
   }
   
-  char corrupted = 0;
   if (age != 0xFFFFFFFF)
   {
     // Found enough space for the line, compact the page
@@ -515,10 +526,10 @@ void flashstore_compact(unsigned char len, unsigned char* tempmemstart, unsigned
       }
       ptr += len;
     }
-    osal_run_system();        
+//    osal_run_system();        
     // Erase the page
     OS_flashstore_erase(FLASHSTORE_FPAGE(flash));
-    osal_run_system();
+//    osal_run_system();
     lastage++;
     OS_flashstore_write(FLASHSTORE_FADDR(flash), (unsigned char*)&lastage, FLASHSTORE_WORDS(sizeof(lastage)));
     orderedpages[selected].waste = 0;
@@ -528,9 +539,14 @@ void flashstore_compact(unsigned char len, unsigned char* tempmemstart, unsigned
     // Copy the old lines back in.
     flash += sizeof(flashpage_age);
     OS_flashstore_write(FLASHSTORE_FADDR(flash), tempmemstart, FLASHSTORE_WORDS(mem_length));
-    osal_run_system();
+//    osal_run_system();
     if (corrupted)
     {
+      if (heap_len)
+      {
+        // copy old heap data back into position before rebuilding the index
+        OS_memcpy((void*)lineindexend, (void*)lineindexstart, heap_len);
+      }
       // We corrupted memory, so we need to reinitialize
       flashstore_init((unsigned char**)lineindexstart);
     }
