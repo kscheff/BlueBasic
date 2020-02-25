@@ -830,8 +830,12 @@ uint16 GAPRole_ProcessEvent( uint8 task_id, uint16 events )
       // Setup advertisement parameters
       if ( gapRole_AdvNonConnEnabled )
       {
+#ifndef PLUS_BROADCASTER        
         // Only advertise non-connectable undirected.
         params.eventType = GAP_ADTYPE_ADV_NONCONN_IND;
+#else
+        params.eventType = GAP_ADTYPE_ADV_SCAN_IND;
+#endif
       }
       else
       {

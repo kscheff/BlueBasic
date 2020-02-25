@@ -742,6 +742,10 @@ static void bluebasic_ParamUpdateCB( uint16 connInterval,
 
 static void bluebasic_StateNotificationCB( gaprole_States_t newState )
 {
+#ifdef PLUS_BROADCASTER
+  static uint8 first_conn_flag = 0;
+#endif // PLUS_BROADCASTER
+   
 #if defined ENABLE_YIELD && ENABLE_YIELD  
 //  P1DIR |= 1;
   switch ( newState )
@@ -769,6 +773,28 @@ static void bluebasic_StateNotificationCB( gaprole_States_t newState )
 //      SEMAPHORE_CONN_WAIT();
       osal_start_timerEx(blueBasic_TaskID, BLUEBASIC_EVENT_CON, 6000);
     }
+ #ifdef PLUS_BROADCASTER
+    // Only turn advertising on for this state when we first connect
+    // otherwise, when we go from connected_advertising back to this state
+    // we will be turning advertising back on.
+    if ( first_conn_flag == 0 ) 
+    {
+        uint8 advertEnabled = FALSE; // Turn off Advertising
+
+        // Disable connectable advertising.
+        GAPRole_SetParameter(GAPROLE_ADVERT_ENABLED, sizeof(uint8),
+                             &advertEnabled);
+        
+        // Set to true for non-connectabel advertising.
+        advertEnabled = TRUE;
+        
+        // Enable non-connectable advertising.
+        GAPRole_SetParameter(GAPROLE_ADV_NONCONN_ENABLED, sizeof(uint8),
+                             &advertEnabled);
+        
+        first_conn_flag = 1;
+    }
+#endif // PLUS_BROADCASTER   
     SEMAPHORE_READ_SIGNAL();
     break;
     
@@ -779,8 +805,51 @@ static void bluebasic_StateNotificationCB( gaprole_States_t newState )
     SEMAPHORE_CONN_SIGNAL();
     SEMAPHORE_READ_SIGNAL();
     ble_init_ccc();
+#ifdef PLUS_BROADCASTER
+    {
+      uint8 advertEnabled = TRUE;
+      // enable connectable advertising.
+      GAPRole_SetParameter(GAPROLE_ADVERT_ENABLED, sizeof(uint8), &advertEnabled);
+    }
+#endif      
     break;
+
+#ifdef PLUS_BROADCASTER   
+  /* After a connection is dropped a device in PLUS_BROADCASTER will continue
+   * sending non-connectable advertisements and shall sending this change of 
+   * state to the application.  These are then disabled here so that sending 
+   * connectable advertisements can resume.
+   */
+  case GAPROLE_ADVERTISING_NONCONN:
+    {
+      uint8 advertEnabled = FALSE;
     
+      // Disable non-connectable advertising.
+      GAPRole_SetParameter(GAPROLE_ADV_NONCONN_ENABLED, sizeof(uint8),
+                         &advertEnabled);
+      
+      // Reset flag for next connection.
+      first_conn_flag = 0;
+    }
+    break;
+#endif //PLUS_BROADCASTER         
+
+    case GAPROLE_WAITING_AFTER_TIMEOUT:
+      {
+#ifdef PLUS_BROADCASTER
+        // Reset flag for next connection.
+        first_conn_flag = 0;
+#endif //#ifdef (PLUS_BROADCASTER)
+      }
+#ifdef PLUS_BROADCASTER
+      {
+        uint8 advertEnabled = TRUE;
+        // enable connectable advertising.
+        GAPRole_SetParameter(GAPROLE_ADVERT_ENABLED, sizeof(uint8), &advertEnabled);
+      }
+#endif      
+      break;
+      
   default:
     break;
   }
