@@ -498,6 +498,17 @@ enum
   FRAME_SERVICE_FLAG
 };
 
+// Stack clean up return types
+enum
+{
+  RETURN_GOSUB = 1,
+  RETURN_EVENT,
+  RETURN_FOR,
+  RETURN_ERROR_OOM,
+  RETURN_ERROR_OR_OK,
+  RETURN_QWHAT
+};
+
 // Variable types
 enum
 {
@@ -576,6 +587,8 @@ static unsigned short err_line = 0;
 
 #define CHECK_SP_OOM(S,E)   if (sp - (S) < heap) {SET_MIN_MEMORY(0); SET_ERR_LINE ; goto E;} else {sp -= (S); CHECK_MIN_MEMORY();}
 #define CHECK_HEAP_OOM(S,E) if (heap + (S) > sp) {SET_MIN_MEMORY(0); SET_ERR_LINE ; goto E;} else {heap += (S); CHECK_MIN_MEMORY();}
+
+static unsigned char cleanup_stack(void);
 
 #ifdef SIMULATE_PINS
 static unsigned char P0DIR, P1DIR, P2DIR;
@@ -2397,73 +2410,24 @@ next:
     GOTO_QWHAT;
   }
 
-gosub_return:
-  // Now walk up the stack frames and find the frame we want, if present
-  while (sp < variables_begin)
+gosub_return:  
+  switch (cleanup_stack())
   {
-    switch (((frame_header*)sp)->frame_type)
-    {
-      case FRAME_GOSUB_FLAG:
-        if (txtpos[-1] == KW_RETURN)
-        {
-          gosub_frame *f = (gosub_frame *)sp;
-          lineptr = f->line;
-          sp += f->header.frame_size;
-          goto run_next_statement;
-        }
-        break;
-      case FRAME_EVENT_FLAG:
-        if (txtpos[-1] == KW_RETURN)
-        {
-          sp += ((frame_header*)sp)->frame_size;
-          goto prompt;
-        }
-        break;
-      case FRAME_FOR_FLAG:
-        // Flag, Var, Final, Step
-        if (txtpos[-1] == KW_NEXT)
-        {
-          for_frame *f = (for_frame *)sp;
-          // Is the the variable we are looking for?
-          if (*txtpos == f->for_var)
-          {
-            VAR_TYPE v = VARIABLE_INT_GET(f->for_var) + f->step;
-            VARIABLE_INT_SET(f->for_var, v);
-            // Use a different test depending on the sign of the step increment
-            if ((f->step > 0 && v <= f->terminal) || (f->step < 0 && v >= f->terminal))
-            {
-              // We have to loop so don't pop the stack
-              lineptr = f->line;
-            }
-            else
-            {
-              // We've run to the end of the loop. drop out of the loop, popping the stack
-              sp += f->header.frame_size;
-              txtpos++;
-            }
-            goto run_next_statement;
-          }
-        }
-        break;
-      case FRAME_VARIABLE_FLAG:
-        {
-          VARIABLE_RESTORE((variable_frame*)sp);
-        }
-        break;
-      default:
-        SET_ERR_LINE;
-        goto qoom;
-    }
-    sp += ((frame_header*)sp)->frame_size;
-  }
-  // Didn't find the variable we've been looking for
-  // If we're returning from the main entry point, then we're done
-  if (txtpos[-1] == KW_RETURN)
-  {
+  case RETURN_GOSUB:
+    goto run_next_statement;
+  case RETURN_EVENT:
+    goto prompt;
+  case RETURN_FOR:
+    goto run_next_statement;
+  case RETURN_ERROR_OOM:
+    goto qoom;
+  case RETURN_ERROR_OR_OK:
     goto print_error_or_ok;
+//  case RETURN_QWHAT:
+  default:
+    GOTO_QWHAT;
   }
-  GOTO_QWHAT;
-
+  
 //
 // PX(Y) = Z
 // Assign a value to a pin.
@@ -4837,6 +4801,84 @@ cmd_config:
       }
   }
   goto run_next_statement;
+}
+
+//
+// clean up the stack e.g. when return is encountered
+//
+static unsigned char cleanup_stack(void)
+{  
+  // Now walk up the stack frames and find the frame we want, if present
+  while (sp < variables_begin)
+  {
+    switch (((frame_header*)sp)->frame_type)
+    {
+      case FRAME_GOSUB_FLAG:
+        if (txtpos[-1] == KW_RETURN)
+        {
+          gosub_frame *f = (gosub_frame *)sp;
+          lineptr = f->line;
+          sp += f->header.frame_size;
+          //goto run_next_statement;
+          return RETURN_GOSUB;
+        }
+        break;
+      case FRAME_EVENT_FLAG:
+        if (txtpos[-1] == KW_RETURN)
+        {
+          sp += ((frame_header*)sp)->frame_size;
+          //goto prompt;
+          return RETURN_EVENT;
+        }
+        break;
+      case FRAME_FOR_FLAG:
+        // Flag, Var, Final, Step
+        if (txtpos[-1] == KW_NEXT)
+        {
+          for_frame *f = (for_frame *)sp;
+          // Is the the variable we are looking for?
+          if (*txtpos == f->for_var)
+          {
+            VAR_TYPE v = VARIABLE_INT_GET(f->for_var) + f->step;
+            VARIABLE_INT_SET(f->for_var, v);
+            // Use a different test depending on the sign of the step increment
+            if ((f->step > 0 && v <= f->terminal) || (f->step < 0 && v >= f->terminal))
+            {
+              // We have to loop so don't pop the stack
+              lineptr = f->line;
+            }
+            else
+            {
+              // We've run to the end of the loop. drop out of the loop, popping the stack
+              sp += f->header.frame_size;
+              txtpos++;
+            }
+            //goto run_next_statement;
+            return RETURN_FOR;
+          }
+        }
+        break;
+      case FRAME_VARIABLE_FLAG:
+        {
+          VARIABLE_RESTORE((variable_frame*)sp);
+        }
+        break;
+      default:
+        SET_ERR_LINE;
+        //goto qoom;
+        return RETURN_ERROR_OOM;
+    }
+    sp += ((frame_header*)sp)->frame_size;
+  }
+  // Didn't find the variable we've been looking for
+  // If we're returning from the main entry point, then we're done
+  if (txtpos[-1] == KW_RETURN)
+  {
+    //goto print_error_or_ok;
+    return RETURN_ERROR_OR_OK;
+  }
+  //GOTO_QWHAT;  
+  return RETURN_QWHAT;
 }
 
 //
