@@ -109,7 +109,11 @@ static const char* const error_msgs[] =
 #define STR_EXPAND(number) #number
 #define STR(number) STR_EXPAND(number)
 
+#if HAL_UART
 #define MSG_EXT MPPT_MODE_MSG MPPT_EMU_MSG "\nUARTs:" STR(OS_MAX_SERIAL)
+#else
+#define MSG_EXT MPPT_MODE_MSG MPPT_EMU_MSG "\nno UART"
+#endif
 
 #ifdef BUILD_TIMESTAMP
 #ifdef FEATURE_OAD_HEADER
@@ -1166,11 +1170,13 @@ static void clean_memory(void)
   }
   lineptr = NULL;
   
+#if HAL_UART  
   // Stop serial interfaces
   for (unsigned char i = OS_MAX_SERIAL; i--; )
   {
     OS_serial_close(i);
   }
+#endif
 
 #ifdef HAL_I2C  
   // Stop i2c interface
@@ -1406,6 +1412,7 @@ static VAR_TYPE expression(unsigned char mode)
         }
         ch = *++txtpos;
         if (ch == KW_SERIAL)
+#if HAL_UART          
         {
           unsigned char port = 0;
           ignore_blanks();
@@ -1430,6 +1437,9 @@ static VAR_TYPE expression(unsigned char mode)
           }
           *queueptr++ = OS_serial_available(port, ch == KW_READ ? 'R' : 'W');
         }
+#else   // HAL_UART
+          goto expr_error;
+#endif  // HAL_UART
 #ifdef HAL_I2C
         else if (ch == KW_I2C)
         {
@@ -2974,6 +2984,7 @@ cmd_interrupt:
 // SERIAL #<port> <baud>,<parity:N|P>,<bits>,<stop>,<flow> [ONREAD GOSUB <linenum>] [ONWRITE GOSUB <linenum>]
 //
 cmd_serial:
+#if HAL_UART
   {
     unsigned char port = 0;
     if (*txtpos == '#')
@@ -3028,7 +3039,10 @@ cmd_serial:
     }
   }
   goto run_next_statement;
-
+#else // HAL_UART
+  GOTO_QWHAT;
+#endif // HAL_UART
+  
 #if !defined(ENABLE_WIRE) || ENABLE_WIRE  
 //
 // WIRE ...
@@ -3614,6 +3628,7 @@ cmd_open:
 cmd_close:
   {
     if (*txtpos == KW_SERIAL)
+#if HAL_UART      
     {
       unsigned char port = 0;
       txtpos++;
@@ -3628,6 +3643,11 @@ cmd_close:
       }
       OS_serial_close(port);
     }
+#else  // HAL_UART
+    {
+      GOTO_QWHAT;
+    }
+#endif // HAL_UART
 #ifdef HAL_I2C
     else if (*txtpos == KW_I2C)
     {
@@ -3659,6 +3679,7 @@ cmd_read:
       GOTO_QWHAT;
     }
     else if (*txtpos == KW_SERIAL)
+#if HAL_UART
     {
       unsigned char port = 0;
       txtpos++;
@@ -3712,6 +3733,11 @@ cmd_read:
         }
       }
     }
+#else // HAL_UART
+    {
+      GOTO_QWHAT;
+    }
+#endif // HAL_UART
 #ifdef HAL_I2C
     else if (*txtpos == KW_I2C)
     {
@@ -3950,6 +3976,7 @@ cmd_write:
       GOTO_QWHAT;
     }
     else if (*txtpos == KW_SERIAL)
+#if HAL_UART
     {
       unsigned char port = 0;
       txtpos++;
@@ -4031,6 +4058,11 @@ cmd_write:
       }
       goto run_next_statement;
     }
+#else // HAL_UART
+    {
+      GOTO_QWHAT;
+    }
+#endif // HAL_UART
     else
     {
       if (lineptr >= program_end)

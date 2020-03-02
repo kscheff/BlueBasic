@@ -277,11 +277,15 @@ extern unsigned char blueBasic_TaskID;
 #define BLUEBASIC_START_DEVICE_EVT 0x0001
 #define BLUEBASIC_CONNECTION_EVENT 0x0002
 #define BLUEBASIC_INPUT_AVAILABLE 0x0004
+
+#if HAL_UART 
 #if (HAL_UART_ISR == 2 || HAL_UART_DMA == 2) && (HAL_UART_DMA == 1 || HAL_UART_ISR == 1)
 #define OS_MAX_SERIAL             2
 #else
 #define OS_MAX_SERIAL             1
 #endif
+#endif // HAL_UART
+
 #define BLUEBASIC_EVENT_SERIAL    0x0008
 #define BLUEBASIC_EVENT_SERIALS   0x0018
 #define OS_MAX_TIMER              4
@@ -299,7 +303,7 @@ extern unsigned char blueBasic_TaskID;
 
 #define OS_MAX_FILE               16
 
-
+#if HAL_UART
 // Serial
 typedef struct
 {
@@ -312,6 +316,7 @@ typedef struct
 #endif  
 } os_serial_t;
 extern os_serial_t serial[OS_MAX_SERIAL];
+#endif
 
 #ifdef HAL_I2C
 // I2C

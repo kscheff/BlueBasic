@@ -7239,7 +7239,7 @@
                     <state>OSAL_CBTIMER_NUM_TASKS=1</state>
                     <state>HAL_AES_DMA=TRUE</state>
                     <state>HAL_DMA=TRUE</state>
-                    <state>HAL_UART=FALSE</state>
+                    <state>xHAL_UART=TRUE</state>
                     <state>xHAL_UART_DMA=1</state>
                     <state>xHAL_UART_DMA_RX_MAX=32</state>
                     <state>xHAL_UART_DMA_TX_MAX=32</state>

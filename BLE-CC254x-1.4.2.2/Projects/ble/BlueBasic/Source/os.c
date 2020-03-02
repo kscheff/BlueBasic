@@ -60,9 +60,11 @@ struct
   unsigned short lineno;
 } timers[OS_MAX_TIMER];
 
+#if HAL_UART
 // Serial
 os_serial_t serial[OS_MAX_SERIAL];
 uint8 uart_stop_polling = 1;
+#endif
 
 #ifdef HAL_I2C
 // I2C
