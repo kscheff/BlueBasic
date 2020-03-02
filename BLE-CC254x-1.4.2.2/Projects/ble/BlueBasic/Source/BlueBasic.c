@@ -412,6 +412,12 @@ void BlueBasic_Init( uint8 task_id )
 #if !HAL_UART_DMA
   // See: http://e2e.ti.com/support/wireless_connectivity/f/538/p/169944/668822.aspx#664740
   HCI_EXT_ClkDivOnHaltCmd(HCI_EXT_ENABLE_CLK_DIVIDE_ON_HALT);
+#ifdef PLUS_BROADCASTER
+  // gapProcessDisconnectCompleteEvt doesn't get through
+  // despite llConnectTerminate comes in
+  // when CPU is halted during RF
+  HCI_EXT_HaltDuringRfCmd(HCI_EXT_HALT_DURING_RF_DISABLE);
+#endif
 #else
   HCI_EXT_HaltDuringRfCmd(HCI_EXT_HALT_DURING_RF_DISABLE);
   HCI_EXT_ClkDivOnHaltCmd(HCI_EXT_DISABLE_CLK_DIVIDE_ON_HALT);
