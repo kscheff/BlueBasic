@@ -254,7 +254,25 @@ static void crcCheck(uint8 page, uint16 *crc)
 void main(void)
 {
   uint16 crc[2];
-
+  
+#ifdef FORCE_OAD_IMAGE_A_CHECK
+  // check input Ports to force running Image A for OAD
+  // external short between P02 (UART0_RX) and P03 (UART0_TX)
+  // switch RX as input pulldown
+  P0SEL = 0;
+  P0INP = 8;
+  P2INP = 0; //bit 5 switch P0 to pullup on
+  P0 = 4;        // charge P02 to high, P03 to low
+  P0DIR = 0x0C;  // switch P02, P03 OUTPUT
+  P0DIR = 0x08; // switch back to input
+  for (unsigned char cnt=0; --cnt; )
+  {
+    if (P0 & 0x04)
+      continue;  // check if bit stays high
+    goto run_image_a; // a short runs image A
+  }
+#endif // FORCE_OAD_IMAGE_A  
+  
   // Prefer to run Image-B over Image-A so that Image-A does not have to invalidate itself.
   HalFlashRead(BIM_IMG_B_PAGE, BIM_CRC_OSET, (uint8 *)crc, 4);
 
@@ -271,6 +289,10 @@ void main(void)
     crcCheck(BIM_IMG_B_PAGE, crc);
   }
 
+#ifdef FORCE_OAD_IMAGE_A_CHECK  
+run_image_a:
+#endif
+  
   //HalFlashRead(BIM_IMG_A_PAGE, BIM_CRC_OSET, (uint8 *)crc, 4);
 
   //if ((crc[0] != 0xFFFF) && (crc[0] != 0x0000))
