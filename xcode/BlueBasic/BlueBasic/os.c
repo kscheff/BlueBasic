@@ -146,7 +146,7 @@ char OS_timer_start(unsigned char id, unsigned long timeout, unsigned char repea
   {
     return 0;
   }
-  printf("setting timer %d: timeout=%d, repeat=%d, lineno=%d\n", id, timeout, repeat, lineno);
+  printf("setting timer %d: timeout=%ld, repeat=%d, lineno=%d\n", id, timeout, repeat, lineno);
   timers[id].lineno = lineno;
   timers[id].periode = id == DELAY_TIMER ? 0 : (int32_t) timeout;
   timers[id].repeat = id == DELAY_TIMER ? 0 :  repeat;

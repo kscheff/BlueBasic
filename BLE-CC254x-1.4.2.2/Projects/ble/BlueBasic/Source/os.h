@@ -37,6 +37,7 @@
 #define __data
 
 #define BLUEBASIC_MEM 8192
+#define FLASHSTORE_NRPAGES flashstore_nrpages
 
 #define SIMULATE_PINS   1
 #define ENABLE_PORT0    1
@@ -57,6 +58,7 @@
 #define OS_interrupt_attach(A, B) 0
 #define OS_interrupt_detach(A)    0
 #define OS_delaymicroseconds(A) do { } while ((void)(A), 0)
+#define OS_yield(A)
 
 extern void OS_prompt_buffer(unsigned char* start, unsigned char* end);
 extern char OS_prompt_available(void);
@@ -68,6 +70,8 @@ extern void OS_flashstore_erase(unsigned long page);
 extern void OS_init(void);
 extern uint32_t OS_get_millis(void);
 
+// command line option from main.c
+extern unsigned char flashstore_nrpages;
 
 #define OS_MAX_TIMER              4
 #define BLUEBASIC_EVENT_TIMER     0x0001
@@ -166,6 +170,7 @@ typedef struct gattCharCfg
   unsigned char value;
 } gattCharCfg_t;
 
+#define bool unsigned char
 #define uint8 unsigned char
 #define uint16 unsigned short
 #define int8 char

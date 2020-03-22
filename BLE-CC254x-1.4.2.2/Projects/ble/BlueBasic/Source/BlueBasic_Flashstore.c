@@ -13,11 +13,24 @@ extern __data unsigned char* sp;
 #define FLASHSTORE_WORDS(LEN)     ((LEN) >> 2)
 
 #ifdef SIMULATE_FLASH
-unsigned char __store[FLASHSTORE_LEN];
+//unsigned char __store[FLASHSTORE_LEN];
+unsigned char __store[124l * FLASHSTORE_PAGESIZE];
 #define FLASHSTORE_CPU_BASEADDR (__store)
 #define FLASHSTORE_DMA_BASEADDR (0)
+struct
+{
+    unsigned short free;
+    unsigned short waste;
+    unsigned short *special;
+} orderedpages[124];
 #else
 __code const unsigned char _flashstore[4] @ "FLASHSTORE" = {0xff, 0xff, 0xff, 0xff} ;
+static struct
+{
+  unsigned short free;
+  unsigned short waste;
+  unsigned short *special;
+} orderedpages[FLASHSTORE_NRPAGES];
 #endif
 
 static const unsigned char* flashstore = (unsigned char*)FLASHSTORE_CPU_BASEADDR;
@@ -26,12 +39,6 @@ static const unsigned char* flashstore = (unsigned char*)FLASHSTORE_CPU_BASEADDR
 
 static unsigned short** lineindexstart;
 static unsigned short** lineindexend;
-static struct
-{
-  unsigned short free;
-  unsigned short waste;
-  unsigned short *special;
-} orderedpages[FLASHSTORE_NRPAGES];
 
 #define FLASHSTORE_PAGEBASE(IDX)  &flashstore[FLASHSTORE_PAGESIZE * (IDX)]
 #define FLASHSTORE_PADDEDSIZE(SZ) (((SZ) + 3) & -4)
@@ -302,7 +309,7 @@ unsigned char flashstore_addspecial(unsigned char* item)
     unsigned short* mem = (unsigned short*)(FLASHSTORE_PAGEBASE(pg) + FLASHSTORE_PAGESIZE - orderedpages[pg].free);
     OS_flashstore_write(FLASHSTORE_FADDR(mem), item, FLASHSTORE_WORDS(len));
     orderedpages[pg].free -= len;
-    if ( (orderedpages[pg].special != 0) && (mem < orderedpages[pg].special) || orderedpages[pg].special == 0 )
+    if ( ((orderedpages[pg].special != 0) && (mem < orderedpages[pg].special)) || orderedpages[pg].special == 0 )
     {
       // the new entry is located before the saved one
       // or its the first entry in this page

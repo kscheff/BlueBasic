@@ -2229,7 +2229,8 @@ print_error_or_ok:
   {
     printmsg("rebooting...");
 //    for (long t0 = OS_get_millis(); OS_get_millis() - t0 < 1000; osal_run_system());
-    for (uint8 cnt = 0; --cnt ; osal_run_system(), OS_delaymicroseconds(2)); 
+    for (uint8 cnt = 0; --cnt ; osal_run_system() )
+       OS_delaymicroseconds(2);
     clean_memory(); 
     OS_reboot(0);
 //    return IX_OUTOFMEMORY;
