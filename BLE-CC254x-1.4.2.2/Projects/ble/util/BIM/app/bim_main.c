@@ -255,21 +255,28 @@ void main(void)
 {
   uint16 crc[2];
   
-#ifdef FORCE_OAD_IMAGE_A_CHECK
+#ifdef FORCE_OAD_IMAGE_A_CHECK      
+  {
   // check input Ports to force running Image A for OAD
   // external short between P02 (UART0_RX) and P03 (UART0_TX)
-  // switch RX as input pulldown
-  P0SEL = 0;
-  P0INP = 8;
-  P2INP = 0; //bit 5 switch P0 to pullup on
-  P0 = 4;        // charge P02 to high, P03 to low
-  P0DIR = 0x0C;  // switch P02, P03 OUTPUT
-  P0DIR = 0x08; // switch back to input
-  for (unsigned char cnt=0; --cnt; )
+  // switch RX as output, TX as input
+  P0SEL = 0; // switch P0 as GPIO
+  P0INP = 8; // input mode pull up/down on
+  P2INP = 0; // witch P0 to pullup
+  P0DIR = 0x04; // switch P02 to output (should have series resitor of 1K)
+  unsigned char pattern;
+  for (pattern = 0xaa; pattern; pattern >>= 1)
   {
-    if (P0 & 0x04)
-      continue;  // check if bit stays high
-    goto run_image_a; // a short runs image A
+    for (unsigned cnt = 10; --cnt ; )
+    {
+      P0 = (pattern & 1) << 2;
+    }
+    if ( ((P0 & 0x08) >> 3) != (pattern & 1) )
+        break;
+  }
+  P0DIR = 0; // switch all to input
+  if (!pattern)
+    goto run_image_a;
   }
 #endif // FORCE_OAD_IMAGE_A  
   
