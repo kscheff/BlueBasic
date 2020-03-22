@@ -158,9 +158,11 @@ extern void* memcpy(void *dest, const void *src, size_t len);
 // Device Information Service attribute
 static CONST gattAttrType_t devInfoService = { ATT_BT_UUID_SIZE, devInfoServUUID };
 
+#ifdef FEATURE_DEVINFO
 // System ID characteristic
 static CONST uint8 devInfoSystemIdProps = GATT_PROP_READ;
 static uint8 devInfoSystemId[DEVINFO_SYSTEM_ID_LEN] = {0, 0, 0, 0, 0, 0, 0, 0};
+#endif
 
 // Model Number String characteristic
 static CONST uint8 devInfoModelNumberProps = GATT_PROP_READ;
@@ -241,6 +243,7 @@ static gattAttribute_t devInfoAttrTbl[] =
     (uint8 *)&devInfoService                /* pValue */
   },
 
+#ifdef FEATURE_DEVINFO  
     // System ID Declaration
     {
       { ATT_BT_UUID_SIZE, characterUUID },
@@ -256,6 +259,7 @@ static gattAttribute_t devInfoAttrTbl[] =
         0,
         (uint8 *)&devInfoSystemId
       },
+#endif
 
     // Model Number String Declaration
     {
@@ -444,6 +448,7 @@ bStatus_t DevInfo_AddService( void )
                                       &devInfoCBs );
 }
 
+#ifdef FEATURE_DEVINFO
 /*********************************************************************
  * @fn      DevInfo_SetParameter
  *
@@ -475,6 +480,7 @@ bStatus_t DevInfo_SetParameter( uint8 param, uint8 len, void *value )
 
   return ( ret );
 }
+#endif
 
 /*********************************************************************
  * @fn      DevInfo_GetParameter
@@ -495,10 +501,12 @@ bStatus_t DevInfo_GetParameter( uint8 param, void *value )
 
   switch ( param )
   {
+#ifdef FEATURE_DEVINFO    
     case DEVINFO_SYSTEM_ID:
       memcpy(value, devInfoSystemId, sizeof(devInfoSystemId));
       break;
-
+#endif
+      
     case DEVINFO_MODEL_NUMBER:
       memcpy(value, devInfoModelNumber, sizeof(devInfoModelNumber));
       break;
@@ -574,6 +582,7 @@ static bStatus_t devInfo_ReadAttrCB( uint16 connHandle, gattAttribute_t *pAttr,
   // the error code Invalid Offset.
   switch (uuid)
   {
+#ifdef FEATURE_DEVINFO    
     case SYSTEM_ID_UUID:
       // verify offset
       if (offset > sizeof(devInfoSystemId))
@@ -589,7 +598,8 @@ static bStatus_t devInfo_ReadAttrCB( uint16 connHandle, gattAttribute_t *pAttr,
         memcpy(pValue, &devInfoSystemId[offset], *pLen);
       }
       break;
-
+#endif
+      
     case MODEL_NUMBER_UUID:
       // verify offset
       if (offset > (sizeof(devInfoModelNumber) - 1))
