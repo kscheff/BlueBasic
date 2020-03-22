@@ -134,7 +134,11 @@ static uint8  gapRole_IRK[KEYLEN];
 static uint8  gapRole_SRK[KEYLEN];
 static uint32 gapRole_signCounter;
 static uint8  gapRole_bdAddr[B_ADDR_LEN];
+#ifndef GAPROLE_DEFAULT_ADV_ENABLED
 static uint8  gapRole_AdvEnabled = TRUE;
+#else
+static uint8  gapRole_AdvEnabled = GAPROLE_DEFAULT_ADV_ENABLED;
+#endif
 static uint8  gapRole_AdvNonConnEnabled = FALSE;
 static uint16 gapRole_AdvertOffTime = DEFAULT_ADVERT_OFF_TIME;
 static uint8  gapRole_AdvertDataLen = 3;

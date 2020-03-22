@@ -503,8 +503,15 @@ uint16 BlueBasic_ProcessEvent( uint8 task_id, uint16 events )
 #endif
 
     // Start Interpreter
-    interpreter_setup();
-
+    if (!interpreter_setup()) 
+    {
+#if defined(GAPROLE_DEFAULT_ADV_ENABLED) && !(GAPROLE_DEFAULT_ADV_ENABLED)
+      uint8 advertEnabled = TRUE;
+      GAPRole_SetParameter(GAPROLE_ADVERT_ENABLED, sizeof(uint8),
+                           &advertEnabled);
+#endif
+    }
+    
     return ( events ^ BLUEBASIC_START_DEVICE_EVT );
   }
   

@@ -1869,12 +1869,14 @@ void interpreter_banner(void)
   printmsg(error_msgs[ERROR_OK]);
 }
 
+
+
 //
 // Setup the interpreter.
 //  Initialize everything we need to run the interpreter, and process any
 //  'autorun' which may have been set.
-//
-void interpreter_setup(void)
+//  return TRUE when autostart was scheduled, otherwise FALSE
+bool interpreter_setup(void)
 {
   OS_init();
   interpreter_init();
@@ -1885,8 +1887,10 @@ void interpreter_setup(void)
     if (program_end > program_start)
     {
       OS_timer_start(DELAY_TIMER, OS_AUTORUN_TIMEOUT, 0, *(LINENUM*)*program_start);
+      return TRUE;
     }
   }
+  return FALSE;
 }
 
 //
@@ -3389,8 +3393,9 @@ ble_advert:
         }
         if (ble_isadvert)
         {
+          uint8 advert = TRUE;
           GAPRole_SetParameter(_GAPROLE(BLE_ADVERT_DATA), ble_adptr - ble_adbuf, ble_adbuf);
-          GAPRole_SetParameter(_GAPROLE(BLE_ADVERT_ENABLED), 1, NULL);
+          GAPRole_SetParameter(_GAPROLE(BLE_ADVERT_ENABLED), sizeof(uint8), &advert);
         }
         else
         {

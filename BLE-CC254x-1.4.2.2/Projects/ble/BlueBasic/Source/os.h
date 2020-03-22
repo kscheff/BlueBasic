@@ -299,7 +299,9 @@ extern unsigned char blueBasic_TaskID;
 #define BLUEBASIC_EVENT_YIELD      0x4000
 #define BLUEBASIC_EVENT_CON        0x8000
 
+#ifndef OS_AUTORUN_TIMEOUT
 #define OS_AUTORUN_TIMEOUT        5000
+#endif
 
 #define OS_MAX_FILE               16
 
@@ -476,7 +478,7 @@ extern unsigned short timeSlice;
 
 #define LINKDB_STATUS_UPDATE_RSSI 16
 
-extern void interpreter_setup(void);
+extern bool interpreter_setup(void);
 extern void interpreter_banner(void);
 extern void interpreter_loop(void);
 extern unsigned char interpreter_run(unsigned short gofrom, unsigned char canreturn);
