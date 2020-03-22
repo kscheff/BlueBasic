@@ -3218,11 +3218,13 @@ ble_scan:
     {
       GOTO_QWHAT;
     }
-    GAPRole_SetParameter(TGAP_GEN_DISC_SCAN, val, NULL);
-    GAPRole_SetParameter(TGAP_LIM_DISC_SCAN, val, NULL);
+    uint16 param = val;
+    GAPRole_SetParameter(TGAP_GEN_DISC_SCAN, sizeof(param), &param);
+    GAPRole_SetParameter(TGAP_LIM_DISC_SCAN, sizeof(param), &param);
 #if ( HOST_CONFIG & OBSERVER_CFG )        
     blueBasic_discover.linenum = linenum;
-    GAPRole_SetParameter(TGAP_FILTER_ADV_REPORTS, !dups, NULL);
+    uint16 param = !dups;
+    GAPRole_SetParameter(TGAP_FILTER_ADV_REPORTS, sizeof(param), &param);
     GAPObserverRole_CancelDiscovery();
     mode = 3;
     GAPObserverRole_StartDiscovery(mode, !!active, 0);
