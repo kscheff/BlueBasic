@@ -22,6 +22,18 @@ extern "C"
  * MACROS
  */
 
+// check for BBX product ID  
+#ifdef USE_LED_BLE
+#define LED_BLE_INIT \
+  P1SEL = 0;\
+  P1DIR = 0x01;\
+  P1 = 0;
+#define LED_BLE_ON P1 |= 1
+#define LED_BLE_OFF P1 &= ~1
+#define LED_BLE_TOGGLE P1 ^= 1
+#define LED_BLE(a) P1 = ((P1 & ~1) | (a))
+#endif  
+  
 /*********************************************************************
  * FUNCTIONS
  */
@@ -35,6 +47,9 @@ extern void BlueBasic_Init( uint8 task_id );
  * Task Event Processor for the BLE Application
  */
 extern uint16 BlueBasic_ProcessEvent( uint8 task_id, uint16 events );
+
+extern uint8 toggleLed;
+extern uint8 blueBasicLoader_TaskID;
 
 /*********************************************************************
 *********************************************************************/

@@ -105,6 +105,7 @@
 #define INVALID_CONNHANDLE                    0xFFFF
 
 #define BLUEBASICLOADER_START_DEVICE_EVT        0x0001
+#define BLUEBASICLOADER_LED_EVT                 0x0002
 
 /*********************************************************************
  * TYPEDEFS
@@ -114,6 +115,9 @@
  * GLOBAL VARIABLES
  */
 uint8 blueBasicLoader_TaskID;   // Task ID for internal task/event processing
+#ifdef USE_LED_BLE
+uint8 toggleLed = 1;
+#endif
 
 /*********************************************************************
  * EXTERNAL VARIABLES
@@ -293,6 +297,10 @@ void BlueBasic_Init( uint8 task_id )
 
   // Setup a delayed profile startup
   osal_set_event( blueBasicLoader_TaskID, BLUEBASICLOADER_START_DEVICE_EVT );
+#ifdef USE_LED_BLE  
+  LED_BLE_INIT;
+  osal_start_reload_timer( blueBasicLoader_TaskID, BLUEBASICLOADER_LED_EVT, 100);
+#endif
 }
 
 /*********************************************************************
@@ -340,6 +348,21 @@ uint16 BlueBasic_ProcessEvent( uint8 task_id, uint16 events )
    
     return ( events ^ BLUEBASICLOADER_START_DEVICE_EVT );
   }
+  
+#ifdef USE_LED_BLE
+  if ( events & BLUEBASICLOADER_LED_EVT )
+  {
+    if (toggleLed)
+    {
+      LED_BLE_TOGGLE;
+    }
+    else
+    {
+      LED_BLE_OFF;
+    }
+    return ( events ^ BLUEBASICLOADER_LED_EVT );
+  }
+#endif  
 
   // Discard unknown events
   return 0;

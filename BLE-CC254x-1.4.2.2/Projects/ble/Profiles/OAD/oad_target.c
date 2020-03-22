@@ -66,6 +66,9 @@
 #include "oad.h"
 #include "oad_target.h"
 #include "OSAL.h"
+#ifdef USE_LED_BLE   
+#include "BlueBasicLoader.h"   
+#endif
 
 /*********************************************************************
  * CONSTANTS
@@ -502,6 +505,14 @@ static bStatus_t oadImgBlockWrite( uint16 connHandle, uint8 *pValue )
     }
 
     HalFlashWrite(addr, pValue+2, (OAD_BLOCK_SIZE / HAL_FLASH_WORD_SIZE));
+#ifdef USE_LED_BLE    
+      toggleLed = 0;
+      if (!(blkNum % 16))
+      {
+        LED_BLE_ON;
+        osal_start_timerEx(blueBasicLoader_TaskID, 0x0002, 20);
+      }
+#endif    
   }
 
   if (oadBlkNum == oadBlkTot)  // If the OAD Image is complete.
