@@ -75,9 +75,11 @@ extern "C"
 #else
 #define OAD_IMG_B_PAGE        63
 #endif
+#ifndef FLASHSTORE_RES_AREA
 // the last 4 pages are reserved for the BASIC program
-//#define OAD_IMG_B_AREA       (124 - OAD_IMG_A_AREA - 4)
-#define OAD_IMG_B_AREA       (124 - OAD_IMG_A_AREA - 0)  // don't reserve BASIC programm  
+#define FLASHSTORE_RES_AREA 4
+#endif
+#define OAD_IMG_B_AREA       (124 - OAD_IMG_A_AREA - FLASHSTORE_RES_AREA)
 #endif
 
 #if defined HAL_IMAGE_B

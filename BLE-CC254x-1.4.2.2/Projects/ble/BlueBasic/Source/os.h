@@ -347,11 +347,12 @@ extern os_timer_t blueBasic_timers[OS_MAX_TIMER];
 extern unsigned short bluebasic_yield_linenum;
 extern unsigned char bluebasic_block_execution;
 
-//#define FLASHSTORE_CPU_BASEADDR ((unsigned char*)0xC000)
-//#define FLASHSTORE_DMA_BASEADDR ((unsigned long)0x24000)
-#define FLASHSTORE_CPU_BASEADDR ((unsigned char*)0xB000)
-#define FLASHSTORE_DMA_BASEADDR ((unsigned long)0x23000)
-
+//#define FLASHSTORE_DMA_BASEADDR (__segment_begin("FLASHSTORE"))
+#ifndef FLASHSTORE_1STPAGE
+#define FLASHSTORE_1STPAGE 72
+#endif
+#define FLASHSTORE_DMA_BASEADDR ((unsigned long)FLASHSTORE_1STPAGE * FLASHSTORE_PAGESIZE)
+#define FLASHSTORE_CPU_BASEADDR ((unsigned char*)(FLASHSTORE_DMA_BASEADDR & 0x7FFF | 0x8000))
 
 #define OS_memset(A, B, C)     osal_memset(A, B, C)
 #define OS_memcpy(A, B, C)     osal_memcpy(A, B, C)
@@ -491,7 +492,9 @@ extern void interpreter_timer_event(unsigned short id);
 #define PIN_MAJOR(P)  ((P) >> 6)
 #define PIN_MINOR(P)  (((P) >> 3) & 7)
 
-#define FLASHSTORE_NRPAGES    10
+#ifndef FLASHSTORE_NRPAGES
+#define FLASHSTORE_NRPAGES 8  // defaults to 16K BASIC program
+#endif
 #define FLASHSTORE_PAGESIZE   2048
 #define FLASHSTORE_LEN        (FLASHSTORE_NRPAGES * FLASHSTORE_PAGESIZE)
 

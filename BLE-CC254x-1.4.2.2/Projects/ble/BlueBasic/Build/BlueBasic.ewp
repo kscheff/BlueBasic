@@ -11956,6 +11956,9 @@
                     <state>DEVINFO_PID=0x2000</state>
                     <state>GAPROLE_DEFAULT_ADV_ENABLED=FALSE</state>
                     <state>MPPT_AS_VOT=1</state>
+                    <state>FLASHSTORE_RES_AREA=0</state>
+                    <state>FLASHSTORE_1STPAGE=70</state>
+                    <state>FLASHSTORE_NRPAGES=10</state>
                 </option>
                 <option>
                     <name>CCPreprocFile</name>
