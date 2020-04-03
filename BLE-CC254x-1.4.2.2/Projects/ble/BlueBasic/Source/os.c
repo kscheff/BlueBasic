@@ -443,10 +443,10 @@ unsigned char OS_serial_open(unsigned char port, unsigned long baud, unsigned ch
     return 1;
   }
 // saves some bytes due to simplier compare uint8
-#define BAUD_RIGHT_SHIFT 9
-  switch ((uint8)(baud>>BAUD_RIGHT_SHIFT))
+#define SHIFT9(BR) ((BR)>>9)  
+  switch ((uint8)SHIFT9(baud))
   {
-    case 1000>>BAUD_RIGHT_SHIFT:
+    case SHIFT9(1000):
 #if 0 //defined MPPT_AS_VOT && MPPT_AS_VOT
       if (flow == 'V')
       {
@@ -458,24 +458,25 @@ unsigned char OS_serial_open(unsigned char port, unsigned long baud, unsigned ch
       cbaud = HAL_UART_BR_1000;
 #endif
       break;
-    case 9600>>BAUD_RIGHT_SHIFT:
+    case SHIFT9(9600):
       cbaud = HAL_UART_BR_9600;
       break;
-    case 19200>>BAUD_RIGHT_SHIFT:
+    case SHIFT9(19200):
       cbaud = HAL_UART_BR_19200;
       break;
-    case 38400>>BAUD_RIGHT_SHIFT:
+    case SHIFT9(38400):
       cbaud = HAL_UART_BR_38400;
       break;
-    case 57600>>BAUD_RIGHT_SHIFT:
+    case SHIFT9(57600):
       cbaud = HAL_UART_BR_57600;
       break;
-    case 115200>>BAUD_RIGHT_SHIFT:
+    case SHIFT9(115200):
       cbaud = HAL_UART_BR_115200;
       break;
     default:
       return 2;
-  } 
+  }
+#undef SHIFT9
   // Only support port 0-1, no-parity, 8-bits, 1 stop bit
 #ifndef PROCESS_SERIAL_DATA 
   if (port > (OS_MAX_SERIAL - 1) || parity != 'N' || bits != 8 || stop != 1 || (flow != 'H' && flow != 'N'))
