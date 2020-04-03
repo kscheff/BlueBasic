@@ -6358,7 +6358,8 @@ void ble_connection_status(unsigned short connHandle, unsigned char changeType, 
       if (vframe->connect)
       {
 #if !defined(BLUEBATTERY) && !BLUEBATTERY
-        if (VARIABLE_IS_EXTENDED('H') || VARIABLE_IS_EXTENDED('S') || VARIABLE_IS_EXTENDED('V'))
+       unsigned char vname;
+       if (VARIABLE_IS_EXTENDED('H') || VARIABLE_IS_EXTENDED('S') || VARIABLE_IS_EXTENDED('V'))
         {
           continue; // Silently fail
         }
