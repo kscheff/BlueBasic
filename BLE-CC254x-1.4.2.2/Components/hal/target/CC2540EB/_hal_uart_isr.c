@@ -210,6 +210,10 @@
  * TYPEDEFS
  */
 
+// to avoid conflict with DMA driver
+#define rxIdx_t _isr_rxIdx_t  
+#define txIdx_t _isr_txIdx_t    
+    
 #if HAL_UART_ISR_RX_MAX <= 256
 typedef uint8 rxIdx_t;
 #else
