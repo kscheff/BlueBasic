@@ -200,7 +200,7 @@
 #define HAL_UART_ISR_TX_MAX        HAL_UART_ISR_RX_MAX
 #endif
 #if !defined HAL_UART_ISR_HIGH
-#define HAL_UART_ISR_HIGH         (HAL_UART_ISR_RX_MAX / 2 - 16)
+#define HAL_UART_ISR_HIGH         (HAL_UART_ISR_RX_MAX/2 * 3/4)
 #endif
 #if !defined HAL_UART_ISR_IDLE
 #define HAL_UART_ISR_IDLE         (0 * HAL_UART_MSECS_TO_TICKS)
