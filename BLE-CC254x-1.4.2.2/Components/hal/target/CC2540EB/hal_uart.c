@@ -118,6 +118,22 @@ void HalUARTInit(void)
 #endif
 }
 
+void HalUARTInitPort(uint8 port)
+{
+#if (HAL_UART_DMA == 1)
+  if (port == HAL_UART_PORT_0)  HalUARTInitDMA();
+#endif
+#if (HAL_UART_DMA == 2)
+  if (port == HAL_UART_PORT_1)  HalUARTInitDMA();
+#endif
+#if (HAL_UART_ISR == 1)
+  if (port == HAL_UART_PORT_0)  HalUARTInitISR();
+#endif
+#if (HAL_UART_ISR == 2)
+  if (port == HAL_UART_PORT_1)  HalUARTInitISR();
+#endif  
+}
+
 /******************************************************************************
  * @fn      HalUARTOpen
  *

@@ -517,10 +517,14 @@ unsigned char OS_serial_open(unsigned char port, unsigned long baud, unsigned ch
   prevent_sleep_flags |= 0x01;
 #endif
 #endif
-  if (uart_stop_polling)
-  {
-    HalUARTInit();
-  }
+  
+//  if (uart_stop_polling)
+//  {
+//    HalUARTInit();
+//  }
+  
+  HalUARTInitPort(port);
+  
   if (port == 0)
   {
     // P0(5) RX    

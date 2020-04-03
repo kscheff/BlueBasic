@@ -177,6 +177,7 @@ typedef union
  *  Initialize UART at the startup
  */
 extern void HalUARTInit ( void );
+extern void HalUARTInitPort(uint8 port); // initialize only one port
 
 /*
  * Open a port based on the configuration
