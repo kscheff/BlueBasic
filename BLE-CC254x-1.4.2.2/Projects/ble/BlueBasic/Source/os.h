@@ -493,6 +493,12 @@ extern void interpreter_loop(void);
 extern unsigned char interpreter_run(unsigned short gofrom, unsigned char canreturn);
 extern void interpreter_timer_event(unsigned short id);
 
+#ifdef FEATURE_SAMPLING
+extern void interpreter_sampling(void);
+extern unsigned char samplingTimer;
+extern unsigned char samplingPortMap;
+#endif
+
 #define PIN_MAKE(A,I) (((A) << 6) | ((I) << 3))
 #define PIN_MAJOR(P)  ((P) >> 6)
 #define PIN_MINOR(P)  (((P) >> 3) & 7)

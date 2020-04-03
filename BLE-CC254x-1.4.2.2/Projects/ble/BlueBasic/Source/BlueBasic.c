@@ -515,6 +515,15 @@ uint16 BlueBasic_ProcessEvent( uint8 task_id, uint16 events )
     return ( events ^ BLUEBASIC_START_DEVICE_EVT );
   }
   
+#ifdef FEATURE_SAMPLING
+  if ( samplingPortMap &&
+      events & BLUEBASIC_EVENT_TIMER << samplingTimer )
+  {
+    interpreter_sampling();
+    return  events ^ (BLUEBASIC_EVENT_TIMER << samplingTimer);
+  }
+#endif      
+  
 #if ENABLE_BLE_CONSOLE
   if ( events & BLUEBASIC_CONNECTION_EVENT )
   {

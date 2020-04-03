@@ -708,6 +708,20 @@ unsigned short BlueBasic_rawBattery;
 unsigned char BlueBasic_powerMode;
 #endif
 
+#ifdef FEATURE_SAMPLING
+// defines which ports to sample
+unsigned char samplingPortMap = 0; // port 0 map of pins to sample
+
+static struct {
+  int16 adc[8];
+  VAR_TYPE var;
+} sampling;
+
+unsigned char samplingTimer;    // associated timer id
+static unsigned short samplingDelay;    // delay after strobe in µs
+static unsigned short samplingStrobePin;
+static unsigned short samplingStrobePolarity;
+#endif
 
 //
 // Skip whitespace
@@ -1194,6 +1208,10 @@ static void clean_memory(void)
   {
     OS_timer_stop(i);
   }
+  
+#ifdef FEATURE_SAMPLING
+  samplingPortMap = 0;
+#endif
   
   // Stop pending yield event
   OS_yield(0);
@@ -2727,15 +2745,26 @@ cmd_timer:
         txtpos++;
         repeat = 1;
       }
-      if (*txtpos != KW_GOSUB)
+      if (*txtpos == KW_GOSUB)
       {
-        GOTO_QWHAT;
+        txtpos++;
+        subline = (LINENUM)expression(EXPR_NORMAL);
+        if (error_num)
+        {
+          GOTO_QWHAT;
+        }
       }
-      txtpos++;
-      subline = (LINENUM)expression(EXPR_NORMAL);
-      if (error_num)
+      else
       {
-        GOTO_QWHAT;
+#ifdef FEATURE_SAMPLING 
+        // allow TIMER without GOSUB
+        if (*txtpos == NL)
+        {
+          subline = 0;
+        }
+        else
+#endif
+          GOTO_QWHAT;
       }
       if (!OS_timer_start(timer, timeout, repeat, subline))
       {
@@ -2829,6 +2858,9 @@ cmd_pinmode:
             GOTO_QWHAT;
           }
           *cmd++ = WIRE_INPUT_ADC;
+//--- aquistion mode -----         
+          
+//--- end aquisition mode ----
         }
         else
         {
@@ -4733,47 +4765,93 @@ i2c_end:
 //  Set the number of bits returned from an ADC operation.
 // ANALOG REFERENCE, INTERNAL|EXTERNAL
 //
+// ANALOG TIMER timer id, port map ,strobe port, strobe polarity LOW|HIGH, delay in µs
+//  Background adc sampling via timer with strobe and delay
+//  timer id: associated timer
+//  port map: P0 bit map of pins to sample
+//    special mode when bit 6,7 is set: calculate true rms of p0(7)-p0(6)
+//  strobe port: use Px(y) as strobe signal for sampling
+//  strobe polarity: LOW, HIGH, 0, or 1
+//  strobe delay: minimum delay between strobe signal and adc sampling (not precise)
 cmd_analog:
-
-  switch (expression(EXPR_COMMA))
+  switch (*txtpos)
   {
-    case CO_REFERENCE:
-      switch (expression(EXPR_NORMAL))
+#ifdef FEATURE_SAMPLING
+    case TI_STOP:
+      txtpos++;
+      samplingPortMap = 0;
+      break;
+    case KW_TIMER:
       {
-        case CO_INTERNAL:
-          analogReference = 0x00;
+        txtpos++;
+        samplingTimer = (unsigned char) expression(EXPR_COMMA);
+        unsigned char map = (unsigned char) expression(EXPR_COMMA);
+        samplingStrobePin = 1 << PIN_MINOR(pin_parse());
+        ignore_blanks();
+        if (*txtpos != ',' | error_num != ERROR_OK)
+          GOTO_QWHAT;
+        txtpos++;
+        switch (expression(EXPR_COMMA))
+        {
+        case 0:
+        case CO_LOW:
+          samplingStrobePolarity = 0;
           break;
-        case CO_EXTERNAL:
-          analogReference = 0x40;
-          break;
-        case CO_AVDD:
-          analogReference = 0x80;
+        case 1:
+        case CO_HIGH:
+          samplingStrobePolarity = 1;
           break;
         default:
           GOTO_QWHAT;
-      }
-      break;
-    case CO_RESOLUTION:
-      switch (expression(EXPR_NORMAL))
-      {
-        case 8:
-          analogResolution = 0x00;
-          break;
-        case 10:
-          analogResolution = 0x10;
-          break;
-        case 12:
-          analogResolution = 0x20;
-          break;
-        case 14:
-          analogResolution = 0x30;
-          break;
-        default:
+        }
+        samplingDelay = (unsigned short) expression(EXPR_NORMAL);
+        if (error_num)
           GOTO_QWHAT;
+        samplingPortMap = map;
       }
       break;
-    default:
-      GOTO_QWHAT;
+#endif     
+  default:    
+    switch (expression(EXPR_COMMA))
+    {
+      case CO_REFERENCE:
+        switch (expression(EXPR_NORMAL))
+        {
+          case CO_INTERNAL:
+            analogReference = 0x00;
+            break;
+          case CO_EXTERNAL:
+            analogReference = 0x40;
+            break;
+          case CO_AVDD:
+            analogReference = 0x80;
+            break;
+          default:
+            GOTO_QWHAT;
+        }
+        break;
+      case CO_RESOLUTION:
+        switch (expression(EXPR_NORMAL))
+        {
+          case 8:
+            analogResolution = 0x00;
+            break;
+          case 10:
+            analogResolution = 0x10;
+            break;
+          case 12:
+            analogResolution = 0x20;
+            break;
+          case 14:
+            analogResolution = 0x30;
+            break;
+          default:
+            GOTO_QWHAT;
+        }
+        break; 
+      default:
+        GOTO_QWHAT;
+    }
   }
   goto run_next_statement;
 
@@ -4995,6 +5073,24 @@ badpin:
   return 0;
 }
 
+static int16 adc_read(unsigned char minor)
+{
+  int16 val;
+  halIntState_t intState;
+  HAL_ENTER_CRITICAL_SECTION(intState);
+  ADCCON3 = minor | analogResolution | analogReference;
+#ifdef SIMULATE_PINS
+  ADCCON1 = 0x80;
+#endif
+  while ((ADCCON1 & 0x80) == 0)
+    ;
+  val = ADCL;
+  val |= ADCH << 8;
+  HAL_EXIT_CRITICAL_SECTION(intState);        
+  return val;  
+}
+
+
 //
 // Read pin
 //
@@ -5005,19 +5101,31 @@ static VAR_TYPE pin_read(unsigned char major, unsigned char minor)
     case 0:
       if (APCFG & (1 << minor))
       {
-        VAR_TYPE val;
-        halIntState_t intState;
-        HAL_ENTER_CRITICAL_SECTION(intState);
-        ADCCON3 = minor | analogResolution | analogReference;
-#ifdef SIMULATE_PINS
-        ADCCON1 = 0x80;
-#endif
-        while ((ADCCON1 & 0x80) == 0)
-          ;
-        val = ADCL;
-        val |= ADCH << 8;
-        HAL_EXIT_CRITICAL_SECTION(intState);        
-        return val >> (8 - (analogResolution >> 3));
+#ifdef FEATURE_SAMPLING  
+        if (samplingPortMap & (1 << minor))
+        {
+          if (samplingPortMap & 0xc0)
+          {
+            int32 val;
+            val = sampling.adc[0];   
+            val += sampling.adc[1];  
+            val += sampling.adc[2];  
+            val += sampling.adc[3];
+            val += sampling.adc[4];
+            val += sampling.adc[5];
+            val += sampling.adc[6];
+            val += sampling.adc[7];
+            val += 15;
+            val /= 4;
+            // simple low pass to gain resolution
+  //          sampling.var = (sampling.var * 7 + val) / 8; 
+            sampling.var = val;
+            return sampling.var;
+          }
+          return sampling.adc[minor];
+        }
+#endif  
+        return adc_read(minor) >> (8 - (analogResolution >> 3));
       }
       return (P0 >> minor) & 1;
     case 1:
@@ -5026,6 +5134,92 @@ static VAR_TYPE pin_read(unsigned char major, unsigned char minor)
       return (P2 >> minor) & 1;
   }
 }
+
+
+#ifdef FEATURE_SAMPLING
+void interpreter_sampling(void)
+{
+  static uint8 samplingCnt;
+  switch (PIN_MAJOR(samplingStrobePin))
+  {
+  case 0:
+    if (samplingStrobePolarity)
+      P0 |= samplingStrobePin;
+    else
+      P0 &= ~samplingStrobePin;
+    break;
+  case 1:
+    if (samplingStrobePolarity)
+      P1 |= samplingStrobePin;
+    else
+      P1 &= ~samplingStrobePin;
+    break;
+  case 2:
+    if (samplingStrobePolarity)
+      P2 |= samplingStrobePin;
+    else
+      P2 &= ~samplingStrobePin;
+    break;
+  }
+  OS_delaymicroseconds(samplingDelay);
+  // check if bit 6&7 are set, make P0(6)-P0(7) differential measurement
+  // for BlueBattery current measurement
+  // no other ports can be used in this mode
+  if (samplingPortMap & 0xc0)
+  {
+    int16 a;
+    switch (samplingPortMap)
+    {
+    case 0xc0:
+      a = adc_read(11); // read channel 11 (AIN6-AIN7)
+      break;
+    case 0x40:
+      a = adc_read(6);
+      break;
+    default:  // 0x80
+      a = adc_read(7);
+    }
+    sampling.adc[7 & samplingCnt++] = a;
+  }
+  else 
+  {  
+    unsigned char map = samplingPortMap;
+    unsigned char pin = 7;
+    while (map)
+    {
+      if (map & 0x80)
+      {
+        int16 a = adc_read(pin);
+        sampling.adc[pin] = ((int32)sampling.adc[pin] * 7 + a) >> 3;
+      }
+      map <<= 1;
+      pin--;
+    }
+   }
+  switch (PIN_MAJOR(samplingStrobePin))
+  {
+  case 0:
+    if (samplingStrobePolarity)
+      P0 &= ~samplingStrobePin;
+    else
+      P0 |= samplingStrobePin;
+    break;
+  case 1:
+    if (samplingStrobePolarity)
+      P1 &= ~samplingStrobePin;
+    else
+      P1 |= samplingStrobePin;
+    break;
+  default:  // 2
+    if (samplingStrobePolarity)
+      P2 &= ~samplingStrobePin;
+    else
+      P2 |= samplingStrobePin;
+    break;
+  }  
+}
+
+#endif  // FEATURE_SAMPLING
 
 #if !defined(ENABLE_WIRE) || ENABLE_WIRE
 //
@@ -5236,9 +5430,10 @@ static void pin_wire(unsigned char* ptr, unsigned char* end)
 {
   // We now have an fast expression to manipulate the pins. Do it.
   // We inline all the pin operations to keep the time down.
-
+#if !defined(ENABLE_WIRE) || ENABLE_WIRE
   unsigned short wtimeout = 256;
   unsigned short ptimeout = 256;
+#endif
   unsigned char major = 0;
   unsigned char dbit = 1;
   unsigned char len;
@@ -5379,19 +5574,6 @@ static void pin_wire(unsigned char* ptr, unsigned char* end)
             APCFG |= dbit;
           }
           break;
-        case WIRE_CASE(WIRE_TIMEOUT):
-#define WIRE_USEC_TO_PULSE_COUNT(U) ((((U) - 24) * 82) >> 8) // Calibrated Aug 17, 2014
-#define WIRE_USEC_TO_WAIT_COUNT(U)  ((((U) - 21) * 179) >> 8) // Calibrated Aug 17, 2014
-#define WIRE_COUNT_TO_USEC(C)       ((((C) * 393) >> 8) + 1) // Calbirated Aug 17, 2014
-          wtimeout = *(unsigned short*)ptr;
-          ptimeout = WIRE_USEC_TO_PULSE_COUNT(wtimeout);
-          wtimeout = WIRE_USEC_TO_WAIT_COUNT(wtimeout);
-          ptr += sizeof(unsigned short);
-          break;
-        case WIRE_CASE(WIRE_WAIT_TIME):
-          OS_delaymicroseconds(*(short*)ptr - 12); // WIRE_WAIT_TIME execution takes 12us minimum - Calibrated Aug 16, 2014
-          ptr += sizeof(unsigned short);
-          break;
         case WIRE_CASE(WIRE_HIGH):
         wire_high:
           switch (major)
@@ -5421,6 +5603,20 @@ static void pin_wire(unsigned char* ptr, unsigned char* end)
               P2 &= ~dbit;
               break;
           }
+          break;
+#if !defined(ENABLE_WIRE) || ENABLE_WIRE        
+        case WIRE_CASE(WIRE_TIMEOUT):
+#define WIRE_USEC_TO_PULSE_COUNT(U) ((((U) - 24) * 82) >> 8) // Calibrated Aug 17, 2014
+#define WIRE_USEC_TO_WAIT_COUNT(U)  ((((U) - 21) * 179) >> 8) // Calibrated Aug 17, 2014
+#define WIRE_COUNT_TO_USEC(C)       ((((C) * 393) >> 8) + 1) // Calbirated Aug 17, 2014
+          wtimeout = *(unsigned short*)ptr;
+          ptimeout = WIRE_USEC_TO_PULSE_COUNT(wtimeout);
+          wtimeout = WIRE_USEC_TO_WAIT_COUNT(wtimeout);
+          ptr += sizeof(unsigned short);
+          break;
+        case WIRE_CASE(WIRE_WAIT_TIME):
+          OS_delaymicroseconds(*(short*)ptr - 12); // WIRE_WAIT_TIME execution takes 12us minimum - Calibrated Aug 16, 2014
+          ptr += sizeof(unsigned short);
           break;
         case WIRE_CASE(WIRE_INPUT_PULSE):
         {
@@ -5539,6 +5735,7 @@ static void pin_wire(unsigned char* ptr, unsigned char* end)
           }
           break;
         }
+#endif  // ENABLE_WIRE
         case WIRE_CASE(WIRE_INPUT_READ):
         wire_read:
         {
@@ -6152,7 +6349,6 @@ void ble_connection_status(unsigned short connHandle, unsigned char changeType, 
   service_frame* vframe;
   unsigned char j;
   unsigned char f;
-  unsigned char vname;
 
   for (ptr = (unsigned char*)program_end; ptr < heap; ptr += ((frame_header*)ptr)->frame_size)
   {
