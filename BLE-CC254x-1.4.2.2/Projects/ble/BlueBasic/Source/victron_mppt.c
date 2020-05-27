@@ -80,11 +80,12 @@ typedef struct
   uint8  size;
   uint16 batt_volt;   // 10mV per bit
   uint16 sol_volt;    // 10mV per bit
-  int16 sol_current; // 0.1A per bit
+  int16 main_current;  // 10mA per bit
+  int16 load_current; // 10mA per bit
   uint8  status;
 } mppt_t;
 
-static mppt_t mppt = { sizeof(mppt) - sizeof(mppt.size),0,0,0,0 };
+static mppt_t mppt = { sizeof(mppt) - sizeof(mppt.size),0,0,0,0,0 };
 
 #if MPPT_MODE_HEX
 typedef struct
@@ -249,10 +250,11 @@ static void send_as_vot(uint8 port)
   sol_frame->u_batt_msb = HI_UINT16(mppt.batt_volt);
   sol_frame->u_panel_lsb = LO_UINT16(mppt.sol_volt);
   sol_frame->u_panel_msb = HI_UINT16(mppt.sol_volt);
-  if (mppt.sol_current >= 0)
+  int16 sol_current = mppt.main_current + mppt.load_current;
+  if (sol_current >= 0)
   {
-    sol_frame->i_batt_lsb = LO_UINT16(mppt.sol_current);
-    sol_frame->i_batt_msb = HI_UINT16(mppt.sol_current);
+    sol_frame->i_batt_lsb = LO_UINT16(sol_current);
+    sol_frame->i_batt_msb = HI_UINT16(sol_current);
   }
   else
   {
@@ -411,10 +413,12 @@ static void receive_mppt(uint8 port)
 #if MPPT_MODE_TEXT
 typedef enum
 {
+  LABEL_NONE,
   LABEL_V,
-  LABEL_I,
+  LABEL_I, 
   LABEL_VPV,
-  LABEL_CS
+  LABEL_CS,
+  LABEL_IL
 } label_t;
 
 static label_t label;
@@ -459,14 +463,18 @@ static void receive_text(uint8 port)
         state = MPPT_IDLE;
       break;
     case MPPT_LABEL_0:
+      state = MPPT_LABEL_1;
       switch (c)
       {
       case 'V':
+        label = LABEL_V;
+        break;
       case 'C':
-        state = MPPT_LABEL_1;
+        label = LABEL_CS;
+//        state = MPPT_LABEL_1;
         break;
       case 'I':
-        state = MPPT_TAB;
+//        state = MPPT_LABEL_1;
         label = LABEL_I;
         mppt_sign = 1;
         break;
@@ -478,13 +486,23 @@ static void receive_text(uint8 port)
       switch (c)
       {
       case 0x09:
-        label = LABEL_V;
-        state = MPPT_DATA_0;
-        mppt_data = 0;
+        if ((label == LABEL_V) || (label == LABEL_I))
+        {
+          state = MPPT_DATA_0;
+          mppt_data = 0;
+        }
+        else
+        {
+          state = MPPT_IDLE;
+        }
+        break;
+      case 'L':
+        state = MPPT_TAB;
+        label = LABEL_IL;
         break;
       case 'S':
         state = MPPT_TAB;
-        label = LABEL_CS;
+//        label = LABEL_CS;
         break;
       case 'P':  // VPV?
       case 'h':  // checksum?
@@ -591,8 +609,10 @@ static void receive_text(uint8 port)
           mppt.batt_volt = mppt_data / 10;
           break;
         case LABEL_I:
-          // clip negative values to 0 to avoid overflow
-          mppt.sol_current = (mppt_sign == 1) ? mppt_data / 100 : 0;
+          mppt.main_current = mppt_sign * mppt_data / 10;
+          break;
+        case LABEL_IL:
+          mppt.load_current = mppt_sign * mppt_data / 10;
           break;
         case LABEL_VPV:
           mppt.sol_volt = mppt_data / 10;
