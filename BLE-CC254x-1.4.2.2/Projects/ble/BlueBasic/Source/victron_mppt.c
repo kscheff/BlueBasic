@@ -250,7 +250,7 @@ static void send_as_vot(uint8 port)
   sol_frame->u_batt_msb = HI_UINT16(mppt.batt_volt);
   sol_frame->u_panel_lsb = LO_UINT16(mppt.sol_volt);
   sol_frame->u_panel_msb = HI_UINT16(mppt.sol_volt);
-  int16 sol_current = mppt.main_current + mppt.load_current;
+  int16 sol_current = (mppt.main_current + mppt.load_current + 5) / 10;
   if (sol_current >= 0)
   {
     sol_frame->i_batt_lsb = LO_UINT16(sol_current);
