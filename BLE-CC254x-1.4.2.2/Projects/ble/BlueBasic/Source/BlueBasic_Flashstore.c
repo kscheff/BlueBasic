@@ -483,18 +483,16 @@ void flashstore_compact(unsigned char len, unsigned char* tempmemstart, unsigned
     // by moving heap to to beginning
     // Attention: this assumes that tempmemstart is the current heap end!
     heap_len = tempmemstart - (unsigned char*)lineindexend;
-    if (heap_len)
-    {
-      OS_memcpy((void*)lineindexstart, (void*)lineindexend, heap_len);
-      tempmemstart = (unsigned char*) lineindexstart + heap_len;
-      corrupted = 1; // since we use the index area it is definitly corrupted
-    }
+    tempmemstart = OS_memcpy((void*)lineindexstart, (void*)lineindexend, heap_len);
+    corrupted = 1; // since we use the index area it is definitly corrupted
   }
   
   if (age != 0xFFFFFFFF)
   {
     // Found enough space for the line, compact the page
-    
+    // block all background execution
+    halIntState_t intState;
+    HAL_ENTER_CRITICAL_SECTION(intState);
     // Copy required page data into RAM
     unsigned char* ram = tempmemstart;
     unsigned char* flash = (unsigned char*)FLASHSTORE_PAGEBASE(selected);
@@ -520,8 +518,7 @@ void flashstore_compact(unsigned char len, unsigned char* tempmemstart, unsigned
         }
         if (mem_length + len <= available)
         {
-          OS_memcpy(ram, ptr, len);
-          ram += len;
+          ram = OS_memcpy(ram, ptr, len);
           mem_length += len;
         }
         else
@@ -533,10 +530,8 @@ void flashstore_compact(unsigned char len, unsigned char* tempmemstart, unsigned
       }
       ptr += len;
     }
-//    osal_run_system();        
     // Erase the page
     OS_flashstore_erase(FLASHSTORE_FPAGE(flash));
-//    osal_run_system();
     lastage++;
     OS_flashstore_write(FLASHSTORE_FADDR(flash), (unsigned char*)&lastage, FLASHSTORE_WORDS(sizeof(lastage)));
     orderedpages[selected].waste = 0;
@@ -546,7 +541,6 @@ void flashstore_compact(unsigned char len, unsigned char* tempmemstart, unsigned
     // Copy the old lines back in.
     flash += sizeof(flashpage_age);
     OS_flashstore_write(FLASHSTORE_FADDR(flash), tempmemstart, FLASHSTORE_WORDS(mem_length));
-//    osal_run_system();
     if (corrupted)
     {
       if (heap_len)
@@ -557,6 +551,7 @@ void flashstore_compact(unsigned char len, unsigned char* tempmemstart, unsigned
       // We corrupted memory, so we need to reinitialize
       flashstore_init((unsigned char**)lineindexstart);
     }
+    HAL_EXIT_CRITICAL_SECTION(intState); 
   }
 }
 
