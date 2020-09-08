@@ -6762,7 +6762,7 @@
                 </option>
                 <option>
                     <name>ChipconVerifyDownload</name>
-                    <state>1</state>
+                    <state>0</state>
                 </option>
                 <option>
                     <name>ChipconVerifyRadio</name>
@@ -6820,7 +6820,7 @@
                 </option>
                 <option>
                     <name>ChipconRetainPages</name>
-                    <state>0-7,86-124</state>
+                    <state>0-7,82-124,72-79</state>
                 </option>
                 <option>
                     <name>ChipconFlashPages</name>
