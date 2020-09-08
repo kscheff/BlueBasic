@@ -11958,7 +11958,7 @@
                     <state>ENABLE_WIRE=0</state>
                     <state>XOSC32K_INSTALLED=TRUE</state>
                     <state>PLUS_BROADCASTER</state>
-                    <state>OS_AUTORUN_TIMEOUT=200</state>
+                    <state>OS_AUTORUN_TIMEOUT=5000</state>
                     <state>DEVINFO_PID=0x2000</state>
                     <state>GAPROLE_DEFAULT_ADV_ENABLED=FALSE</state>
                     <state>FLASHSTORE_RES_AREA=0</state>
@@ -13137,7 +13137,7 @@
                     <state>ENABLE_WIRE=0</state>
                     <state>XOSC32K_INSTALLED=TRUE</state>
                     <state>PLUS_BROADCASTER</state>
-                    <state>OS_AUTORUN_TIMEOUT=200</state>
+                    <state>OS_AUTORUN_TIMEOUT=5000</state>
                     <state>DEVINFO_PID=0x2000</state>
                     <state>GAPROLE_DEFAULT_ADV_ENABLED=FALSE</state>
                     <state>FLASHSTORE_RES_AREA=16</state>
