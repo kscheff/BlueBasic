@@ -1863,6 +1863,9 @@ expr_oom:
 
 void interpreter_init()
 {
+#ifdef DEBUG_P20_SET
+  P2DIR |= 1;
+#endif
 #ifndef TARGET_CC254X
   assert(LAST_KEYWORD < 256);
 #else
@@ -3627,11 +3630,13 @@ cmd_open:
         file->action = 'W';
         if (bSnv)
           break;
+//        DEBUG_P20_CLR;
         for (unsigned long special = FS_MAKE_FILE_SPECIAL(file->filename, file->record); flashstore_deletespecial(special); special++)
         {
           // keep OSAL spinning
           if (special % 16 == 0) osal_run_system();
         }
+//        DEBUG_P20_SET;
         break;
       }
       case FS_APPEND: // Append
@@ -4200,6 +4205,7 @@ cmd_write:
           SET_ERR_LINE;
           goto qhoom;
         }
+//        DEBUG_P20_SET;
         heap = item;
         goto run_next_statement;
 qhoom:
@@ -4278,6 +4284,7 @@ qhoom:
           SET_ERR_LINE;
           goto qhoom2;
         }
+//        DEBUG_P20_SET;
         heap = item;
         goto run_next_statement;
 qhoom2:
