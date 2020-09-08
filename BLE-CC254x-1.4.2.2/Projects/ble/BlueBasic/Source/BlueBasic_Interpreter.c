@@ -6220,6 +6220,7 @@ static unsigned char ble_read_callback(unsigned short handle, gattAttribute_t* a
   // run interpreter only if its the first paket
   if (vref->read && offset == 0)
   {
+    SEMAPHORE_READ_WAIT();
     interpreter_run(vref->read, INTERPRETER_CAN_RETURN);
   }
 
@@ -6235,9 +6236,9 @@ static unsigned char ble_read_callback(unsigned short handle, gattAttribute_t* a
     //bluebasic_block_execution = (moffset == var_len) ? 0 : 1;
     if (moffset == var_len) {
       SEMAPHORE_READ_SIGNAL();
-    } else {
-      SEMAPHORE_READ_WAIT();
-    }
+    } //else {
+      //SEMAPHORE_READ_WAIT();
+    //}
   }
   else
   {
