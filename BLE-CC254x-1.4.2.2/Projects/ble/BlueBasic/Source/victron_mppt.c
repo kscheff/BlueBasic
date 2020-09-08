@@ -287,7 +287,6 @@ static void send_as_vot(uint8 port)
     break;
   }
   serial[port].sbuf_read_pos = 0;
-  mppt.size = 0;
 }
 #endif
 
@@ -649,6 +648,7 @@ void process_mppt(uint8 port, uint8 len)
     if (serial[port].sbuf_read_pos == 16 && mppt.size)
     {
       SEND_MPPT(port);
+      mppt.size = 0;
 #if UART_USE_CALLBACK   
       osal_set_event(blueBasic_TaskID, BLUEBASIC_EVENT_SERIAL<<(port == HAL_UART_PORT_1));
 #endif
