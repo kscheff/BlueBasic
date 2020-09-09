@@ -673,16 +673,6 @@ unsigned char OS_serial_write(unsigned char port, unsigned char ch)
   return 0;
 }
 
-#ifndef PROCESS_SERIAL_DATA
-unsigned char OS_serial_available(unsigned char port, unsigned char ch)
-{
-  if (port > OS_MAX_SERIAL -1)
-  {
-    return 0;
-  }
-  return ch == 'R' ? Hal_UART_RxBufLen(port == 0 ? HAL_UART_PORT_0 : HAL_UART_PORT_1) : Hal_UART_TxBufLen(port == 0 ? HAL_UART_PORT_0 : HAL_UART_PORT_1);
-}
-#else
 unsigned char OS_serial_available(unsigned char port, unsigned char ch)
 {
 #if !HAL_UART
@@ -692,10 +682,13 @@ unsigned char OS_serial_available(unsigned char port, unsigned char ch)
   {
     return 0;
   }
+#ifndef PROCESS_SERIAL_DATA
+  return ch == 'R' ? Hal_UART_RxBufLen(port == 0 ? HAL_UART_PORT_0 : HAL_UART_PORT_1) : Hal_UART_TxBufLen(port == 0 ? HAL_UART_PORT_0 : HAL_UART_PORT_1);
+#else
   return ch == 'R' ? (16 - serial[port].sbuf_read_pos) : Hal_UART_TxBufLen(port == 0 ? HAL_UART_PORT_0 : HAL_UART_PORT_1);
 #endif
-}
 #endif
+}
 
 #ifdef HAL_I2C
 uint8 _i2cCallback(uint8 cnt)
