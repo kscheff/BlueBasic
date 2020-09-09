@@ -455,9 +455,9 @@ void flashstore_compact(unsigned char len, unsigned char* tempmemstart, unsigned
   const unsigned short available = tempmemend - tempmemstart + (unsigned char*)lineindexend - (unsigned char*)lineindexstart;  
   // Find the lowest age page which this will fit in.
   static unsigned char pg;
-  unsigned char selected = 0;
+  static unsigned char selected = 0;
   static unsigned short occupied;
-  flashpage_age age = 0xFFFFFFFF;
+  static flashpage_age age = 0xFFFFFFFF;
   len = FLASHSTORE_PADDEDSIZE(len);
   for (pg = 0; pg < FLASHSTORE_NRPAGES; pg++)
   {
@@ -472,13 +472,19 @@ void flashstore_compact(unsigned char len, unsigned char* tempmemstart, unsigned
   }
   occupied = FLASHSTORE_PAGESIZE - orderedpages[selected].free - orderedpages[selected].waste;
   
-  unsigned short heap_len = 0;
-  char corrupted = 0;
   // Need at least FLASHSTORE_PAGESIZE
+  if (occupied > available)
+    return;
+    
+  // close access to the flash store
+  static halIntState_t intState;
+  HAL_ENTER_CRITICAL_SECTION(intState);
+  
+  static unsigned short heap_len = 0;
+  static char corrupted = 0;
+
   if (occupied > tempmemend - tempmemstart)  
   {
-    if (occupied > available)
-      return;
     // use additionally index area for compacting
     // by moving heap to to beginning
     // Attention: this assumes that tempmemstart is the current heap end!
@@ -490,16 +496,13 @@ void flashstore_compact(unsigned char len, unsigned char* tempmemstart, unsigned
   if (age != 0xFFFFFFFF)
   {
     // Found enough space for the line, compact the page
-    // block all background execution
-    halIntState_t intState;
-    HAL_ENTER_CRITICAL_SECTION(intState);
     // Copy required page data into RAM
     unsigned char* ram = tempmemstart;
     unsigned char* flash = (unsigned char*)FLASHSTORE_PAGEBASE(selected);
     static unsigned char* ptr;
-    unsigned short mem_length = 0;
-    char deleted = 0;
-    unsigned short *special = 0;
+    static unsigned short mem_length = 0;
+    static char deleted = 0;
+    static unsigned short *special = 0;
     for (ptr = flash + sizeof(flashpage_age); (ptr <= flash + (FLASHSTORE_PAGESIZE-1)) && (ptr > flash); )
     {
       unsigned short id = *(unsigned short*)ptr;
@@ -521,8 +524,8 @@ void flashstore_compact(unsigned char len, unsigned char* tempmemstart, unsigned
           ram = OS_memcpy(ram, ptr, len);
           mem_length += len;
         }
-        else
-          return;  // mem_length doesn't fit  
+        else 
+          goto exit;   
       }
       else
       {
@@ -551,6 +554,7 @@ void flashstore_compact(unsigned char len, unsigned char* tempmemstart, unsigned
       // We corrupted memory, so we need to reinitialize
       flashstore_init((unsigned char**)lineindexstart);
     }
+  exit:
     HAL_EXIT_CRITICAL_SECTION(intState); 
   }
 }
