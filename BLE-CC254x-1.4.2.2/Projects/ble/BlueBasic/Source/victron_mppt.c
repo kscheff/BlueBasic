@@ -422,22 +422,13 @@ typedef enum
 
 static label_t label;
 
-#if MPPT_DOUBLE_BUF
-static struct
-{
-  uint16 v;   // in 10 mv 
-  int32 i;    // in 100 mA
-  uint16 vpv; // in 10 mV
-  uint16 cs;
-} txt_frame;
-#endif
-
 static void receive_text(uint8 port)
 {
   static const uint8 sequence[] = { 'c','k','s','u','m' };
   static uint8 in_buf[16];
   static int32 mppt_data;
   static int8 mppt_sign;
+
   uint8 *ptr = in_buf;
   uint8 len = (uint8)HalUARTRead(port, ptr, sizeof(in_buf));
   while (len--)
@@ -545,16 +536,13 @@ static void receive_text(uint8 port)
       if (mppt_sum == 0)
       {
         // valid frame received
-#if MPPT_DOUBLE_BUF
-        // copy data over  
-        // assume frame contained all below info
-        mppt.batt_volt = txt_frame.v;
-        mppt.sol_current = txt_frame.i;
-        mppt.sol_volt = txt_frame.vpv;
-        mppt.status = LO_UINT16(txt_frame.cs);
-#endif
         // indicate valid data
-        mppt.size = sizeof(mppt) - sizeof(mppt.size);
+        if (serial[port].sbuf_read_pos == 16)
+        {
+          mppt.size = sizeof(mppt) - sizeof(mppt.size);
+          // only copy data, don't stall RX for too long
+          SEND_MPPT(port);
+        }
       }
       state = MPPT_FRAME;
       break;
@@ -589,21 +577,7 @@ static void receive_text(uint8 port)
       if (c == 0xd)
       {
         switch (label)
-        {
-#if MPPT_DOUBLE_BUF
-        case LABEL_V:
-          txt_frame.v = mppt_data / 10;
-          break;
-        case LABEL_I:
-          txt_frame.i = (mppt_sign == 1) ? mppt_data / 100 : 0;
-          break;
-        case LABEL_VPV:
-          txt_frame.vpv = mppt_data / 10;
-          break;
-        case LABEL_CS:
-          txt_frame.cs = BUILD_UINT16(LO_UINT16(mppt_data),0);
-          break;
-#else         
+        { 
         case LABEL_V:
           mppt.batt_volt = mppt_data / 10;
           break;
@@ -619,7 +593,6 @@ static void receive_text(uint8 port)
         case LABEL_CS:
           mppt.status = LO_UINT16(mppt_data);
           break;
-#endif                  
         default:
           // empty
           break;
@@ -645,9 +618,8 @@ void process_mppt(uint8 port, uint8 len)
   {
     //DEBUG_LED_ON;
     RECEIVE_MPPT(port);
-    if (serial[port].sbuf_read_pos == 16 && mppt.size)
+    if (mppt.size)
     {
-      SEND_MPPT(port);
       mppt.size = 0;
 #if UART_USE_CALLBACK   
       osal_set_event(blueBasic_TaskID, BLUEBASIC_EVENT_SERIAL<<(port == HAL_UART_PORT_1));
