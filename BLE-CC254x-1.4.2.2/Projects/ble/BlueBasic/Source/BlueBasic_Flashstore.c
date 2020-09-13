@@ -43,6 +43,11 @@ static unsigned short** lineindexend;
 #define FLASHSTORE_PAGEBASE(IDX)  &flashstore[FLASHSTORE_PAGESIZE * (IDX)]
 #define FLASHSTORE_PADDEDSIZE(SZ) (((SZ) + 3) & -4)
 
+#if 0
+#define KEEP_ALIVE() osal_run_system()
+#else
+#define KEEP_ALIVE()
+#endif
 
 //
 // Flash page structure:
@@ -114,7 +119,7 @@ static void flashpage_heapsort(void)
 
   for (i = count / 2; i >= 0; i--)
   {
-    osal_run_system();
+    KEEP_ALIVE();
     siftdown(i, count - 1);
   }
   for (i = count - 1; i >= 0; i--)
@@ -122,7 +127,7 @@ static void flashpage_heapsort(void)
     unsigned short* temp = lines[0];
     lines[0] = lines[i];
     lines[i] = temp;
-    osal_run_system();
+    KEEP_ALIVE();
     siftdown(0, i - 1);
   }
 }
@@ -178,7 +183,7 @@ unsigned char** flashstore_init(unsigned char** startmem)
         orderedpages[ordered].special = (unsigned short*) ptr;
       }
       ptr += FLASHSTORE_PADDEDSIZE(ptr[sizeof(unsigned short)]);
-      osal_run_system();
+      KEEP_ALIVE();
     } 
     orderedpages[ordered].free = FLASHSTORE_PAGESIZE - (ptr - page);
     ordered++;
@@ -425,7 +430,7 @@ unsigned char** flashstore_deleteall(void)
       orderedpages[pg].special = 0;
     }
     // keep OSAL spinning
-    osal_run_system();
+    KEEP_ALIVE();
   }
 
   lineindexend = lineindexstart;
