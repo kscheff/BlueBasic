@@ -580,7 +580,7 @@ static void flashstore_invalidate(unsigned short* mem)
 
   OS_flashstore_write(FLASHSTORE_FADDR(mem), (unsigned char*)&invalid, FLASHSTORE_WORDS(sizeof(invalid)));
 
-  orderedpages[((unsigned char*)mem - flashstore) / FLASHSTORE_PAGESIZE].waste += invalid.len;
+  orderedpages[((unsigned char*)mem - flashstore) / FLASHSTORE_PAGESIZE].waste += FLASHSTORE_PADDEDSIZE(invalid.len);
 }
 
 //
