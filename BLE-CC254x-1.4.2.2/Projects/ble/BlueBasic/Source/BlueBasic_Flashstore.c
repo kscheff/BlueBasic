@@ -464,36 +464,45 @@ unsigned int flashstore_freemem(void)
 
 void flashstore_compact(unsigned char len, unsigned char* tempmemstart, unsigned char* tempmemend)
 {
-  const unsigned short available = tempmemend - tempmemstart + (unsigned char*)lineindexend - (unsigned char*)lineindexstart;  
+  unsigned short available =
+    ( (tempmemend - tempmemstart)  // free heap
+     + ((unsigned char*)lineindexend - (unsigned char*)lineindexstart) ); // optional index
+  //  & (unsigned short)(FLASHSTORE_PAGESIZE - 1);  // limit to page size
   // Find the lowest age page which this will fit in.
   static unsigned char pg;
-  static unsigned char selected = 0;
+  static unsigned char selected;
   static unsigned short occupied;
-  static flashpage_age age = 0xFFFFFFFF;
+  static flashpage_age age;
+  age = 0xFFFFFFFF;
+  selected = 0;
   len = FLASHSTORE_PADDEDSIZE(len);
+  if (available > FLASHSTORE_PAGESIZE)
+  {
+    available = FLASHSTORE_PAGESIZE;
+  }
   for (pg = 0; pg < FLASHSTORE_NRPAGES; pg++)
   {
     flashpage_age cage = *(flashpage_age*)FLASHSTORE_PAGEBASE(pg);
-    occupied = FLASHSTORE_PAGESIZE - orderedpages[pg].free - orderedpages[pg].waste;
-    if ((cage < age && FLASHSTORE_PAGESIZE - occupied >= len)
-        && occupied <= available)
+    unsigned short cfree = orderedpages[pg].free + orderedpages[pg].waste;
+    if ((cage < age && cfree >= len)
+        && cfree <= available)
     {
       selected = pg;
       age = cage;
+      occupied = FLASHSTORE_PAGESIZE - cfree;
     }
   }
-  occupied = FLASHSTORE_PAGESIZE - orderedpages[selected].free - orderedpages[selected].waste;
-  
+    
   // Need at least FLASHSTORE_PAGESIZE
-  if (occupied > available)
+  if ( (occupied > available) || (age == 0xFFFFFFFF) )
     return;
     
   // close access to the flash store
   static halIntState_t intState;
   HAL_ENTER_CRITICAL_SECTION(intState);
   
-  static unsigned short heap_len = 0;
-  static char corrupted = 0;
+  unsigned short heap_len = 0;
+  char corrupted = 0;
 
   if (occupied > tempmemend - tempmemstart)  
   {
@@ -505,70 +514,70 @@ void flashstore_compact(unsigned char len, unsigned char* tempmemstart, unsigned
     corrupted = 1; // since we use the index area it is definitly corrupted
   }
   
-  if (age != 0xFFFFFFFF)
+  // Found enough space for the line, compact the page
+  // Copy required page data into RAM
+  unsigned char* ram = tempmemstart + sizeof(flashpage_age);
+  unsigned char* flash = (unsigned char*)FLASHSTORE_PAGEBASE(selected);
+  static unsigned char* ptr;
+  unsigned short mem_length = sizeof(flashpage_age);
+  char deleted = 0;
+  unsigned short *special = 0;
+  for (ptr = flash + sizeof(flashpage_age); (ptr <= flash + (FLASHSTORE_PAGESIZE-1)) && (ptr > flash); )
   {
-    // Found enough space for the line, compact the page
-    // Copy required page data into RAM
-    unsigned char* ram = tempmemstart;
-    unsigned char* flash = (unsigned char*)FLASHSTORE_PAGEBASE(selected);
-    static unsigned char* ptr;
-    static unsigned short mem_length = 0;
-    static char deleted = 0;
-    static unsigned short *special = 0;
-    for (ptr = flash + sizeof(flashpage_age); (ptr <= flash + (FLASHSTORE_PAGESIZE-1)) && (ptr > flash); )
+    unsigned short id = *(unsigned short*)ptr;
+    unsigned char itemlen = FLASHSTORE_PADDEDSIZE(ptr[sizeof(unsigned short)]);
+    if (id == FLASHID_FREE)
     {
-      unsigned short id = *(unsigned short*)ptr;
-      unsigned char len = FLASHSTORE_PADDEDSIZE(ptr[sizeof(unsigned short)]);
-      if (id == FLASHID_FREE)
-      {
-        // the rest of the page is empty
-        break;
-      }
-      else if (id != FLASHID_INVALID)
-      {
-        corrupted |= (id != FLASHID_SPECIAL) && deleted;
-        if (special == 0 && id == FLASHID_SPECIAL)
-        {
-          special = (unsigned short *)(flash + mem_length + sizeof(flashpage_age));
-        }
-        if (mem_length + len <= available)
-        {
-          ram = OS_memcpy(ram, ptr, len);
-          mem_length += len;
-        }
-        else 
-          goto exit;   
-      }
-      else
-      {
-        deleted = 1;
-      }
-      ptr += len;
+      // the rest of the page is empty
+      break;
     }
-    // Erase the page
-    OS_flashstore_erase(FLASHSTORE_FPAGE(flash));
-    lastage++;
-    OS_flashstore_write(FLASHSTORE_FADDR(flash), (unsigned char*)&lastage, FLASHSTORE_WORDS(sizeof(lastage)));
-    orderedpages[selected].waste = 0;
-    orderedpages[selected].free = FLASHSTORE_PAGESIZE - mem_length - sizeof(flashpage_age);
-    orderedpages[selected].special = special;
-
-    // Copy the old lines back in.
-    flash += sizeof(flashpage_age);
-    OS_flashstore_write(FLASHSTORE_FADDR(flash), tempmemstart, FLASHSTORE_WORDS(mem_length));
-    if (corrupted)
+    else if (id != FLASHID_INVALID)
     {
-      if (heap_len)
+      corrupted |= (id != FLASHID_SPECIAL) && deleted;
+      if (special == 0 && id == FLASHID_SPECIAL)
       {
-        // copy old heap data back into position before rebuilding the index
-        OS_memcpy((void*)lineindexend, (void*)lineindexstart, heap_len);
+        special = (unsigned short *)(flash + mem_length + sizeof(flashpage_age));
       }
-      // We corrupted memory, so we need to reinitialize
-      flashstore_init((unsigned char**)lineindexstart);
+      if (mem_length + itemlen <= available)
+      {
+        ram = OS_memcpy(ram, ptr, itemlen);
+        mem_length += itemlen;
+      }
+      else 
+      {
+        corrupted = 1;
+        goto exit;   
+      } 
     }
-  exit:
-    HAL_EXIT_CRITICAL_SECTION(intState); 
+    else
+    {
+      deleted = 1;
+    }
+    ptr += itemlen;
   }
+  // Erase the page
+  OS_flashstore_erase(FLASHSTORE_FPAGE(flash));
+  *(flashpage_age*)tempmemstart = ++lastage; 
+//  OS_flashstore_write(FLASHSTORE_FADDR(flash), (unsigned char*)&lastage, FLASHSTORE_WORDS(sizeof(lastage)));
+  orderedpages[selected].waste = 0;
+  orderedpages[selected].free = FLASHSTORE_PAGESIZE - mem_length; // - sizeof(flashpage_age);
+  orderedpages[selected].special = special;
+
+  // Copy the old lines back in.
+  //flash += sizeof(flashpage_age);
+  OS_flashstore_write(FLASHSTORE_FADDR(flash), tempmemstart, FLASHSTORE_WORDS(mem_length));
+  if (corrupted)
+  {
+    if (heap_len)
+    {
+      // copy old heap data back into position before rebuilding the index
+      OS_memcpy((void*)lineindexend, (void*)lineindexstart, heap_len);
+    }
+    // We corrupted memory, so we need to reinitialize
+    flashstore_init((unsigned char**)lineindexstart);
+  }
+exit:
+  HAL_EXIT_CRITICAL_SECTION(intState); 
 }
 
 //
