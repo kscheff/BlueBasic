@@ -182,7 +182,14 @@ unsigned char** flashstore_init(unsigned char** startmem)
         // for faster access via find_special
         orderedpages[ordered].special = (unsigned short*) ptr;
       }
-      ptr += FLASHSTORE_PADDEDSIZE(ptr[sizeof(unsigned short)]);
+      unsigned char itemlen = FLASHSTORE_PADDEDSIZE(ptr[sizeof(unsigned short)]);
+      if (itemlen < (FLASHSTORE_PAGESIZE / FLASHSTORE_WORDS(FLASHSTORE_PAGESIZE)))
+      {
+        // flash page is corrupted
+        flashstore_deleteall();
+        OS_reboot(0);
+      }
+      ptr += itemlen;
       KEEP_ALIVE();
     } 
     orderedpages[ordered].free = FLASHSTORE_PAGESIZE - (ptr - page);
