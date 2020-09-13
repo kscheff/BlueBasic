@@ -1,1 +1,0 @@
-#define BUILD_TIMESTAMP "BlueBatt/20200909175932" 
