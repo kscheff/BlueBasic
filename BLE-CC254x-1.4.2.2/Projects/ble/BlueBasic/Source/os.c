@@ -407,17 +407,16 @@ static void _uartCallback(uint8 port, uint8 event)
 #endif
   if (port > OS_MAX_SERIAL - 1)
     return;
-
+  uint8 len = Hal_UART_RxBufLen(port);
 #if PROCESS_MPPT 
-  if (serial[port].sflow == 'M')
+  if ((serial[port].sflow == 'M') && len)
   {
     process_mppt(port, Hal_UART_RxBufLen(port));
   }
   else
 #endif
   {
-    if ( (Hal_UART_RxBufLen(port) > 1 )
-          && ( serial[port].sbuf_read_pos != 0 ) )
+    if ( len && ( serial[port].sbuf_read_pos != 0 ) )
     {
       osal_set_event(blueBasic_TaskID, BLUEBASIC_EVENT_SERIAL<<(port == HAL_UART_PORT_1));
     }
