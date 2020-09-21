@@ -268,6 +268,10 @@ extern bStatus_t GAP_SetParamValue( gapParamIDs_t paramID, uint16 paramValue );
 #define ENABLE_PORT2            1
 #define ENABLE_YIELD            1
 
+#define YIEDL_TIMEOUT_MS_SLOW   20
+#define YIELD_TIMEOUT_MS_NORMAL 10
+#define YIELD_TIMEOUT_MS_FAST 5
+
 #endif // TARGET_PETRA
 
 #if TARGET_CC2540 || TARGET_CC2541
