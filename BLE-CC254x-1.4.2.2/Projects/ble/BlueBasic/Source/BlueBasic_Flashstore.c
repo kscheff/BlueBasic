@@ -536,7 +536,7 @@ void flashstore_compact(unsigned char len, unsigned char* tempmemstart, unsigned
       corrupted |= (id != FLASHID_SPECIAL) && deleted;
       if (special == 0 && id == FLASHID_SPECIAL)
       {
-        special = (unsigned short *)(flash + mem_length + sizeof(flashpage_age));
+        special = (unsigned short *)(flash + mem_length);
       }
       if (mem_length + itemlen <= available)
       {
