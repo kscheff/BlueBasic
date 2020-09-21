@@ -447,16 +447,7 @@ unsigned char OS_serial_open(unsigned char port, unsigned long baud, unsigned ch
   switch ((uint8)SHIFT9(baud))
   {
     case SHIFT9(1000):
-#if 0 //defined MPPT_AS_VOT && MPPT_AS_VOT
-      if (flow == 'V')
-      {
-        baud = 19200;
-        cbaud = HAL_UART_BR_19200;
-        flow = 'M';
-      }      
-#else
       cbaud = HAL_UART_BR_1000;
-#endif
       break;
     case SHIFT9(9600):
       cbaud = HAL_UART_BR_9600;
