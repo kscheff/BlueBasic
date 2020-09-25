@@ -441,6 +441,8 @@ unsigned char OS_serial_open(unsigned char port, unsigned long baud, unsigned ch
   {
     return 1;
   }
+  OS_serial_close(port); // stop before we reconfigure
+  
 // saves some bytes due to simplier compare uint8
 #define SHIFT9(BR) ((BR)>>9)  
   switch ((uint8)SHIFT9(baud))
