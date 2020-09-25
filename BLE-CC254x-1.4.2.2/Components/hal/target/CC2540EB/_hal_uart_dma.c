@@ -587,8 +587,9 @@ void HalUARTCloseDMA( void )
 {
   HAL_DMA_ABORT_CH(HAL_DMA_CH_RX);
   IENx &= ~IEN_BIT;    // disable interrupt
+  while (UxCSR & 1);   // wait until ACTIVE clears
+  UxCSR &= ~CSR_RE;    // disable receiver  
   UxUCR |= UCR_FLUSH;  // flush TX
-  UxCSR &= ~CSR_RE;    // disable receiver
 }
 
 /*****************************************************************************
