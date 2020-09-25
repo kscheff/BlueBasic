@@ -46,7 +46,7 @@ uint16 test_read(void* ptr, uint16 len);
 #define MPPT_DOUBLE_BUF FALSE
 
 #if MPPT_MODE_TEXT
-#define RECEIVE_MPPT(port) receive_text(port)
+#define RECEIVE_MPPT(port, len) receive_text(port, len)
 #else
 #define RECEIVE_MPPT(port) receive_mppt(port)
 #endif
@@ -70,9 +70,12 @@ uint16 test_read(void* ptr, uint16 len);
 #define NIB_VAL(a) ((a) >= 'A' ? (a) - 'A' + 10 : (a) - '0' )
 #define SWAP_UINT16(a) BUILD_UINT16(HI_UINT16(a),LO_UINT16(a))
 
-#if 1
-#define DEBUG_LED_ON  P0|=0x10
-#define DEBUG_LED_OFF P0&=~0x10
+#if 0
+#define DEBUG_LED_ON  P1 |=  0x08
+#define DEBUG_LED_OFF P1 &= ~0x08
+#else
+#define DEBUG_LED_ON 
+#define DEBUG_LED_OFF
 #endif
 
 typedef struct
@@ -86,6 +89,18 @@ typedef struct
 } mppt_t;
 
 static mppt_t mppt = { sizeof(mppt) - sizeof(mppt.size),0,0,0,0,0 };
+
+#if 0
+// report UART input buffer size high level as solar voltage 1V = 1 byte 
+static uint16 test_high_watermark = 0;
+#define TEST_WATERMARK_SET(len) if ((100U*len) > test_high_watermark) test_high_watermark = (100U*len)
+#define TEST_WATERMARK_CLEAR if (test_high_watermark) test_high_watermark -= 10
+#define TEST_WATERMARK_REPORT mppt.sol_volt = test_high_watermark
+#else
+#define TEST_WATERMARK_SET(len)
+#define TEST_WATERMARK_CLEAR
+#define TEST_WATERMARK_REPORT
+#endif
 
 #if MPPT_MODE_HEX
 typedef struct
@@ -135,10 +150,9 @@ typedef enum
 #if MPPT_MODE_TEXT
 typedef enum
 {
-  MPPT_FRAME,
   MPPT_IDLE,
-  MPPT_START,
   MPPT_CHECKSUM,
+  MPPT_HEX_RECORD,
   MPPT_LABEL_0,
   MPPT_LABEL_1,
   MPPT_LABEL_2,
@@ -159,7 +173,7 @@ typedef enum
 } state_mppt_t;
 #endif
 
-#if defined(MPPT_MODE_TEXT) || defined (MPPT_MODE_HEX)
+#if MPPT_MODE_HEX
 static state_mppt_t state;
 #endif
 static uint8 mppt_sum;
@@ -422,188 +436,240 @@ typedef enum
 
 static label_t label;
 
-static void receive_text(uint8 port)
+static void receive_text(uint8 port, uint8 len)
 {
   static const uint8 sequence[] = { 'c','k','s','u','m' };
   static uint8 in_buf[16];
   static int32 mppt_data;
   static int8 mppt_sign;
-
-  uint8 *ptr = in_buf;
-  uint8 len = (uint8)HalUARTRead(port, ptr, sizeof(in_buf));
-  while (len--)
+  static state_mppt_t state = MPPT_IDLE;  
+  
+#if 0
+  // to sync faster we empty a full, overran RX buffer
+  uint8 max = (port == HAL_UART_DMA - 1) ? HAL_UART_DMA_RX_MAX : HAL_UART_ISR_RX_MAX;
+  if (len == max)
   {
-    uint8 c = *ptr++;
-    mppt_sum += c;
-    switch (state)
+    state = MPPT_IDLE;
+    uint8 count = max / sizeof(in_buf); 
+    while (count--)
     {
-    case MPPT_FRAME:
-      mppt_sum = c;
-      if (c == '\r')
-        state = MPPT_START;
-      break;
-    case MPPT_IDLE:
-      if (c == '\r')
-        state = MPPT_START;
-      break;
-    case MPPT_START:
-      if (c == '\n')
-        state = MPPT_LABEL_0;
-      else
-        state = MPPT_IDLE;
-      break;
-    case MPPT_LABEL_0:
-      state = MPPT_LABEL_1;
-      switch (c)
+      if ( 0 == HalUARTRead(port, in_buf, sizeof(in_buf)) )
+        break;
+    }
+    return;
+  }
+#endif
+  
+#if 0
+  if (len == HAL_UART_DMA_RX_MAX) {
+    DEBUG_LED_ON;
+//    HalUARTClose(port);  // stop DMA transfer
+//    HalUARTInitPort(port); // clear buffers and restart DMA
+    state = MPPT_IDLE;
+    mppt_sum = 0;
+    unsigned short onread = serial[port].onread;
+    unsigned short onwrite = serial[port].onwrite; 
+    OS_serial_close(port);
+    OS_serial_open(port, 19200, 'N', 8, 1, 'M', onread, onwrite);
+    DEBUG_LED_OFF;
+    return;
+  }
+#endif
+  
+#if 0
+  if (U0CSR & 0x10)  // check for framing error
+    DEBUG_LED_ON;
+  else
+    DEBUG_LED_OFF;
+#endif    
+  
+  while (len = (uint8)HalUARTRead(port, in_buf, sizeof(in_buf)) )
+  {
+    uint8 *ptr = in_buf;
+    while (len--)
+    {
+      uint8 c = *ptr++;
+      if ( (c == ':') && (state != MPPT_CHECKSUM) )
       {
-      case 'V':
-        label = LABEL_V;
-        break;
-      case 'C':
-        label = LABEL_CS;
-//        state = MPPT_LABEL_1;
-        break;
-      case 'I':
-//        state = MPPT_LABEL_1;
-        label = LABEL_I;
-        mppt_sign = 1;
-        break;
-      default:
-        state = MPPT_IDLE;
+        DEBUG_LED_ON;
+        state = MPPT_HEX_RECORD;
       }
-      break;
-    case MPPT_LABEL_1:
-      switch (c)
+      if (state != MPPT_HEX_RECORD)
       {
-      case 0x09:
-        if ((label == LABEL_V) || (label == LABEL_I))
+        mppt_sum += c;
+      }
+      switch (state)
+      {
+      case MPPT_HEX_RECORD:
+        switch (c)
+        {
+        case '\n':
+        case '\r':
+          state = MPPT_IDLE;
+          mppt_sum = 0;
+          DEBUG_LED_OFF;
+        }
+        break;
+      case MPPT_IDLE:
+        DEBUG_LED_OFF;
+        if (c == '\n')
+          state = MPPT_LABEL_0;
+        break;
+      case MPPT_LABEL_0:
+        state = MPPT_LABEL_1;
+        switch (c)
+        {
+        case 'V':
+          label = LABEL_V;
+          break;
+        case 'C':
+          label = LABEL_CS;
+          //        state = MPPT_LABEL_1;
+          break;
+        case 'I':
+          //        state = MPPT_LABEL_1;
+          label = LABEL_I;
+          mppt_sign = 1;
+          break;
+        default:
+          state = MPPT_IDLE;
+        }
+        break;
+      case MPPT_LABEL_1:
+        switch (c)
+        {
+        case '\t':
+          if ((label == LABEL_V) || (label == LABEL_I))
+          {
+            state = MPPT_DATA_0;
+            mppt_data = 0;
+          }
+          else
+          {
+            state = MPPT_IDLE;
+          }
+          break;
+        case 'L':
+          state = MPPT_TAB;
+          label = LABEL_IL;
+          break;
+        case 'S':
+          state = MPPT_TAB;
+          //        label = LABEL_CS;
+          break;
+        case 'P':  // VPV?
+        case 'h':  // checksum?
+          state = MPPT_LABEL_2;
+          break;
+        default:
+          state = MPPT_IDLE;
+        }
+        break;
+      case MPPT_LABEL_2:
+        switch (c)
+        {
+        case 'V':
+          state = MPPT_TAB;
+          label = LABEL_VPV;
+          break;
+        case 'e':
+          state = MPPT_LABEL_3;
+          break;
+        default:
+          state = MPPT_IDLE;
+        }
+        break;
+      case MPPT_LABEL_3:
+      case MPPT_LABEL_4:
+      case MPPT_LABEL_5:
+      case MPPT_LABEL_6:
+      case MPPT_LABEL_7:
+        if (c == sequence[state - MPPT_LABEL_3])
+          state += 1;
+        else
+          state = MPPT_IDLE;
+        break;
+      case MPPT_LABEL_END:
+        if (c == '\t') {
+          state = MPPT_CHECKSUM;
+          DEBUG_LED_ON;
+        }
+        else
+          state = MPPT_IDLE;
+        break;
+      case MPPT_CHECKSUM:
+        state = MPPT_IDLE;
+        if (mppt_sum == 0)
+        {
+          // valid frame received
+          // copy valid data if there is space
+          if (serial[port].sbuf_read_pos == 16)
+          {
+            TEST_WATERMARK_REPORT;
+            // only copy data, don't stall RX for too long
+            SEND_MPPT(port);
+          }
+        }
+        mppt_sum = 0;
+        break;
+      case MPPT_TAB:
+        if (c == '\t')
         {
           state = MPPT_DATA_0;
           mppt_data = 0;
         }
         else
-        {
           state = MPPT_IDLE;
-        }
         break;
-      case 'L':
-        state = MPPT_TAB;
-        label = LABEL_IL;
-        break;
-      case 'S':
-        state = MPPT_TAB;
-//        label = LABEL_CS;
-        break;
-      case 'P':  // VPV?
-      case 'h':  // checksum?
-        state = MPPT_LABEL_2;
-        break;
-      default:
-        state = MPPT_IDLE;
-      }
-      break;
-    case MPPT_LABEL_2:
-      switch (c)
-      {
-      case 'V':
-        state = MPPT_TAB;
-        label = LABEL_VPV;
-        break;
-      case 'e':
-        state = MPPT_LABEL_3;
-        break;
-      default:
-        state = MPPT_IDLE;
-      }
-      break;
-    case MPPT_LABEL_3:
-    case MPPT_LABEL_4:
-    case MPPT_LABEL_5:
-    case MPPT_LABEL_6:
-    case MPPT_LABEL_7:
-      if (c == sequence[state - MPPT_LABEL_3])
-        state += 1;
-      else
-        state = MPPT_IDLE;
-      break;
-    case MPPT_LABEL_END:
-      if (c == 9)
-        state = MPPT_CHECKSUM;
-      else
-        state = MPPT_IDLE;
-      break;
-    case MPPT_CHECKSUM:
-      if (mppt_sum == 0)
-      {
-        // valid frame received
-        // indicate valid data
-        if (serial[port].sbuf_read_pos == 16)
+      case MPPT_DATA_0:
+        if (c == '-')
         {
-          mppt.size = sizeof(mppt) - sizeof(mppt.size);
-          // only copy data, don't stall RX for too long
-          SEND_MPPT(port);
-        }
-      }
-      state = MPPT_FRAME;
-      break;
-    case MPPT_TAB:
-      if (c == 0x09)
-      {
-        state = MPPT_DATA_0;
-        mppt_data = 0;
-      }
-      else
-        state = MPPT_IDLE;
-      break;
-    case MPPT_DATA_0:
-      if (c == '-')
-      {
-        mppt_sign = -1;
-        break;
-      }
-    case MPPT_DATA_1:
-    case MPPT_DATA_2:
-    case MPPT_DATA_3:
-    case MPPT_DATA_4:
-    case MPPT_DATA_5:
-      if (c >= '0' && c <= '9')
-      {
-        mppt_data = mppt_data * 10 + c - '0';
-        state += 1;
-        break;
-      }
-      // fall through
-    case MPPT_DATA_END:
-      if (c == 0xd)
-      {
-        switch (label)
-        { 
-        case LABEL_V:
-          mppt.batt_volt = mppt_data / 10;
-          break;
-        case LABEL_I:
-          mppt.main_current = mppt_sign * mppt_data / 10;
-          break;
-        case LABEL_IL:
-          mppt.load_current = mppt_sign * mppt_data / 10;
-          break;
-        case LABEL_VPV:
-          mppt.sol_volt = mppt_data / 10;
-          break;
-        case LABEL_CS:
-          mppt.status = LO_UINT16(mppt_data);
-          break;
-        default:
-          // empty
+          mppt_sign = -1;
           break;
         }
-        state = MPPT_START;
-      }
-      else
+      case MPPT_DATA_1:
+      case MPPT_DATA_2:
+      case MPPT_DATA_3:
+      case MPPT_DATA_4:
+      case MPPT_DATA_5:
+        if (c >= '0' && c <= '9')
+        {
+          mppt_data = mppt_data * 10 + c - '0';
+          state += 1;
+          break;
+        }
+        // fall through
+      case MPPT_DATA_END:
+        if (c == '\r')
+        {
+          DEBUG_LED_ON;
+          switch (label)
+          { 
+          case LABEL_V:
+            mppt.batt_volt = mppt_data / 10;
+            break;
+          case LABEL_I:
+            mppt.main_current = mppt_sign * mppt_data / 10;
+            break;
+          case LABEL_IL:
+            mppt.load_current = mppt_sign * mppt_data / 10;
+            break;
+          case LABEL_VPV:
+            mppt.sol_volt = mppt_data / 10;
+            break;
+          case LABEL_CS:
+            mppt.status = LO_UINT16(mppt_data);
+            break;
+          default:
+            // empty
+            break;
+          }
+        }
         state = MPPT_IDLE;
-      break;
-    default:
-      state = MPPT_FRAME;
+        break;
+      default:
+        state = MPPT_IDLE;
+      }
     }
   }
 }
@@ -616,16 +682,16 @@ void process_mppt(uint8 port, uint8 len)
 {
   if (len)
   {
-    //DEBUG_LED_ON;
-    RECEIVE_MPPT(port);
-    if (mppt.size)
+    TEST_WATERMARK_SET(len);
+    RECEIVE_MPPT(port, len);
+
+    if (serial[port].sbuf_read_pos == 0)
     {
-      mppt.size = 0;
+      TEST_WATERMARK_CLEAR;
 #if UART_USE_CALLBACK   
       osal_set_event(blueBasic_TaskID, BLUEBASIC_EVENT_SERIAL<<(port == HAL_UART_PORT_1));
 #endif
     }
-    //DEBUG_LED_OFF;
   }
 #if MPPT_MODE_HEX    
   else
