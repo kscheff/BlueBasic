@@ -491,8 +491,8 @@ unsigned char OS_serial_open(unsigned char port, unsigned long baud, unsigned ch
   config.flowControl = flow == 'H' ? HAL_UART_FLOW_ON : HAL_UART_FLOW_OFF;
   config.flowControlThreshold = flow == 'H' ? 64 : 0;
   config.idleTimeout = 0;
-  config.rx.maxBufSize = HAL_UART_DMA_RX_MAX;
-  config.tx.maxBufSize = HAL_UART_DMA_TX_MAX;
+  config.rx.maxBufSize = 0; //HAL_UART_DMA_RX_MAX;
+  config.tx.maxBufSize = 0; //HAL_UART_DMA_TX_MAX;
   config.intEnable = 1;
 #if UART_USE_CALLBACK  
   config.callBackFunc = _uartCallback;
