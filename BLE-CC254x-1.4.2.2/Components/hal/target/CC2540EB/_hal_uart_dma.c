@@ -483,9 +483,9 @@ static void HalUARTInitDMA(void)
   HAL_DMA_SET_M8( ch, HAL_DMA_M8_USE_8_BITS );
 
   // DMA has highest priority for memory access.
-  //HAL_DMA_SET_PRIORITY( ch, HAL_DMA_PRI_HIGH);
+  HAL_DMA_SET_PRIORITY( ch, HAL_DMA_PRI_HIGH);
   // when DMA Flash operation is active, we don't want highest prio
-  HAL_DMA_SET_PRIORITY( ch, HAL_DMA_PRI_GUARANTEED); 
+  //HAL_DMA_SET_PRIORITY( ch, HAL_DMA_PRI_GUARANTEED); 
 
   volatile uint8 dummy = *(volatile uint8 *)DMA_UxDBUF;  // Clear the DMA Rx trigger.
   HAL_DMA_CLEAR_IRQ(HAL_DMA_CH_RX);
