@@ -713,9 +713,17 @@ unsigned char BlueBasic_powerMode;
 unsigned char samplingPortMap = 0; // port 0 map of pins to sample
 
 static struct {
+#ifdef FEATURE_TRUE_RMS
+  int32 adc[8];
+#else
   int16 adc[8];
+#endif
   VAR_TYPE var;
 } sampling;
+
+#ifdef FEATURE_TRUE_RMS
+uint8 true_rms = 0;  // aquistion mode in timer based sampling
+#endif
 
 unsigned char samplingTimer;    // associated timer id
 static unsigned short samplingDelay;    // delay after strobe in µs
@@ -4771,7 +4779,12 @@ i2c_end:
 // ANALOG RESOLUTION, 8|10|12|14
 //  Set the number of bits returned from an ADC operation.
 // ANALOG REFERENCE, INTERNAL|EXTERNAL
-//
+// ANALOG STOP
+//  Stop timer based sampling
+// ANALOG TRUE, 0|1
+//  in timer based sampling select calculation
+//  0: averaging mode (default)
+//  1: True RMS
 // ANALOG TIMER timer id, port map ,strobe port, strobe polarity LOW|HIGH, delay in µs
 //  Background adc sampling via timer with strobe and delay
 //  timer id: associated timer
@@ -4856,6 +4869,16 @@ cmd_analog:
             GOTO_QWHAT;
         }
         break; 
+#ifdef FEATURE_TRUE_RMS      
+      case CO_TRUE:
+        {
+          true_rms = (uint8)expression(EXPR_NORMAL);
+          if (error_num)
+            GOTO_QWHAT;
+          OS_memset(sampling.adc, 0, sizeof(sampling.adc));
+        }
+        break;
+#endif
       default:
         GOTO_QWHAT;
     }
@@ -5122,8 +5145,17 @@ static VAR_TYPE pin_read(unsigned char major, unsigned char minor)
             val += sampling.adc[5];
             val += sampling.adc[6];
             val += sampling.adc[7];
-            val += 15;
-            val /= 4;
+#ifdef FEATURE_TRUE_RMS
+            if (true_rms)
+            {
+              val = (int32)sqrt((val > 0 ? 8.0 : -8.0) * val) * (val > 0 ? 1 : -1);
+            }
+            else
+#endif
+            {
+              val += 15;
+              val /= 4;
+            }
             // simple low pass to gain resolution
   //          sampling.var = (sampling.var * 7 + val) / 8; 
             sampling.var = val;
@@ -5186,7 +5218,16 @@ void interpreter_sampling(void)
     default:  // 0x80
       a = adc_read(7);
     }
-    sampling.adc[7 & samplingCnt++] = a;
+#ifdef FEATURE_TRUE_RMS    
+    if (true_rms)
+    {
+      a += 3;
+      a /= 4;  // make it 14 bit
+      sampling.adc[7 & samplingCnt++] = (long)a * (a < 0 ? -a : a); // result 28-bit signed 
+    }
+    else
+#endif
+      sampling.adc[7 & samplingCnt++] = a;
   }
   else 
   {  

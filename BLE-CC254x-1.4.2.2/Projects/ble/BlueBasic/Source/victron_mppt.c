@@ -439,7 +439,7 @@ static label_t label;
 static void receive_text(uint8 port, uint8 len)
 {
   static const uint8 sequence[] = { 'c','k','s','u','m' };
-  static uint8 in_buf[16];
+  uint8 in_buf[16];
   static int32 mppt_data;
   static int8 mppt_sign;
   static state_mppt_t state = MPPT_IDLE;  

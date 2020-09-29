@@ -13126,6 +13126,7 @@
                     <state>FEATURE_OAD_HEADER=FALSE</state>
                     <state>xFEATURE_BOOST_CONVERTER=P2_0</state>
                     <state>FEATURE_SAMPLING</state>
+                    <state>FEATURE_TRUE_RMS</state>
                     <state>UART_USE_CALLBACK=1</state>
                     <state>PROCESS_SERIAL_DATA</state>
                     <state>PROCESS_MPPT</state>
@@ -14306,6 +14307,7 @@
                     <state>FEATURE_OAD_HEADER=FALSE</state>
                     <state>xFEATURE_BOOST_CONVERTER=P2_0</state>
                     <state>FEATURE_SAMPLING</state>
+                    <state>FEATURE_TRUE_RMS</state>
                     <state>UART_USE_CALLBACK=1</state>
                     <state>PROCESS_SERIAL_DATA</state>
                     <state>PROCESS_MPPT</state>
