@@ -4872,7 +4872,7 @@ cmd_analog:
 #ifdef FEATURE_TRUE_RMS      
       case CO_TRUE:
         {
-          true_rms = (uint8)expression(EXPR_NORMAL);
+          true_rms = expression(EXPR_NORMAL);
           if (error_num)
             GOTO_QWHAT;
           OS_memset(sampling.adc, 0, sizeof(sampling.adc));
