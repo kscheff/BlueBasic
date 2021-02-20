@@ -87,3 +87,4 @@ BLE-CC254x-1.5.0.16/Projects/ble/BlueBasicLoader/Build/CC2541-ImgA-BBX/Obj
 BLE-CC254x-1.5.0.16/Projects/ble/BlueBasic/Build/BBX/Obj
 BLE-CC254x-1.5.0.16/Projects/ble/BlueBasic/Build/BBX-CC-Debugger/Obj
 BLE-CC254x-1.5.0.16/Projects/ble/BlueBasic/Build/BlueBattery-MPPT-CC-Debugger/Obj
+*.zip
