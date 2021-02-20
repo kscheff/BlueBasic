@@ -613,11 +613,13 @@ uint16 BlueBasic_ProcessEvent( uint8 task_id, uint16 events )
       if ( blueBasic_timers[i].linenum && (events & (BLUEBASIC_EVENT_TIMER<<i)))
       {
         interpreter_run(blueBasic_timers[i].linenum, i == DELAY_TIMER ? 0 : INTERPRETER_CAN_RETURN | INTERPRETER_CAN_YIELD);
+#if ENABLE_YIELD          
         if (bluebasic_yield_linenum)
         {
           // timer did not finish, the event frame  still sitts on the stack
           break;
         }
+#endif
       }
     }
     SEMAPHORE_YIELD_SIGNAL();
@@ -635,8 +637,10 @@ uint16 BlueBasic_ProcessEvent( uint8 task_id, uint16 events )
 #error HAL_UART_PORT_0/1 should have values of 0,1 respectivly!
 #endif
         uint8 len = Hal_UART_RxBufLen(i);
+#if defined(PROCESS_SERIAL_DATA) || defined(PROCESS_MPPT)
         switch (serial[i].sflow)
         {
+#endif          
 #ifdef PROCESS_SERIAL_DATA
         case 'V':
           if (len >= 16 && serial[i].sbuf_read_pos == 16)
@@ -673,7 +677,9 @@ uint16 BlueBasic_ProcessEvent( uint8 task_id, uint16 events )
             interpreter_run(serial[i].onread, INTERPRETER_CAN_RETURN);
           break;
 #endif
+#if defined(PROCESS_SERIAL_DATA) || defined(PROCESS_MPPT)          
         default:
+#endif
           if (len > 1)
           {
             // copy data when space is available
@@ -692,8 +698,10 @@ uint16 BlueBasic_ProcessEvent( uint8 task_id, uint16 events )
             if (serial[i].onread /*&& serial[i].sbuf_read_pos != 16*/)
               interpreter_run(serial[i].onread, INTERPRETER_CAN_RETURN);    
           }
+ #if defined(PROCESS_SERIAL_DATA) || defined(PROCESS_MPPT)   
           break;
         }
+#endif
       }
     }
     SEMAPHORE_YIELD_SIGNAL();

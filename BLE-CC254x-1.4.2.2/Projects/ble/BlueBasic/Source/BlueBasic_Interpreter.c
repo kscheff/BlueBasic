@@ -1221,9 +1221,11 @@ static void clean_memory(void)
   samplingPortMap = 0;
 #endif
   
+#if ENABLE_YIELD  
   // Stop pending yield event
   OS_yield(0);
-
+#endif
+  
   // Remove any persistent info from the stack.
   sp = (unsigned char*)variables_begin;
   

@@ -72,7 +72,7 @@ os_i2c_t i2c[1];
 unsigned char prevent_sleep_flags = 0; 
 #endif
 
-#if ENABLE_YIELD
+#if ENABLE_YIELD  
 unsigned short bluebasic_yield_linenum;
 #endif
 
