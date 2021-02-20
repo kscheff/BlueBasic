@@ -10,53 +10,7 @@ Console/osx/BlueBasicConsole/BlueBasicConsole.xcodeproj/project.xcworkspace/xcus
 Console/osx/BlueBasicConsole/BlueBasicConsole.xcodeproj/xcuserdata/
 Console/osx/BlueBasicConsole/Builds/
 
-BLE-CC254x-1.4.0/Projects/ble/util/BIM/cc254x/settings/
-BLE-CC254x-1.4.0/Projects/ble/BlueBasic/Build/settings/
-BLE-CC254x-1.4.0/Projects/ble/BlueBasicLoader/Build/settings/
 
-BLE-CC254x-1.4.0/Projects/ble/util/BIM/cc254x/CC254xF256/Exe/
-BLE-CC254x-1.4.0/Projects/ble/util/BIM/cc254x/CC254xF256/Obj/
-BLE-CC254x-1.4.0/Projects/ble/util/BIM/cc254x/CC254xF256/List/
-
-BLE-CC254x-1.4.0/Projects/ble/BlueBasic/Build/CC2540/Exe/
-BLE-CC254x-1.4.0/Projects/ble/BlueBasic/Build/CC2540/Obj/
-BLE-CC254x-1.4.0/Projects/ble/BlueBasic/Build/CC2540/List/
-
-BLE-CC254x-1.4.0/Projects/ble/BlueBasic/Build/CC2541/Exe/
-BLE-CC254x-1.4.0/Projects/ble/BlueBasic/Build/CC2541/Obj/
-BLE-CC254x-1.4.0/Projects/ble/BlueBasic/Build/CC2541/List/
-
-BLE-CC254x-1.4.0/Projects/ble/BlueBasic/Build/CC2540-ImgB/Exe/
-BLE-CC254x-1.4.0/Projects/ble/BlueBasic/Build/CC2540-ImgB/Obj/
-BLE-CC254x-1.4.0/Projects/ble/BlueBasic/Build/CC2540-ImgB/List/
-
-BLE-CC254x-1.4.0/Projects/ble/BlueBasic/Build/CC2541-ImgB/Exe/
-BLE-CC254x-1.4.0/Projects/ble/BlueBasic/Build/CC2541-ImgB/Obj/
-BLE-CC254x-1.4.0/Projects/ble/BlueBasic/Build/CC2541-ImgB/List/
-
-BLE-CC254x-1.4.0/Projects/ble/BlueBasic/Build/Petra/Exe/
-BLE-CC254x-1.4.0/Projects/ble/BlueBasic/Build/Petra/Obj/
-BLE-CC254x-1.4.0/Projects/ble/BlueBasic/Build/Petra/List/
-
-BLE-CC254x-1.4.0/Projects/ble/BlueBasicLoader/Build/CC2540/Exe/
-BLE-CC254x-1.4.0/Projects/ble/BlueBasicLoader/Build/CC2540/Obj/
-BLE-CC254x-1.4.0/Projects/ble/BlueBasicLoader/Build/List/
-
-BLE-CC254x-1.4.0/Projects/ble/BlueBasicLoader/Build/CC2541/Exe/
-BLE-CC254x-1.4.0/Projects/ble/BlueBasicLoader/Build/CC2541/Obj/
-BLE-CC254x-1.4.0/Projects/ble/BlueBasicLoader/Build/CC2541/List/
-
-BLE-CC254x-1.4.0/Projects/ble/BlueBasicLoader/Build/CC2540-ImgA/Exe/
-BLE-CC254x-1.4.0/Projects/ble/BlueBasicLoader/Build/CC2540-ImgA/Obj/
-BLE-CC254x-1.4.0/Projects/ble/BlueBasicLoader/Build/CC2540-ImgA/List/
-
-BLE-CC254x-1.4.0/Projects/ble/BlueBasicLoader/Build/CC2541-ImgA/Exe/
-BLE-CC254x-1.4.0/Projects/ble/BlueBasicLoader/Build/CC2541-ImgA/Obj/
-BLE-CC254x-1.4.0/Projects/ble/BlueBasicLoader/Build/CC2541-ImgA/List/
-
-BLE-CC254x-1.4.0/Projects/ble/BlueBasicLoader/Build/Petra/Exe/
-BLE-CC254x-1.4.0/Projects/ble/BlueBasicLoader/Build/Petra/Obj/
-BLE-CC254x-1.4.0/Projects/ble/BlueBasicLoader/Build/Petra/List/
 *.d51
 *.sim
 *.r51
@@ -70,12 +24,6 @@ BLE-CC254x-1.4.0/Projects/ble/BlueBasicLoader/Build/Petra/List/
 *.dbgdt
 *.s51
 *.map
-BLE-CC254x-1.4.0/Projects/ble/BlueBasic/Build/BlueBattery-ImgB/Exe
-BLE-CC254x-1.4.0/Projects/ble/BlueBasic/Build/BlueBattery-ImgB/Obj
-BLE-CC254x-1.4.0/Projects/ble/BlueBasic/Build/BlueBattery/Exe
-BLE-CC254x-1.4.0/Projects/ble/BlueBasic/Build/BlueBattery/Obj
-BLE-CC254x-1.4.0/Projects/ble/BlueBasic/Build/BlueSolar/Exe
-BLE-CC254x-1.4.0/Projects/ble/BlueBasic/Build/BlueSolar/Obj
 
 BLE-CC254x-1.4.2.2/Projects/ble/util/BIM/cc254x/settings/
 BLE-CC254x-1.4.2.2/Projects/ble/BlueBasic/Build/settings/
@@ -129,10 +77,7 @@ BLE-CC254x-1.4.2.2/Projects/ble/BlueBasicLoader/Build/Petra/List/
 *.map
 *.pbd
 *.browse
-BLE-CC254x-1.4.0/Projects/ble/BlueBasic/Build/BlueBattery-ImgB/Obj
-BLE-CC254x-1.4.0/Projects/ble/BlueBasic/Build/BlueBattery/Obj
-BLE-CC254x-1.4.0/Projects/ble/BlueBasic/Build/BlueSolar-ImgB/Obj
-BLE-CC254x-1.4.0/Projects/ble/BlueBasic/Build/BlueSolar/Obj
+
 *.d51
 BLE-CC254x-1.4.2.2/Projects/ble/BlueBasic/Build/BlueBattery/Exe
 BLE-CC254x-1.4.2.2/Projects/ble/BlueBasic/Build/BlueBattery/Obj
@@ -141,7 +86,6 @@ BLE-CC254x-1.4.2.2/Projects/ble/BlueBasic/Build/BlueSolar/Obj
 BLE-CC254x-1.4.2.2/Projects/ble/BlueBasic/Build/BlueSteca/Obj
 *.ewt
 
-BLE-CC254x-1.5.0.16
 BLE-CC254x-1.4.2.2/Projects/ble/BlueBasic/Build/BlueBattery-D1/Obj
 BLE-CC254x-1.4.2.2/Projects/ble/BlueBasic/Build/BlueBattery-MPPT/Obj
 BLE-CC254x-1.4.2.2/Projects/ble/util/BIM/cc254x/BBX/Obj
