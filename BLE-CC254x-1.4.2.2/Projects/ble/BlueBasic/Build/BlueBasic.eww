@@ -8,15 +8,27 @@
             <name>All</name>
             <member>
                 <project>BlueBasic</project>
-                <configuration>CC2540-ImgB</configuration>
+                <configuration>BBX</configuration>
             </member>
             <member>
                 <project>BlueBasic</project>
-                <configuration>CC2541-ImgB</configuration>
+                <configuration>BlueBattery</configuration>
             </member>
             <member>
                 <project>BlueBasic</project>
-                <configuration>Petra</configuration>
+                <configuration>BlueBattery-D1</configuration>
+            </member>
+            <member>
+                <project>BlueBasic</project>
+                <configuration>BlueBattery-MPPT</configuration>
+            </member>
+            <member>
+                <project>BlueBasic</project>
+                <configuration>BlueSolar</configuration>
+            </member>
+            <member>
+                <project>BlueBasic</project>
+                <configuration>BlueSteca</configuration>
             </member>
         </batchDefinition>
         <batchDefinition>
