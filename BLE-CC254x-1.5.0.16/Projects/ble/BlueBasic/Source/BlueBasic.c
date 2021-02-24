@@ -859,9 +859,10 @@ static void bluebasic_StateNotificationCB( gaprole_States_t newState )
                          &advertEnabled);
       
       // Reset flag for next connection.
-      first_conn_flag = 0;
+//      first_conn_flag = 0;
     }
-    break;
+//    break;
+    // fall through and enable connectable advertising...
 #endif //PLUS_BROADCASTER         
 
     case GAPROLE_WAITING_AFTER_TIMEOUT:
