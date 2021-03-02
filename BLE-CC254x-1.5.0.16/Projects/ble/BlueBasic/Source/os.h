@@ -378,8 +378,10 @@ extern unsigned char bluebasic_block_execution;
 // bit 1: block during ble connection
 // bit 2: block durig flash compact
 extern unsigned char bluebasic_block_execution;
-#define BLUEBASIC_BLOCK_SET(A)   bluebasic_block_execution |= (A)
-#define BLUEBASIC_BLOCK_CLR(A)   bluebasic_block_execution &= ~(A)
+#define BLOCK(x) x
+//#define BLOCK(x) HAL_CRITICAL_STATEMENT(x)
+#define BLUEBASIC_BLOCK_SET(A)   BLOCK(bluebasic_block_execution |= (A))
+#define BLUEBASIC_BLOCK_CLR(A)   BLOCK(bluebasic_block_execution &= ~(A))
 #define SEMAPHORE_READ_WAIT()    BLUEBASIC_BLOCK_SET(0x01)
 #define SEMAPHORE_READ_SIGNAL()  BLUEBASIC_BLOCK_CLR(0x01)
 #define SEMAPHORE_CONN_WAIT()    //BLUEBASIC_BLOCK_SET(0x02)
