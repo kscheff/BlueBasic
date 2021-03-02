@@ -73,16 +73,28 @@ extern "C"
    Serial Port Baudrate Settings
    Have to match with baudrate table
 */
-  
-//#define HAL_UART_BR_1200  
-//#define HAL_UART_BR_2400  
-//#define HAL_UART_BR_4800  
-#define HAL_UART_BR_9600   0x00
-#define HAL_UART_BR_19200  0x01
-#define HAL_UART_BR_38400  0x02
-#define HAL_UART_BR_57600  0x03
-#define HAL_UART_BR_115200 0x04
-#define HAL_UART_BR_1000   0x10
+
+// generate baud rate setting code  
+#define HAL_MAKE_BR(baud,gcr) (baud<<8|gcr)
+// access baud rate settings from code
+#define HAL_BR_BAUD(x) (x >> 8)
+#define HAL_BR_GCR(x)  (x & 0xff)
+
+#define HAL_UART_BR_1000    HAL_MAKE_BR(6,5)
+#define HAL_UART_BR_1200    HAL_MAKE_BR(59,5) 
+#define HAL_UART_BR_2400    HAL_MAKE_BR(59,6) 
+#define HAL_UART_BR_4800    HAL_MAKE_BR(59,7) 
+#define HAL_UART_BR_9600    HAL_MAKE_BR(59,8)
+#define HAL_UART_BR_19200   HAL_MAKE_BR(59,9)
+#define HAL_UART_BR_38400   HAL_MAKE_BR(59,10)
+#define HAL_UART_BR_57600   HAL_MAKE_BR(216,10)
+#define HAL_UART_BR_115200  HAL_MAKE_BR(216,11)
+#define HAL_UART_BR_230400  HAL_MAKE_BR(216,12)
+#define HAL_UART_BR_460800  HAL_MAKE_BR(216,13
+#define HAL_UART_BR_921600  HAL_MAKE_BR(216,14)
+#define HAL_UART_BR_1000000 HAL_MAKE_BR(0,15)
+#define HAL_UART_BR_1500000 HAL_MAKE_BR(128,15)
+#define HAL_UART_BR_2000000 HAL_MAKE_BR(0,16)
 
 /* Frame Format constant */
 
@@ -140,7 +152,7 @@ typedef struct
 typedef struct
 {
   bool                configured;
-  uint8               baudRate;
+  uint16              baudRate;
   bool                flowControl;
   uint16              flowControlThreshold;
   uint8               idleTimeout;

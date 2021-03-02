@@ -308,44 +308,10 @@ static void HalUARTOpenISR(halUARTCfg_t *config)
                   (config->baudRate == HAL_UART_BR_115200) ||
                   (config->baudRate == HAL_UART_BR_1000));
 
-  if (config->baudRate == HAL_UART_BR_1000)
-  {
-    UxBAUD = 6;
-  }
-  else
-  {
-    if (config->baudRate == HAL_UART_BR_57600 ||
-        config->baudRate == HAL_UART_BR_115200)
-    {
-      UxBAUD = 216;
-    }
-    else
-    {
-      UxBAUD = 59;
-    }
-  }  
+  // baudRate encodes the settings for matissa and exponent
+  UxGCR = HAL_BR_GCR(config->baudRate);
+  UxBAUD = HAL_BR_BAUD(config->baudRate);
   
-  switch (config->baudRate)
-  {
-    case HAL_UART_BR_1000:
-      UxGCR = 5;
-      break;
-    case HAL_UART_BR_9600:
-      UxGCR = 8;
-      break;
-    case HAL_UART_BR_19200:
-      UxGCR = 9;
-      break;
-    case HAL_UART_BR_38400:
-    case HAL_UART_BR_57600:
-      UxGCR = 10;
-      break;
-    default:
-      // HAL_UART_BR_115200
-      UxGCR = 11;
-      break;
-  }
-
   // 8 bits/char; no parity; 1 stop bit; stop bit hi.
   if (config->flowControl)
   {
