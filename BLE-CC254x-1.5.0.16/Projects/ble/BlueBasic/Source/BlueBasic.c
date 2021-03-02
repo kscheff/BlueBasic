@@ -548,6 +548,7 @@ uint16 BlueBasic_ProcessEvent( uint8 task_id, uint16 events )
   if ( events & BLUEBASIC_INPUT_AVAILABLE )
   {
     interpreter_loop();
+    SEMAPHORE_INPUT_SIGNAL();
     return (events ^ BLUEBASIC_INPUT_AVAILABLE);
   }
 

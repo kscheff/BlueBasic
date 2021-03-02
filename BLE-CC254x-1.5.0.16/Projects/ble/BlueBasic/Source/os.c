@@ -115,6 +115,8 @@ void OS_type(char c)
       break;
     case NL:
     case CR:
+      // stop other interpreter activities
+      SEMAPHORE_INPUT_WAIT();
 #ifdef ENABLE_CONSOLE_ECHO
       OS_putchar('\n');
 #endif // ENABLE_CONSOLE_ECHO
