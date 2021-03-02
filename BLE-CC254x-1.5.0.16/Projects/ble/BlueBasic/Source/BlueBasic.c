@@ -271,6 +271,19 @@ unsigned char bluebasic_block_execution;
  * LOCAL FUNCTIONS
  */
    
+
+#ifdef DEBUG_SERIAL
+#define DEBUG_OUT(x) OS_serial_write(1,x)
+void debugPutMsg(unsigned char id, unsigned char msg) {
+  DEBUG_OUT(id);
+  DEBUG_OUT(msg);
+  DEBUG_OUT('\n');
+}
+#define DEBUG_ROLE(m) debugPutMsg('R', '0' + m)
+#else
+#define DEBUG_ROLE(m)
+#define DEBUG_OUT(x)
+#endif
 /*********************************************************************
  * PROFILE CALLBACKS
  */
@@ -404,6 +417,10 @@ void BlueBasic_Init( uint8 task_id )
   VOID OADTarget_AddService();                    // OAD Profile
 #endif
 
+#ifdef DEBUG_SERIAL
+  // use Port 1 for debug output
+   OS_serial_open(1, DEBUG_SERIAL, 'N', 8, 1,'N', 0, 0);
+#endif  
   // Enable clock divide on halt
   // This reduces active current while radio is active and CC254x MCU
   // is halted
@@ -566,10 +583,13 @@ uint16 BlueBasic_ProcessEvent( uint8 task_id, uint16 events )
     events ^= BLUEBASIC_EVENT_CON;
   }
 
-  if ( bluebasic_block_execution )
+  if ( bluebasic_block_execution ) {
 //    return 0;  // discard all events
+  //  DEBUG_OUT('|');
     return events; // keep events spinning
-
+  }
+  //DEBUG_OUT('-');
+  
   // in case events come in we need to block
   // until any previouse interpreter task returns
   SEMAPHORE_YIELD_WAIT();
@@ -683,6 +703,14 @@ uint16 BlueBasic_ProcessEvent( uint8 task_id, uint16 events )
 #endif
           if (len > 1)
           {
+#ifdef DEBUG_SERIAL
+            if (i == 1) {
+              while (HalUARTRead(i, serial[i].sbuf, 1)) {
+                OS_type(serial[i].sbuf[0]);
+              }
+              break;
+            }
+#endif          
             // copy data when space is available
             //if (serial[i].sbuf_read_pos != 0)
             {
@@ -779,6 +807,7 @@ static void bluebasic_StateNotificationCB( gaprole_States_t newState )
    
 #if defined ENABLE_YIELD && ENABLE_YIELD  
 //  P1DIR |= 1;
+  DEBUG_ROLE(newState);
   switch ( newState )
   {
   case GAPROLE_STARTED:
@@ -892,6 +921,7 @@ static void bluebasic_StateNotificationCB( gaprole_States_t newState )
 
 uint8 ble_console_write(uint8 ch)
 {
+  DEBUG_OUT(ch);   //echo console output
   if (ble_console_enabled)
   {
     // write buffer is full, so we run osal to get it empty
@@ -942,6 +972,7 @@ static uint8 blueBasic_deviceFound( gapObserverRoleEvent_t *pEvent )
 static bStatus_t consoleProfile_ReadAttrCB(uint16 connHandle, gattAttribute_t *pAttr, uint8 *pValue, uint8 *pLen, uint16 offset, uint8 maxLen, uint8 method)
 {
   uint8 len;
+  //DEBUG_OUT('*');
   for (len = 0; io.writein != io.writeout && len < maxLen; len++ )
   {
     *pValue++ = *io.writeout++;
@@ -959,7 +990,7 @@ static bStatus_t consoleProfile_WriteAttrCB(uint16 connHandle, gattAttribute_t *
 {
   unsigned char i;
   bStatus_t status = SUCCESS;
-  
+  //DEBUG_OUT('&');  
   if (pAttr->type.len == ATT_BT_UUID_SIZE)
   {
     uint16 uuid = BUILD_UINT16( pAttr->type.uuid[0], pAttr->type.uuid[1]);

@@ -443,8 +443,13 @@ unsigned char OS_serial_open(unsigned char port, unsigned long baud, unsigned ch
   {
     return 1;
   }
+#ifdef DEBUG_SERIAL
+  if ((port == 1) && (baud != DEBUG_SERIAL)) {
+    return 0;
+  }
+#endif    
   OS_serial_close(port); // stop before we reconfigure
-  
+    
 // saves some bytes due to simplier compare uint8
 #define SHIFT9(BR) ((BR)>>9)  
   switch ((uint8)SHIFT9(baud))
@@ -467,6 +472,26 @@ unsigned char OS_serial_open(unsigned char port, unsigned long baud, unsigned ch
     case SHIFT9(115200):
       cbaud = HAL_UART_BR_115200;
       break;
+#if DEBUG_SERIAL == 921600     
+    case SHIFT9(DEBUG_SERIAL) & 0xff:
+      cbaud = HAL_UART_BR_921600;
+      break;
+#endif
+#if DEBUG_SERIAL == 1000000     
+    case SHIFT9(DEBUG_SERIAL) & 0xff:
+      cbaud = HAL_UART_BR_1000000;
+      break;
+#endif
+#if DEBUG_SERIAL == 1500000     
+    case SHIFT9(DEBUG_SERIAL) & 0xff:
+      cbaud = HAL_UART_BR_1500000;
+      break;
+#endif
+#if DEBUG_SERIAL == 2000000     
+    case SHIFT9(DEBUG_SERIAL) & 0xff:
+      cbaud = HAL_UART_BR_2000000;
+      break;
+#endif
     default:
       return 2;
   }
@@ -568,6 +593,10 @@ unsigned char OS_serial_close(unsigned char port)
   {
     return 0;
   }
+#ifdef DEBUG_SERIAL
+  if (port == 1)
+    return 1;
+#endif  
   serial[port].onread = 0;
   serial[port].onwrite = 0;
 #if !(UART_USE_CALLBACK)

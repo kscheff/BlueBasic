@@ -6236,6 +6236,12 @@ static unsigned short ble_max_offset(gatt_variable_ref* vref, unsigned short off
   return moffset;
 }
 
+#ifdef DEBUG_SERIAL
+#define DEBUG_OUT(x) OS_serial_write(1,x)
+#else
+#define DEBUG_OUT(x)
+#endif
+
 //
 // When a BLE characteristic is read, we process the incoming request from
 // the appropriate BASIC variable. If an ONREAD event is specified we notify the user
@@ -6247,6 +6253,8 @@ static unsigned char ble_read_callback(unsigned short handle, gattAttribute_t* a
   unsigned char moffset;
   unsigned char* v;
   variable_frame* frame;
+  
+  DEBUG_OUT('<');
   
   if (attr->type.uuid == ble_client_characteristic_config_uuid)
   {
@@ -6309,6 +6317,8 @@ static unsigned char ble_write_callback(unsigned short handle, gattAttribute_t* 
   unsigned char moffset;
   unsigned char* v;
   variable_frame* frame;
+
+  DEBUG_OUT('>');
   
   if (attr->type.uuid == ble_client_characteristic_config_uuid)
   {
@@ -6358,6 +6368,7 @@ static unsigned char ble_write_callback(unsigned short handle, gattAttribute_t* 
 //
 static void ble_notify_assign(gatt_variable_ref* vref)
 {
+  DEBUG_OUT('!');
   GATTServApp_ProcessCharCfg(vref->cfg, &(vref->var),
                              FALSE, vref->attrs,
                              ((unsigned short*)vref->attrs)[-1], INVALID_TASK_ID,
