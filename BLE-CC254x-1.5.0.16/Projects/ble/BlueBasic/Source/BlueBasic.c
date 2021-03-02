@@ -286,6 +286,9 @@ void debugPutMsg(unsigned char id, unsigned char msg) {
 #define DEBUG_ROLE(m)
 #define DEBUG_OUT(x)
 #endif
+
+void HCI_config();
+
 /*********************************************************************
  * PROFILE CALLBACKS
  */
@@ -425,10 +428,19 @@ void BlueBasic_Init( uint8 task_id )
   VOID OADTarget_AddService();                    // OAD Profile
 #endif
 
+  // setup custom HCI config
+  HCI_config();
+  
+  // Setup a delayed profile startup
+  osal_set_event( blueBasic_TaskID, BLUEBASIC_START_DEVICE_EVT );
+  
 #ifdef DEBUG_SERIAL
   // use Port 1 for debug output
    OS_serial_open(1, DEBUG_SERIAL, 'N', 8, 1,'N', 0, 0);
 #endif  
+}
+
+void HCI_config() {
   // Enable clock divide on halt
   // This reduces active current while radio is active and CC254x MCU
   // is halted
@@ -454,9 +466,7 @@ void BlueBasic_Init( uint8 task_id )
   HCI_EXT_OverlappedProcessingCmd(HCI_EXT_ENABLE_OVERLAPPED_PROCESSING);
   // Overlap disable
 //  HCI_EXT_OverlappedProcessingCmd(HCI_EXT_DISABLE_OVERLAPPED_PROCESSING);
-#endif
-  // Setup a delayed profile startup
-  osal_set_event( blueBasic_TaskID, BLUEBASIC_START_DEVICE_EVT );
+#endif  
 }
 
 /*********************************************************************
@@ -895,6 +905,10 @@ static void bluebasic_StateNotificationCB( gaprole_States_t newState )
       // Disable non-connectable advertising.
       GAPRole_SetParameter(GAPROLE_ADV_NONCONN_ENABLED, sizeof(uint8),
                          &advertEnabled);
+      
+      // reset HCI to overcome issue "non-advertizing when disconnected"
+      HCI_ResetCmd();
+      HCI_config();
       
       // Reset flag for next connection.
 //      first_conn_flag = 0;
