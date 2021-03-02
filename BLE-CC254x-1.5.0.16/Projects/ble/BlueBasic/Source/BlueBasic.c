@@ -120,6 +120,8 @@
 #define DEFAULT_DESIRED_CONN_TIMEOUT          DEFAULT_CONNECTION_TIMEOUT
 // Whether to enable automatic parameter update request when a connection is formed
 #define DEFAULT_ENABLE_UPDATE_REQUEST         TRUE
+// Advertising Off Time for Limited advertisements (in milliseconds). Read/Write. Size is uint16. Default is 30 seconds.
+#define DEFAULT_DESIRED_ADVERT_OFF_TIME               8000
 
 // Connection Pause Peripheral time value (in seconds)
 #define DEFAULT_CONN_PAUSE_PERIPHERAL         8
@@ -372,6 +374,12 @@ void BlueBasic_Init( uint8 task_id )
     GAPRole_SetParameter( GAPROLE_MAX_CONN_INTERVAL, sizeof( uint16 ), &desired_max_interval );
     GAPRole_SetParameter( GAPROLE_SLAVE_LATENCY, sizeof( uint16 ), &desired_slave_latency );
     GAPRole_SetParameter( GAPROLE_TIMEOUT_MULTIPLIER, sizeof( uint16 ), &desired_conn_timeout );
+#ifdef DEFAULT_DESIRED_ADVERT_OFF_TIME
+    // this time defines the wait time after connection closed/lost before it starts advertizing again 
+    // the default 30 seconds is too long, users are impatient and are getting irritated
+    uint16 desired_advert_off_time = DEFAULT_DESIRED_ADVERT_OFF_TIME;
+    GAPRole_SetParameter( GAPROLE_ADVERT_OFF_TIME, sizeof( uint16 ), &desired_advert_off_time );    
+#endif
   }
   
   // Set desired default connection parameters
