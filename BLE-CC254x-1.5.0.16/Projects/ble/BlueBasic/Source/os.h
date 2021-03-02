@@ -220,6 +220,8 @@ extern bStatus_t GAP_SetParamValue( gapParamIDs_t paramID, uint16 paramValue );
 #define SEMAPHORE_CONN_SIGNAL()
 #define SEMAPHORE_FLASH_WAIT()
 #define SEMAPHORE_FLASH_SIGNAL()
+#define SEMAPHORE_INPUT_WAIT()
+#define SEMAPHORE_INPUT_SIGNAL()
 
 #define OS_MAX_SERIAL 2
 
