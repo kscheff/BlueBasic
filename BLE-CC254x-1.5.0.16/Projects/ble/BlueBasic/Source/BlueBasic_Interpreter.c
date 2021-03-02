@@ -3622,11 +3622,11 @@ cmd_open:
       if (*txtpos != NL)
       {
         value = expression(EXPR_NORMAL);
-        if (error_num || value > file->modulo || value < 0)
+        if (error_num || value < 0)
         {
           GOTO_QWHAT;
         }
-        file->record = value;
+        file->record = value % file->modulo; // keep record in bounds with modulo
         hasOffset = TRUE;
       }
     }  
