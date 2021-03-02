@@ -1669,7 +1669,7 @@ static VAR_TYPE expression(unsigned char mode)
                 queueptr[-1] = OS_rand() % top;
                 break;
               case FUNC_EOF:
-                if (top < 0 || top > FS_NR_FILE_HANDLES || !files[top].action)
+                if (top < 0 || top >= FS_NR_FILE_HANDLES || !files[top].action)
                 {
                   goto expr_error;
                 }
