@@ -19,7 +19,7 @@ Major differences since Tim left:
 - increased flashstore from 4 to 8 and 10 (-BBX) pages
 - multitasking with adaptive time slicing to keep BLE connection alive
 - file OPEN supports modulo and record pointer positioning e.g. for ring log buffering
-- suport for persistant SNV files "0" to "9" surviving OAD updates
+- support for persistant SNV files "0" to "9" surviving OAD updates
 - TIMER based ADC sampling with optional RMS calulation, supports differential analog input
 - support for 2nd UART
 - numerouse other fixes and improvements
