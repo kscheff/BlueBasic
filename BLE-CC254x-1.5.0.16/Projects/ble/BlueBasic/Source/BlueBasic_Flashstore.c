@@ -49,6 +49,12 @@ static unsigned short** lineindexend;
 #define KEEP_ALIVE()
 #endif
 
+#if __APPLE__
+#define CHECK_VDD()
+#else
+#define CHECK_VDD() if (OS_get_vdd_7() <= 100) { SystemReset(); }
+#endif
+
 //
 // Flash page structure:
 //  <age:4><data:FLASHSTORE_PAGESIZE-4>
@@ -429,6 +435,7 @@ unsigned char** flashstore_deleteall(void)
     if (orderedpages[pg].free != FLASHSTORE_PAGESIZE - sizeof(flashpage_age))
     {
       const unsigned char* base = FLASHSTORE_PAGEBASE(pg);
+      CHECK_VDD();
       OS_flashstore_erase(FLASHSTORE_FPAGE(base));
       lastage++;
       OS_flashstore_write(FLASHSTORE_FADDR(base), (unsigned char*)&lastage, FLASHSTORE_WORDS(sizeof(lastage)));
@@ -555,6 +562,7 @@ void flashstore_compact(unsigned char len, unsigned char* tempmemstart, unsigned
     }
     ptr += itemlen;
   }
+  CHECK_VDD();
   // Erase the page
   OS_flashstore_erase(FLASHSTORE_FPAGE(flash));
   *(flashpage_age*)tempmemstart = ++lastage; 
