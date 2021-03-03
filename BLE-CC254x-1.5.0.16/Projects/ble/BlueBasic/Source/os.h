@@ -186,8 +186,8 @@ typedef unsigned char (*pfnGATTReadAttrCB_t)( uint16 connHandle, gattAttribute_t
 typedef uint16 gapParamIDs_t;
 
 typedef unsigned char halIntState_t;
-#define HAL_ENTER_CRITICAL_SECTION(x)
-#define HAL_EXIT_CRITICAL_SECTION(x)
+#define HAL_ENTER_CRITICAL_SECTION(x) (void)x
+#define HAL_EXIT_CRITICAL_SECTION(x)  (void)x
 #define HAL_CRITICAL_STATEMENT(x)       (x;)
 
 #define OS_enable_sleep(x)
@@ -568,4 +568,4 @@ unsigned char OS_i2c_write(unsigned char port, unsigned char ch);
 unsigned char OS_i2c_available(unsigned char port, unsigned char ch);
 int16 OS_get_temperature(uint8 wait);
 extern unsigned char get_snv_length(unsigned char id);
-int8 OS_get_vdd_7();
+int8 OS_get_vdd_7(void);
