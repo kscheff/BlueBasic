@@ -3877,14 +3877,14 @@ cmd_read:
               file->poffset = FLASHSPECIAL_DATA_OFFSET;
               len = special[FLASHSPECIAL_DATA_LEN];
             }
-            unsigned char v = special[file->poffset++];
             if (vframe->type == VAR_DIM_BYTE)
             {
-              *ptr = v;
+              *ptr = special[file->poffset++];
             }
             else if (vframe->type == VAR_INT)
             {
-              *(VAR_TYPE*)ptr = v;
+              *(VAR_TYPE*)ptr = *(VAR_TYPE*)(special+file->poffset);
+              file->poffset += sizeof(VAR_TYPE);
             }
           }
           else if (vframe)
@@ -4156,14 +4156,15 @@ cmd_write:
           unsigned char* ptr = parse_variable_address(&vframe);
           if (ptr)
           {
-            CHECK_HEAP_OOM(1, qhoom);
             if (vframe->type == VAR_DIM_BYTE)
             {
+              CHECK_HEAP_OOM(1, qhoom);
               *iptr = *ptr;
             }
             else
             {
-              *iptr = *(VAR_TYPE*)ptr;
+              CHECK_HEAP_OOM(sizeof(VAR_TYPE), qhoom);
+              *(VAR_TYPE*)iptr = *(VAR_TYPE*)ptr;
             }
           }
           else if (vframe)
