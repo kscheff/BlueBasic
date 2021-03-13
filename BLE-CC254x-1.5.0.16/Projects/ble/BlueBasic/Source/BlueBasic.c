@@ -287,7 +287,87 @@ void debugPutMsg(unsigned char id, unsigned char msg) {
 #define DEBUG_OUT(x)
 #endif
 
-void HCI_config();
+void setupGAPandHCI()
+{
+  // Setup the GAP
+  VOID GAP_SetParamValue( TGAP_CONN_PAUSE_PERIPHERAL, DEFAULT_CONN_PAUSE_PERIPHERAL );
+  
+  // Setup the GAP Peripheral Role Profile
+  {
+    uint8 enable_update_request = DEFAULT_ENABLE_UPDATE_REQUEST;
+    uint16 desired_min_interval = DEFAULT_DESIRED_MIN_CONN_INTERVAL;
+    uint16 desired_max_interval = DEFAULT_DESIRED_MAX_CONN_INTERVAL;
+    uint16 desired_slave_latency = DEFAULT_DESIRED_SLAVE_LATENCY;
+    uint16 desired_conn_timeout = DEFAULT_DESIRED_CONN_TIMEOUT;
+    
+    // Set the GAP Role Parameters
+    GAPRole_SetParameter( GAPROLE_PARAM_UPDATE_ENABLE, sizeof( uint8 ), &enable_update_request );
+    GAPRole_SetParameter( GAPROLE_MIN_CONN_INTERVAL, sizeof( uint16 ), &desired_min_interval );
+    GAPRole_SetParameter( GAPROLE_MAX_CONN_INTERVAL, sizeof( uint16 ), &desired_max_interval );
+    GAPRole_SetParameter( GAPROLE_SLAVE_LATENCY, sizeof( uint16 ), &desired_slave_latency );
+    GAPRole_SetParameter( GAPROLE_TIMEOUT_MULTIPLIER, sizeof( uint16 ), &desired_conn_timeout );
+#ifdef DEFAULT_DESIRED_ADVERT_OFF_TIME
+    // this time defines the wait time after connection closed/lost before it starts advertizing again 
+    // the default 30 seconds is too long, users are impatient and are getting irritated
+    uint16 desired_advert_off_time = DEFAULT_DESIRED_ADVERT_OFF_TIME;
+    GAPRole_SetParameter( GAPROLE_ADVERT_OFF_TIME, sizeof( uint16 ), &desired_advert_off_time );    
+#endif
+  }
+  
+  // Set advertising interval
+  GAP_SetParamValue( TGAP_LIM_DISC_ADV_INT_MIN, DEFAULT_ADVERTISING_INTERVAL );
+  GAP_SetParamValue( TGAP_LIM_DISC_ADV_INT_MAX, DEFAULT_ADVERTISING_INTERVAL );
+  GAP_SetParamValue( TGAP_GEN_DISC_ADV_INT_MIN, DEFAULT_ADVERTISING_INTERVAL );
+  GAP_SetParamValue( TGAP_GEN_DISC_ADV_INT_MAX, DEFAULT_ADVERTISING_INTERVAL );
+  
+#if GAP_BOND_MGR  
+  // Setup the GAP Bond Manager to require pairing with pin code
+  {
+    uint32 passkey = 0; // passkey "000000"
+    uint8 pairMode = GAPBOND_PAIRING_MODE_WAIT_FOR_REQ;
+    uint8 mitm = TRUE;
+    uint8 ioCap = GAPBOND_IO_CAP_DISPLAY_ONLY;
+    uint8 bonding = TRUE;
+    
+    GAPBondMgr_SetParameter( GAPBOND_DEFAULT_PASSCODE, sizeof ( uint32 ), &passkey );
+    GAPBondMgr_SetParameter( GAPBOND_PAIRING_MODE, sizeof ( uint8 ), &pairMode );
+    GAPBondMgr_SetParameter( GAPBOND_MITM_PROTECTION, sizeof ( uint8 ), &mitm );
+    GAPBondMgr_SetParameter( GAPBOND_IO_CAPABILITIES, sizeof ( uint8 ), &ioCap );
+    GAPBondMgr_SetParameter( GAPBOND_BONDING_ENABLED, sizeof ( uint8 ), &bonding );
+  }
+#endif   
+
+  // --- HCI related stuff ---
+  
+  // Enable clock divide on halt
+  // This reduces active current while radio is active and CC254x MCU
+  // is halted
+#if ENABLE_BLE_CONSOLE
+  // do not devide the clock when DMA is configured
+#if !HAL_UART_DMA
+  // See: http://e2e.ti.com/support/wireless_connectivity/f/538/p/169944/668822.aspx#664740
+  HCI_EXT_ClkDivOnHaltCmd(HCI_EXT_ENABLE_CLK_DIVIDE_ON_HALT);
+#ifdef PLUS_BROADCASTER
+  // gapProcessDisconnectCompleteEvt doesn't get through
+  // despite llConnectTerminate comes in
+  // when CPU is halted during RF
+  HCI_EXT_HaltDuringRfCmd(HCI_EXT_HALT_DURING_RF_DISABLE);
+#endif
+#else
+  HCI_EXT_HaltDuringRfCmd(HCI_EXT_HALT_DURING_RF_DISABLE);
+  HCI_EXT_ClkDivOnHaltCmd(HCI_EXT_DISABLE_CLK_DIVIDE_ON_HALT);
+#endif
+#endif
+
+#if !BLUESTECA
+  // Overlap enabled
+  HCI_EXT_OverlappedProcessingCmd(HCI_EXT_ENABLE_OVERLAPPED_PROCESSING);
+  // Overlap disable
+//  HCI_EXT_OverlappedProcessingCmd(HCI_EXT_DISABLE_OVERLAPPED_PROCESSING);
+#endif  
+}
+
+
 
 /*********************************************************************
  * PROFILE CALLBACKS
@@ -357,64 +437,8 @@ void BlueBasic_Init( uint8 task_id )
 #if ENABLE_BLE_CONSOLE
   GAPRole_SetParameter( GAPROLE_ADVERT_DATA, sizeof(consoleAdvert), (void*)consoleAdvert );
 #endif
-  
-#if 1
-  
-  // Setup the GAP
-  VOID GAP_SetParamValue( TGAP_CONN_PAUSE_PERIPHERAL, DEFAULT_CONN_PAUSE_PERIPHERAL );
 
-  // Setup the GAP Peripheral Role Profile
-  {
-    uint8 enable_update_request = DEFAULT_ENABLE_UPDATE_REQUEST;
-    uint16 desired_min_interval = DEFAULT_DESIRED_MIN_CONN_INTERVAL;
-    uint16 desired_max_interval = DEFAULT_DESIRED_MAX_CONN_INTERVAL;
-    uint16 desired_slave_latency = DEFAULT_DESIRED_SLAVE_LATENCY;
-    uint16 desired_conn_timeout = DEFAULT_DESIRED_CONN_TIMEOUT;
-
-    // Set the GAP Role Parameters
-    GAPRole_SetParameter( GAPROLE_PARAM_UPDATE_ENABLE, sizeof( uint8 ), &enable_update_request );
-    GAPRole_SetParameter( GAPROLE_MIN_CONN_INTERVAL, sizeof( uint16 ), &desired_min_interval );
-    GAPRole_SetParameter( GAPROLE_MAX_CONN_INTERVAL, sizeof( uint16 ), &desired_max_interval );
-    GAPRole_SetParameter( GAPROLE_SLAVE_LATENCY, sizeof( uint16 ), &desired_slave_latency );
-    GAPRole_SetParameter( GAPROLE_TIMEOUT_MULTIPLIER, sizeof( uint16 ), &desired_conn_timeout );
-#ifdef DEFAULT_DESIRED_ADVERT_OFF_TIME
-    // this time defines the wait time after connection closed/lost before it starts advertizing again 
-    // the default 30 seconds is too long, users are impatient and are getting irritated
-    uint16 desired_advert_off_time = DEFAULT_DESIRED_ADVERT_OFF_TIME;
-    GAPRole_SetParameter( GAPROLE_ADVERT_OFF_TIME, sizeof( uint16 ), &desired_advert_off_time );    
-#endif
-  }
-  
-  // Set desired default connection parameters
-  GAP_SetParamValue( TGAP_CONN_EST_INT_MIN, DEFAULT_CONNECTION_INTERVAL_MIN);
-  GAP_SetParamValue( TGAP_CONN_EST_INT_MAX, DEFAULT_CONNECTION_INTERVAL_MAX);
-  GAP_SetParamValue( TGAP_CONN_EST_LATENCY, DEFAULT_CONNECTION_LATENCY);
-  GAP_SetParamValue( TGAP_CONN_EST_SUPERV_TIMEOUT, DEFAULT_CONNECTION_TIMEOUT);
-  
-#endif
-
-  // Set advertising interval
-  GAP_SetParamValue( TGAP_LIM_DISC_ADV_INT_MIN, DEFAULT_ADVERTISING_INTERVAL );
-  GAP_SetParamValue( TGAP_LIM_DISC_ADV_INT_MAX, DEFAULT_ADVERTISING_INTERVAL );
-  GAP_SetParamValue( TGAP_GEN_DISC_ADV_INT_MIN, DEFAULT_ADVERTISING_INTERVAL );
-  GAP_SetParamValue( TGAP_GEN_DISC_ADV_INT_MAX, DEFAULT_ADVERTISING_INTERVAL );
-  
-#if GAP_BOND_MGR  
-   // Setup the GAP Bond Manager to require pairing with pin code
-  {
-    uint32 passkey = 0; // passkey "000000"
-    uint8 pairMode = GAPBOND_PAIRING_MODE_WAIT_FOR_REQ;
-    uint8 mitm = TRUE;
-    uint8 ioCap = GAPBOND_IO_CAP_DISPLAY_ONLY;
-    uint8 bonding = TRUE;
-
-    GAPBondMgr_SetParameter( GAPBOND_DEFAULT_PASSCODE, sizeof ( uint32 ), &passkey );
-    GAPBondMgr_SetParameter( GAPBOND_PAIRING_MODE, sizeof ( uint8 ), &pairMode );
-    GAPBondMgr_SetParameter( GAPBOND_MITM_PROTECTION, sizeof ( uint8 ), &mitm );
-    GAPBondMgr_SetParameter( GAPBOND_IO_CAPABILITIES, sizeof ( uint8 ), &ioCap );
-    GAPBondMgr_SetParameter( GAPBOND_BONDING_ENABLED, sizeof ( uint8 ), &bonding );
-  }
-#endif  
+  setupGAPandHCI();
   
   // Initialize GATT attributes
   GGS_AddService( GATT_ALL_SERVICES );            // GAP
@@ -427,9 +451,6 @@ void BlueBasic_Init( uint8 task_id )
 #if defined FEATURE_OAD
   VOID OADTarget_AddService();                    // OAD Profile
 #endif
-
-  // setup custom HCI config
-  HCI_config();
   
   // Setup a delayed profile startup
   osal_set_event( blueBasic_TaskID, BLUEBASIC_START_DEVICE_EVT );
@@ -440,34 +461,6 @@ void BlueBasic_Init( uint8 task_id )
 #endif  
 }
 
-void HCI_config() {
-  // Enable clock divide on halt
-  // This reduces active current while radio is active and CC254x MCU
-  // is halted
-#if ENABLE_BLE_CONSOLE
-  // do not devide the clock when DMA is configured
-#if !HAL_UART_DMA
-  // See: http://e2e.ti.com/support/wireless_connectivity/f/538/p/169944/668822.aspx#664740
-  HCI_EXT_ClkDivOnHaltCmd(HCI_EXT_ENABLE_CLK_DIVIDE_ON_HALT);
-#ifdef PLUS_BROADCASTER
-  // gapProcessDisconnectCompleteEvt doesn't get through
-  // despite llConnectTerminate comes in
-  // when CPU is halted during RF
-  HCI_EXT_HaltDuringRfCmd(HCI_EXT_HALT_DURING_RF_DISABLE);
-#endif
-#else
-  HCI_EXT_HaltDuringRfCmd(HCI_EXT_HALT_DURING_RF_DISABLE);
-  HCI_EXT_ClkDivOnHaltCmd(HCI_EXT_DISABLE_CLK_DIVIDE_ON_HALT);
-#endif
-#endif
-
-#if !BLUESTECA
-  // Overlap enabled
-  HCI_EXT_OverlappedProcessingCmd(HCI_EXT_ENABLE_OVERLAPPED_PROCESSING);
-  // Overlap disable
-//  HCI_EXT_OverlappedProcessingCmd(HCI_EXT_DISABLE_OVERLAPPED_PROCESSING);
-#endif  
-}
 
 /*********************************************************************
  * @fn      BlueBasic_ProcessEvent
@@ -905,11 +898,14 @@ static void bluebasic_StateNotificationCB( gaprole_States_t newState )
       // Disable non-connectable advertising.
       GAPRole_SetParameter(GAPROLE_ADV_NONCONN_ENABLED, sizeof(uint8),
                          &advertEnabled);
-      
+            
       // reset HCI to overcome issue "non-advertizing when disconnected"
       HCI_ResetCmd();
-      HCI_config();
-      
+      // after HCI reset we need to setup parameters again
+      setupGAPandHCI();
+      // restore current advertizing data
+      GAPRole_SetParameter(GAPROLE_ADVERT_DATA_RESEND, 0, NULL);
+
       // Reset flag for next connection.
 //      first_conn_flag = 0;
     }
