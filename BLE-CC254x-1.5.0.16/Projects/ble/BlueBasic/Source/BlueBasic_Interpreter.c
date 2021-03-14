@@ -1625,21 +1625,10 @@ static VAR_TYPE expression(unsigned char mode)
               {
 #ifdef FEATURE_BOOST_CONVERTER
                 VAR_TYPE top = BlueBasic_rawBattery;
+               *queueptr++ = (top * 3720L) / 511L;
 #else
-                ADCCON3 = 0x0F | 0x10 | 0x00; // VDD/3, 10-bit, internal voltage reference
-#ifdef SIMULATE_PINS
-                ADCCON1 = 0x80;
-#endif
-                while ((ADCCON1 & 0x80) == 0)
-                  ;
-                VAR_TYPE top = ADCL;
-                top |= ADCH << 8;
+               *queueptr++ = (VAR_TYPE)( OS_get_vdd_7() * 3720L / 127);
 #endif // FEATURE_BOOST_CONVERTER
-                top = top >> 6;
-                // VDD can be in the range 2v to 3.6v. Internal reference voltage is 1.24v (per datasheet)
-                // So we're measuring VDD/3 against 1.24v giving us (VDD x 511) / 3.72
-                // or VDD = (ADC * 3.72 / 511). x 1000 to get result in mV.
-                *queueptr++ = (top * 3720L) / 511L;
                 break;
               }
               case FUNC_MILLIS:
