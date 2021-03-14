@@ -186,8 +186,8 @@ typedef unsigned char (*pfnGATTReadAttrCB_t)( uint16 connHandle, gattAttribute_t
 typedef uint16 gapParamIDs_t;
 
 typedef unsigned char halIntState_t;
-#define HAL_ENTER_CRITICAL_SECTION(x)
-#define HAL_EXIT_CRITICAL_SECTION(x)
+#define HAL_ENTER_CRITICAL_SECTION(x) (void)x
+#define HAL_EXIT_CRITICAL_SECTION(x)  (void)x
 #define HAL_CRITICAL_STATEMENT(x)       (x;)
 
 #define OS_enable_sleep(x)
