@@ -341,20 +341,22 @@ bStatus_t GAPRole_SetParameter( uint16 param, uint8 len, void *pValue )
       break;
 
     case GAPROLE_ADVERT_DATA:
-      if ( len <= B_MAX_ADV_LEN )
+      if ( len > B_MAX_ADV_LEN )
+      {
+        ret = bleInvalidRange;
+        break;
+      }
+      else
       {
         VOID osal_memset( gapRole_AdvertData, 0, B_MAX_ADV_LEN );
         VOID osal_memcpy( gapRole_AdvertData, pValue, len );
         gapRole_AdvertDataLen = len;
-        
-        // Update the advertising data
-        ret = GAP_UpdateAdvertisingData( gapRole_TaskID,
-                              TRUE, gapRole_AdvertDataLen, gapRole_AdvertData );
       }
-      else
-      {
-        ret = bleInvalidRange;
-      }
+      // fall through
+    case GAPROLE_ADVERT_DATA_RESEND:
+      // Update the advertising data
+      ret = GAP_UpdateAdvertisingData( gapRole_TaskID,
+                            TRUE, gapRole_AdvertDataLen, gapRole_AdvertData );
       break;
 
     case GAPROLE_SCAN_RSP_DATA:

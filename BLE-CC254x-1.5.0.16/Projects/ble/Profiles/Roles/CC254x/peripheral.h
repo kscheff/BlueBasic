@@ -99,6 +99,10 @@ extern "C"
 #define GAPROLE_PARAM_UPDATE_REQ    0x319  //!< Slave Connection Parameter Update Request. Write. Size is uint8. If TRUE then connection parameter update request is sent.
 #define GAPROLE_STATE               0x31A  //!< Reading this parameter will return GAP Peripheral Role State. Read Only. Size is uint8.
 #define GAPROLE_ADV_NONCONN_ENABLED 0x31B  //!< Enable/Disable Non-Connectable Advertising.  Read/Write.  Size is uint8.  Default is FALSE=Disabled.
+ 
+// custom extensions for BlueBasic
+#define GAPROLE_ADVERT_DATA_RESEND  0x3F0  // custom message to resend advertizing data after e.g. HCI reset
+
 /** @} End GAPROLE_PROFILE_PARAMETERS */
 
 /*-------------------------------------------------------------------
