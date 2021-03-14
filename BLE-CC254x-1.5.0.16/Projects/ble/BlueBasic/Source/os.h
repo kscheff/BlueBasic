@@ -568,3 +568,4 @@ unsigned char OS_i2c_write(unsigned char port, unsigned char ch);
 unsigned char OS_i2c_available(unsigned char port, unsigned char ch);
 int16 OS_get_temperature(uint8 wait);
 extern unsigned char get_snv_length(unsigned char id);
+int8 OS_get_vdd_7(void);

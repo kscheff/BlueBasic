@@ -855,3 +855,21 @@ int16 OS_get_temperature(uint8 wait)
   temp = temp < -4000 ? -4000 : temp > 12500 ? 12500 : temp;
   return temp;
 }
+int8 OS_get_vdd_7()
+{
+  // 7-bit raw
+  // 1.24V reference VDD/3
+  // 1.24V / 127 * 3 per bit
+  // multiply result by 3720/127 to get mV 
+  ADCCON3 = 0x0F | 0x00 | 0x00; // VDD/3, 7-bit, internal voltage reference
+#ifdef SIMULATE_PINS
+  ADCCON1 = 0x80;
+#endif
+  while ((ADCCON1 & 0x80) == 0)
+    ;
+  int8 vdd = ADCH; // only take high byte, since the result is 7 bit
+  // VDD can be in the range 2v to 3.6v. Internal reference voltage is 1.24v (per datasheet)
+  // So we're measuring VDD/3 against 1.24v giving us (VDD x 127) / 3.72
+  // or VDD = (ADC * 3.72 / 127) x 1000 to get result in mV.
+  return vdd;
+}
