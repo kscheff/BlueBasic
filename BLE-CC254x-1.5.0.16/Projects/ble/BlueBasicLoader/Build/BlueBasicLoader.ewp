@@ -319,6 +319,7 @@
                     <state>BB_NO_BOND_SUPPORT</state>
                     <state>xFEATURE_DEVINFO</state>
                     <state>BLUEBASIC</state>
+                    <state>XOSC32K_INSTALLED=FALSE</state>
                 </option>
                 <option>
                     <name>CCPreprocFile</name>
