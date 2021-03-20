@@ -3841,7 +3841,7 @@
                     <state>ENABLE_SNV=1</state>
                     <state>ENABLE_SPI=0</state>
                     <state>ENABLE_WIRE=0</state>
-                    <state>XOSC32K_INSTALLED=TRUE</state>
+                    <state>XOSC32K_INSTALLED=FALSE</state>
                     <state>PLUS_BROADCASTER</state>
                     <state>FEATURE_SAMPLING</state>
                 </option>
@@ -5016,7 +5016,7 @@
                     <state>ENABLE_SNV=1</state>
                     <state>ENABLE_SPI=0</state>
                     <state>ENABLE_WIRE=0</state>
-                    <state>XOSC32K_INSTALLED=TRUE</state>
+                    <state>XOSC32K_INSTALLED=FALSE</state>
                     <state>PLUS_BROADCASTER</state>
                     <state>FEATURE_SAMPLING</state>
                 </option>
@@ -6192,7 +6192,7 @@
                     <state>ENABLE_SNV=1</state>
                     <state>ENABLE_SPI=0</state>
                     <state>ENABLE_WIRE=0</state>
-                    <state>XOSC32K_INSTALLED=TRUE</state>
+                    <state>XOSC32K_INSTALLED=FALSE</state>
                     <state>PLUS_BROADCASTER</state>
                     <state>FEATURE_SAMPLING</state>
                     <state>FLASHSTORE_RES_AREA=14</state>
@@ -7371,7 +7371,7 @@
                     <state>ENABLE_SNV=1</state>
                     <state>ENABLE_SPI=0</state>
                     <state>ENABLE_WIRE=0</state>
-                    <state>XOSC32K_INSTALLED=TRUE</state>
+                    <state>XOSC32K_INSTALLED=FALSE</state>
                     <state>OS_AUTORUN_TIMEOUT=5000</state>
                     <state>DEVINFO_PID=0x2000</state>
                     <state>GAPROLE_DEFAULT_ADV_ENABLED=FALSE</state>
@@ -8552,7 +8552,7 @@
                     <state>ENABLE_SNV=1</state>
                     <state>ENABLE_SPI=0</state>
                     <state>ENABLE_WIRE=0</state>
-                    <state>XOSC32K_INSTALLED=TRUE</state>
+                    <state>XOSC32K_INSTALLED=FALSE</state>
                     <state>PLUS_BROADCASTER</state>
                     <state>OS_AUTORUN_TIMEOUT=5000</state>
                     <state>DEVINFO_PID=0x2000</state>
@@ -9730,7 +9730,7 @@
                     <state>ENABLE_SNV=1</state>
                     <state>ENABLE_SPI=0</state>
                     <state>ENABLE_WIRE=0</state>
-                    <state>XOSC32K_INSTALLED=TRUE</state>
+                    <state>XOSC32K_INSTALLED=FALSE</state>
                     <state>PLUS_BROADCASTER</state>
                     <state>FEATURE_SAMPLING</state>
                 </option>
