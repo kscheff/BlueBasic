@@ -6092,7 +6092,7 @@
                 </option>
                 <option>
                     <name>ChipconRetainPages</name>
-                    <state>0-7,72-79,82-126</state>
+                    <state>0-7,72-79,82-124</state>
                 </option>
                 <option>
                     <name>ChipconFlashPages</name>
