@@ -91,6 +91,64 @@ static const __code aes_hdr_t _aesHdr = {
 
 #endif
 
+#if defined (FEATURE_CALIBRATION) && (!defined (XOSC32K_INSTALLED) || (defined (XOSC32K_INSTALLED) && (XOSC32K_INSTALLED == TRUE)))
+#define MEASURE_PERIODE_XOSC32K() measure_periode_xosc32k()
+uint16 periode_32k = 0;
+
+// measure 32KHz periode in 32MHz ticks
+// it intentionally locks up the CPU by more than 500 ms for a stable xtal
+#pragma inline=forced
+inline static void measure_periode_xosc32k()
+  {
+    HAL_DISABLE_INTERRUPTS();
+    PMUX |= 0xB0;  // 1011 0000  switch 32 KHz clock to P0.3
+    // since we manipulated the XOSC, it needs some time to settle
+    T1CNTL = 0; // clear
+    CLKCONCMD |= 0x04; // set tick speed to 16 MHz
+    T1CTL = 0x0C | 0x01; // start free running Ticks/128
+    while( T1STAT != 0x20)
+      ; // wait until overflow  1/16 MHz*128*65536 = 524.288 ms
+    CLKCONCMD &= ~0x1c; // set tick speed to 32MHz
+    uint8 timeout = 0;
+    // clocks are now setup
+    // check if the 32KHz crystal runs
+    T2CTRL = 1; // start async
+    T2CTRL = 0; // stop  
+    T1CNTL = 0; // clear
+    T2CTRL = 3; // start sync
+    while (!(T2CTRL & 4) && --timeout)
+      ;   // wait until started
+    T1CTL = 1; // start free running 32 MHz
+    timeout = 0;
+    T2CTRL = 2; // stop sync
+    while (T2CTRL & 4 && --timeout)
+      ;   // wait until stop
+    T1CTL = 0; // stop
+    if (timeout > 0)
+    {
+      periode_32k =  T1CNTL;
+      periode_32k |= T1CNTH << 8; // should result in 891
+      // nominal periode is 32MHz / 32768Hz = 976.5625
+      periode_32k += 84; // add clock offset, should result in 977
+    }
+    // switch 32 MHz to P1.2 via Timer 1
+    T1CNTL = 0; // clear
+    T1CTL = 2; // modulo
+    T1CCTL0 = 0x14;
+    T1CC0L = 0;
+    T1CC0H = 0;
+    P1SEL |= 4;
+    P2SEL |= 8;
+    P1DIR |= 4;
+    P2DIR |= 0x80;
+    PERCFG |= 0x40; // timer 1 alt. 2
+//    while (P2DIR & 0x80)
+//        ;  // hang in
+  }
+#else
+#define MEASURE_PERIODE_XOSC32K()
+#endif
+
 /**************************************************************************************************
  * @fn          main
  *
@@ -105,7 +163,10 @@ int main(void)
 {
   /* Initialize hardware */
   HAL_BOARD_INIT();
-
+  
+  /* measure XOSC32K and swizch the clock to P0.3 */
+  MEASURE_PERIODE_XOSC32K();
+  
   // Initialize board I/O
   InitBoard( OB_COLD );
 

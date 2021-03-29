@@ -1886,9 +1886,14 @@ void interpreter_banner(void)
   printmsg(urlmsg);
   printnum(0, flashstore_freemem());
   printmsg(memorymsg);
+#if defined (FEATURE_CALIBRATION) && (!defined (XOSC32K_INSTALLED) || (defined (XOSC32K_INSTALLED) && (XOSC32K_INSTALLED == TRUE)))
+  // report 32 KHz crystal periode
+  extern uint16 periode_32k;
+  printnum (0, periode_32k);
+  printmsg(" clks XOSC32K");
+#endif  
   printmsg(error_msgs[ERROR_OK]);
 }
-
 
 
 //

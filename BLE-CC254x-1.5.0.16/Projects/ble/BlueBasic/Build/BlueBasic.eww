@@ -30,6 +30,10 @@
                 <project>BlueBasic</project>
                 <configuration>BlueSteca</configuration>
             </member>
+            <member>
+                <project>BlueBasic</project>
+                <configuration>BlueBattery-Calibration</configuration>
+            </member>
         </batchDefinition>
         <batchDefinition>
             <name>BlueBattery &amp; BlueSolar &amp; BlueSteca</name>
