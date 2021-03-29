@@ -110,9 +110,15 @@ class DetailViewController: UIViewController, UITextViewDelegate, DeviceDelegate
     }
   }
   
+  var connectTitle: String {
+    get {
+      return current?.name != nil ? "Connected \(current!.name)" : "Connected"
+    }
+  }
+
   var isConnected: Bool {
     get {
-      return status == "Connected" || status == "Upgrade available"
+      return status.hasPrefix("Connected") || status == "Upgrade available"
     }
   }
   
@@ -164,7 +170,7 @@ class DetailViewController: UIViewController, UITextViewDelegate, DeviceDelegate
                       onConnected?(false)
                     }
                   } else {
-                    self.status = "Connected"
+                    self.status = self.connectTitle
                     self.current!.delegate = self
                     self.current!.notify(UUIDS.inputCharacteristicUUID, serviceUUID: UUIDS.commsServiceUUID)
                     onConnected?(true)
@@ -195,7 +201,7 @@ class DetailViewController: UIViewController, UITextViewDelegate, DeviceDelegate
     if wrote > written {
       status = String(format: "Sending...%d%%", 100 * written / wrote)
     } else {
-      status = "Connected"
+      status = connectTitle
       wrote = 0
       written = 0
     }
