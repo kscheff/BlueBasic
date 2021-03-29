@@ -42,10 +42,10 @@ class DetailViewController: UIViewController, UITextViewDelegate, DeviceDelegate
             needupgrade in
             if needupgrade {
               self.status = "Upgrade available"
-              self.navigationItem.rightBarButtonItem = UIBarButtonItem(title: "Upgrade", style: .plain, target: self, action: #selector(DetailViewController.upgrade))
+              self.navigationItem.rightBarButtonItem = self.buttonUpgrade
             } else {
               self.autoUpgrade = nil
-              self.navigationItem.rightBarButtonItem = nil
+              self.navigationItem.rightBarButtonItem = self.buttonRun
             }
           }
 
@@ -94,6 +94,24 @@ class DetailViewController: UIViewController, UITextViewDelegate, DeviceDelegate
 
   override func didReceiveMemoryWarning() {
     super.didReceiveMemoryWarning()
+  }
+  
+  // MARK: - Short cuts
+  
+  let buttonUpgrade = UIBarButtonItem(title: "Upgrade", style: .plain, target: self, action: #selector(DetailViewController.upgrade))
+  
+  let buttonRun = UIBarButtonItem(title: "Run", style: .plain, target: self, action: #selector(DetailViewController.run))
+  
+  let buttonStop = UIBarButtonItem(title: "Stop", style: .plain, target: self, action: #selector(DetailViewController.stop))
+  
+  @objc func run() {
+    _ = write("run\n")
+    navigationItem.rightBarButtonItem = buttonStop
+  }
+  
+  @objc func stop() {
+    _ = write("1\n")  // there is no stop command, so we delete line 1
+    navigationItem.rightBarButtonItem = buttonRun
   }
   
   // MARK: - Console mechanics
