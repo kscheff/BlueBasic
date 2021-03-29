@@ -17,6 +17,7 @@ class DeviceManager: NSObject, CBCentralManagerDelegate {
   var connectCallbacks = OneTimeCallbacks<Bool>()
   var disconnectCallbacks = OneTimeCallbacks<Bool>()
   var findCallbacks = Callbacks<Device>()
+  var filter: [CBUUID]? = nil
   
   override init() {
     super.init()
@@ -37,7 +38,7 @@ class DeviceManager: NSObject, CBCentralManagerDelegate {
     }
   }
   
-  func stopStan() {
+  func stopScan() {
     if scanning {
       scanning = false
       manager.stopScan()
@@ -75,7 +76,7 @@ class DeviceManager: NSObject, CBCentralManagerDelegate {
   }
 
   func scan() {
-    manager.scanForPeripherals(withServices: nil, options: [CBCentralManagerScanOptionAllowDuplicatesKey: true])
+    manager.scanForPeripherals(withServices: filter, options: [CBCentralManagerScanOptionAllowDuplicatesKey: true])
   }
 
   func centralManager(_ central: CBCentralManager, didDiscover peripheral: CBPeripheral, advertisementData: [String : Any], rssi RSSI: NSNumber) {

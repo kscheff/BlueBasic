@@ -7,11 +7,27 @@
 //
 
 import UIKit
+import CoreBluetooth
+
+extension Array where Element: Equatable {
+
+ // Remove first collection element that is equal to the given `object`:
+ mutating func remove(object: Element) {
+     guard let index = firstIndex(of: object) else {return}
+     remove(at: index)
+ }
+
+}
 
 class MasterViewController: UITableViewController {
 
   var names = [Device]()
   var lastIndexPath: IndexPath?
+  var filter: Bool = true
+
+  var buttonFiltered: UIBarButtonItem? = nil
+  var buttonUnfiltered: UIBarButtonItem? = nil
+  var buttonFilterBasic: UIBarButtonItem? = nil
 
   override func awakeFromNib() {
     super.awakeFromNib()
@@ -25,6 +41,10 @@ class MasterViewController: UITableViewController {
     super.viewDidLoad()
     self.refreshControl = UIRefreshControl()
     self.refreshControl?.addTarget(self, action: #selector(MasterViewController.pullToRefresh(_:)), for: .valueChanged)
+    buttonFiltered = UIBarButtonItem(title: "filtered", style: .plain, target: self, action: #selector(tapFiltered))
+    buttonUnfiltered = UIBarButtonItem(title: "unfiltered", style: .plain, target: self, action: #selector(tapUnfiltered))
+    buttonFilterBasic = UIBarButtonItem(title: "BASIC#", style: .plain, target: self, action: #selector(tapFilterBasic))
+    tapFilterBasic()
     scan()
   }
 
@@ -32,15 +52,56 @@ class MasterViewController: UITableViewController {
     super.didReceiveMemoryWarning()
     // Dispose of any resources that can be recreated.
   }
+    
+  @objc func tapUnfiltered() {
+    filter = false
+    stop()
+    scan(services: Array(myUuids.values))
+    navigationItem.rightBarButtonItem = buttonFiltered
+  }
   
-  func scan() {
+  @objc func tapFiltered() {
+    filter = true
+    stop()
+    scan(services: nil)
+    navigationItem.rightBarButtonItem = buttonFilterBasic
+  }
+  
+  @objc func tapFilterBasic() {
+    filter = false
+    stop()
+    scan(services: nil)
+    navigationItem.rightBarButtonItem = buttonUnfiltered
+  }
+  
+  func scan(services: [CBUUID]? = nil) {
+    deviceManager.filter = services
     deviceManager.findDevices() {
       device in
+      if self.filter, self.identify(device: device) != true {
+        self.names.remove(object: device)
+        return
+      }
+      self.aimNotActiveAnymore(device: device)
       if !self.names.contains(device) {
         self.names.append(device)
       }
       self.tableView.reloadData()
     }
+  }
+  
+  func stop() {
+    deviceManager.stopScan()
+  }
+  
+  func identify(device: Device) -> Bool {
+    if device.name.hasPrefix("BASIC#") ||
+       device.name.hasPrefix("BlueBattery") {
+      print(device.name, "OK" )
+      return true
+    }
+    print(device.name)
+    return false
   }
   
   func resignActive() {
@@ -55,6 +116,20 @@ class MasterViewController: UITableViewController {
     names.removeAll(keepingCapacity: false)
     tableView.reloadData();
     sender.endRefreshing()
+  }
+  
+  private func aimNotActiveAnymore(device: Device) {
+    cancelNotActiveAnymore(device: device)
+    self.perform(#selector(self.notActiveAnymore), with: device, afterDelay: 15)
+  }
+  
+  private func cancelNotActiveAnymore(device: Device) {
+    NSObject.cancelPreviousPerformRequests(withTarget: self, selector: #selector(self.notActiveAnymore), object: device)
+  }
+  
+  @objc func notActiveAnymore(device: Device) {
+    names.remove(object: device)
+    tableView.reloadData()
   }
   
   // MARK: - Segues
