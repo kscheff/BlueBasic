@@ -257,21 +257,22 @@ void main(void)
   
 #ifdef FORCE_OAD_IMAGE_A_CHECK      
   {
+  // new Version for board with 74LVC2G17 level shifter
   // check input Ports to force running Image A for OAD
   // external short between P02 (UART0_RX) and P03 (UART0_TX)
-  // switch RX as output, TX as input
+  // switch RX as input, TX as output
   P0SEL = 0; // switch P0 as GPIO
-  P0INP = 8; // input mode pull up/down on
+  P0INP = 4; // input mode pull up/down on
   P2INP = 0; // witch P0 to pullup
-  P0DIR = 0x04; // switch P02 to output (should have series resitor of 1K)
+  P0DIR = 0x08; // switch P03 to output (should have series resitor of 1K)
   unsigned char pattern;
   for (pattern = 0xaa; pattern; pattern >>= 1)
   {
-    for (unsigned cnt = 10; --cnt ; )
+    for (unsigned cnt = 10; --cnt ; )  // runs with ca. 37 kHz
     {
-      P0 = (pattern & 1) << 2;
+      P0 = (pattern & 1) << 3;
     }
-    if ( ((P0 & 0x08) >> 3) != (pattern & 1) )
+    if ( ((P0 & 0x04) >> 2) != (pattern & 1) )
         break;
   }
   P0DIR = 0; // switch all to input
@@ -280,6 +281,7 @@ void main(void)
   }
 #endif // FORCE_OAD_IMAGE_A  
   
+
   // Prefer to run Image-B over Image-A so that Image-A does not have to invalidate itself.
   HalFlashRead(BIM_IMG_B_PAGE, BIM_CRC_OSET, (uint8 *)crc, 4);
 
