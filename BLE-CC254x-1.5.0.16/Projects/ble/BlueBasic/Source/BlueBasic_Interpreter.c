@@ -5244,22 +5244,13 @@ void interpreter_sampling(void)
   switch (PIN_MAJOR(samplingStrobePin))
   {
   case 0:
-    if (samplingStrobePolarity)
-      P0 &= ~samplingStrobePin;
-    else
-      P0 |= samplingStrobePin;
+    P0 ^= samplingStrobePin;
     break;
   case 1:
-    if (samplingStrobePolarity)
-      P1 &= ~samplingStrobePin;
-    else
-      P1 |= samplingStrobePin;
+    P1 ^= samplingStrobePin;
     break;
   default:  // 2
-    if (samplingStrobePolarity)
-      P2 &= ~samplingStrobePin;
-    else
-      P2 |= samplingStrobePin;
+    P2 ^= samplingStrobePin;
     break;
   }  
 }
