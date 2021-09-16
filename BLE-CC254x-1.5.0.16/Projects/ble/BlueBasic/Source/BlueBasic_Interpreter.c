@@ -725,8 +725,8 @@ static struct {
 uint8 true_rms = 0;  // aquistion mode in timer based sampling
 #endif
 
-unsigned char samplingTimer;    // associated timer id
-static unsigned short samplingDelay;    // delay after strobe in µs
+unsigned short samplingPeriode;
+static unsigned short samplingDuty; 
 static unsigned short samplingStrobePin;
 static unsigned short samplingStrobePolarity;
 #endif
@@ -4782,14 +4782,14 @@ i2c_end:
 //  in timer based sampling select calculation
 //  0: averaging mode (default)
 //  1: True RMS
-// ANALOG TIMER timer id, port map ,strobe port, strobe polarity LOW|HIGH, delay in µs
+// ANALOG TIMER periode, port map ,strobe port, strobe polarity LOW|HIGH, duty
 //  Background adc sampling via timer with strobe and delay
-//  timer id: associated timer
+//  periode: time in ms
 //  port map: P0 bit map of pins to sample
 //    special mode when bit 6,7 is set: calculate true rms of p0(7)-p0(6)
-//  strobe port: use Px(y) as strobe signal for sampling
+//  strobe port: use P0(x) as strobe signal for sampling
 //  strobe polarity: LOW, HIGH, 0, or 1
-//  strobe delay: minimum delay between strobe signal and adc sampling (not precise)
+//  strobe duty: duty cycle in %
 cmd_analog:
   switch (*txtpos)
   {
@@ -4801,12 +4801,14 @@ cmd_analog:
     case KW_TIMER:
       {
         txtpos++;
-        samplingTimer = (unsigned char) expression(EXPR_COMMA);
+        samplingPeriode = (unsigned short) expression(EXPR_COMMA);
         unsigned char map = (unsigned char) expression(EXPR_COMMA);
-        samplingStrobePin = 1 << PIN_MINOR(pin_parse());
+        samplingStrobePin = pin_parse();
         ignore_blanks();
-        if (*txtpos != ',' | error_num != ERROR_OK)
+        if (*txtpos != ',' | error_num != ERROR_OK
+            | PIN_MAJOR(samplingStrobePin))
           GOTO_QWHAT;
+        samplingStrobePin = 1 << PIN_MINOR(samplingStrobePin);
         txtpos++;
         switch (expression(EXPR_COMMA))
         {
@@ -4821,10 +4823,37 @@ cmd_analog:
         default:
           GOTO_QWHAT;
         }
-        samplingDelay = (unsigned short) expression(EXPR_NORMAL);
+        samplingDuty = (unsigned short) expression(EXPR_NORMAL);
         if (error_num)
           GOTO_QWHAT;
         samplingPortMap = map;
+        
+        CLKCONCMD |= 0x38; // TICKSPD set timer ticks to 250 kHz
+        // use Timer 1 for generating the right timing
+        T1CTL = 0x0c; // tick frequency / 128, stop
+        //T1STAT = 0xd7; // clear status
+        T1CCTL3 = 0x6c; // IRQ enable, compare mode 5, no capture
+        
+        // calculate timings
+        uint16 counter = 15625u * (uint32)samplingPeriode / 16000u;
+        uint16 duty = (uint32)samplingDuty * counter / 100u;
+        
+        // set periode
+        T1CC0L = counter;
+        T1CC0H = counter >> 8;
+
+        // set duty   
+        T1CC3L = duty;
+        T1CC3H = duty >> 8;
+
+        // enable IRQs
+        T1OVFIM = 1;
+        T1IE = 1;
+        
+        // start timer
+        T1CNTL = 0; // clear and init
+        T1CTL = 0x0f; // start up/down mode   
+        P0DIR |= samplingStrobePin; // set output mode
       }
       break;
 #endif     
@@ -5172,32 +5201,33 @@ static VAR_TYPE pin_read(unsigned char major, unsigned char minor)
 }
 
 
-#ifdef FEATURE_SAMPLING
-void interpreter_sampling(void)
+HAL_ISR_FUNCTION(timer1Isr, T1_VECTOR)
 {
-  static uint8 samplingCnt;
-  switch (PIN_MAJOR(samplingStrobePin))
+  unsigned char status;
+  HAL_ENTER_ISR();
+  
+  status = T1STAT;
+  if (status & BV(5))
   {
-  case 0:
+    T1STAT = ~BV(5);
     if (samplingStrobePolarity)
       P0 |= samplingStrobePin;
     else
       P0 &= ~samplingStrobePin;
-    break;
-  case 1:
-    if (samplingStrobePolarity)
-      P1 |= samplingStrobePin;
-    else
-      P1 &= ~samplingStrobePin;
-    break;
-  case 2:
-    if (samplingStrobePolarity)
-      P2 |= samplingStrobePin;
-    else
-      P2 &= ~samplingStrobePin;
-    break;
   }
-  OS_delaymicroseconds(samplingDelay);
+  else if (status & BV(3))
+  {
+    T1STAT = ~BV(3);
+    // schedule ADC read 
+    osal_set_event(blueBasic_TaskID, BLUEBASIC_EVENT_INTERRUPT);
+  }
+  HAL_EXIT_ISR();  
+}
+
+#ifdef FEATURE_SAMPLING
+void interpreter_sampling(void)
+{
+  static uint8 samplingCnt;
   // check if bit 6&7 are set, make P0(6)-P0(7) differential measurement
   // for BlueBattery current measurement
   // no other ports can be used in this mode
@@ -5240,19 +5270,8 @@ void interpreter_sampling(void)
       map <<= 1;
       pin--;
     }
-   }
-  switch (PIN_MAJOR(samplingStrobePin))
-  {
-  case 0:
-    P0 ^= samplingStrobePin;
-    break;
-  case 1:
-    P1 ^= samplingStrobePin;
-    break;
-  default:  // 2
-    P2 ^= samplingStrobePin;
-    break;
   }  
+  P0 ^= samplingStrobePin;
 }
 
 #endif  // FEATURE_SAMPLING
