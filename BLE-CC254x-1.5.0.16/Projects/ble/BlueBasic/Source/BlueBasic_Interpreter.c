@@ -4831,13 +4831,15 @@ cmd_analog:
         CLKCONCMD |= 0x38; // TICKSPD set timer ticks to 250 kHz
         // use Timer 1 for generating the right timing
         T1CTL = 0x0c; // tick frequency / 128, stop
-        //T1STAT = 0xd7; // clear status
         T1CCTL3 = 0x6c; // IRQ enable, compare mode 5, no capture
-        
+                
         // calculate timings
-        uint16 counter = 15625u * (uint32)samplingPeriode / 16000u;
+        uint16 counter = 15625u * (uint32)samplingPeriode / 8000u;
         uint16 duty = (uint32)samplingDuty * counter / 100u;
         
+        // generate IRQ when Timer starts via Channel 0
+        T1CCTL0 = 0x44;
+                
         // set periode
         T1CC0L = counter;
         T1CC0H = counter >> 8;
@@ -4852,7 +4854,8 @@ cmd_analog:
         
         // start timer
         T1CNTL = 0; // clear and init
-        T1CTL = 0x0f; // start up/down mode   
+        T1CTL = 0x0e; // start modulo mode   
+                
         P0DIR |= samplingStrobePin; // set output mode
       }
       break;
@@ -5200,31 +5203,37 @@ static VAR_TYPE pin_read(unsigned char major, unsigned char minor)
   }
 }
 
-
+#ifdef FEATURE_SAMPLING
 HAL_ISR_FUNCTION(timer1Isr, T1_VECTOR)
 {
   unsigned char status;
   HAL_ENTER_ISR();
   
   status = T1STAT;
-  if (status & BV(5))
+  if (status & BV(0)) // CH0IF
   {
-    T1STAT = ~BV(5);
+    T1STAT = ~BV(0);
     if (samplingStrobePolarity)
       P0 |= samplingStrobePin;
     else
       P0 &= ~samplingStrobePin;
   }
-  else if (status & BV(3))
+  else
   {
-    T1STAT = ~BV(3);
-    // schedule ADC read 
-    osal_set_event(blueBasic_TaskID, BLUEBASIC_EVENT_INTERRUPT);
+    if (status & BV(3)) // CH3IF
+    {
+      T1STAT = ~BV(3);
+      // schedule ADC read 
+      // takes about 15 µs
+      osal_set_event(blueBasic_TaskID, BLUEBASIC_EVENT_INTERRUPT);
+    }
   }
   HAL_EXIT_ISR();  
 }
+#endif  // FEATURE_SAMPLING
 
 #ifdef FEATURE_SAMPLING
+// takes about 165 us
 void interpreter_sampling(void)
 {
   static uint8 samplingCnt;
