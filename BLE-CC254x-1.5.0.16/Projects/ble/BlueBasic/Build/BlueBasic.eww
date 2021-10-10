@@ -34,6 +34,10 @@
                 <project>BlueBasic</project>
                 <configuration>BlueBattery-Calibration</configuration>
             </member>
+            <member>
+                <project>BlueBasic</project>
+                <configuration>BlueSolar_sleep</configuration>
+            </member>
         </batchDefinition>
         <batchDefinition>
             <name>BlueBattery &amp; BlueSolar &amp; BlueSteca</name>
@@ -83,6 +87,10 @@
             <member>
                 <project>BlueBasic</project>
                 <configuration>BBX</configuration>
+            </member>
+            <member>
+                <project>BlueBasic</project>
+                <configuration>BlueSolar_sleep</configuration>
             </member>
         </batchDefinition>
     </batchBuild>
