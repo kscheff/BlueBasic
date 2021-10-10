@@ -794,14 +794,14 @@ static void blueBasic_HandleConnStatusCB(uint16 connHandle, uint8 changeType)
   done:;
   }
 #endif
-#ifndef BLUEBATTERY  
+#if !defined(BLUEBATTERY) && !defined(BLUESOLAR)  
   ble_connection_status(connHandle, changeType, 0);
 #endif
 }
 
 static void blueBasic_RSSIUpdate(int8 rssi)
 {
-#ifndef BLUEBATTERY  
+#if !defined(BLUEBATTERY) && !defined(BLUESOLAR)  
   ble_connection_status(0, LINKDB_STATUS_UPDATE_RSSI, rssi);
 #endif
 }
