@@ -718,11 +718,10 @@ static struct {
 #else
   int16 adc[8];
 #endif
-  VAR_TYPE var;
 } sampling;
 
-#ifdef FEATURE_TRUE_RMS
-uint8 true_rms = 0;  // aquistion mode in timer based sampling
+#if defined(FEATURE_TRUE_RMS) || defined(FEATURE_SAMPLING) 
+uint8 sampling_mode = 0;  // aquistion mode in timer based sampling
 #endif
 
 unsigned short samplingPeriode;
@@ -4779,9 +4778,10 @@ i2c_end:
 // ANALOG STOP
 //  Stop timer based sampling
 // ANALOG TRUE, 0|1
-//  in timer based sampling select calculation
-//  0: averaging mode (default)
+//  in timer based sampling select processing
+//  0: off (default)
 //  1: True RMS
+//  2: averaging
 // ANALOG TIMER periode, port map ,strobe port, strobe polarity LOW|HIGH, duty
 //  Background adc sampling via timer with strobe and delay
 //  periode: time in ms
@@ -4794,6 +4794,10 @@ cmd_analog:
   switch (*txtpos)
   {
 #ifdef FEATURE_SAMPLING
+    case CO_LOW:
+      txtpos++;
+      
+      break;
     case TI_STOP:
       txtpos++;
       samplingPortMap = 0;
@@ -4898,10 +4902,10 @@ cmd_analog:
             GOTO_QWHAT;
         }
         break; 
-#ifdef FEATURE_TRUE_RMS      
+#if defined(FEATURE_TRUE_RMS) || defined(FEATURE_SAMPLING)
       case CO_TRUE:
         {
-          true_rms = expression(EXPR_NORMAL);
+          sampling_mode = expression(EXPR_NORMAL);
           if (error_num)
             GOTO_QWHAT;
           OS_memset(sampling.adc, 0, sizeof(sampling.adc));
@@ -5165,30 +5169,30 @@ static VAR_TYPE pin_read(unsigned char major, unsigned char minor)
         {
           if (samplingPortMap & 0xc0)
           {
-            int32 val;
-            val = sampling.adc[0];   
-            val += sampling.adc[1];  
-            val += sampling.adc[2];  
-            val += sampling.adc[3];
-            val += sampling.adc[4];
-            val += sampling.adc[5];
-            val += sampling.adc[6];
-            val += sampling.adc[7];
+            if (sampling_mode)
+            {
+              int32 val;
+              val = sampling.adc[0];   
+              val += sampling.adc[1];  
+              val += sampling.adc[2];  
+              val += sampling.adc[3];
+              val += sampling.adc[4];
+              val += sampling.adc[5];
+              val += sampling.adc[6];
+              val += sampling.adc[7];
 #ifdef FEATURE_TRUE_RMS
-            if (true_rms)
-            {
-              val = (int32)sqrt((val > 0 ? 8.0 : -8.0) * val) * (val > 0 ? 1 : -1);
-            }
-            else
+              if (sampling_mode == 1)
+                val = (int32)sqrt((val > 0 ? 8.0 : -8.0) * val) * (val > 0 ? 1 : -1);
+              else
 #endif
+                // sampling_mode == 2 for averaging
+                val /= 4;
+              return val;
+            } 
+            else
             {
-              val += 15;
-              val /= 4;
+              return sampling.adc[0] * 2;
             }
-            // simple low pass to gain resolution
-  //          sampling.var = (sampling.var * 7 + val) / 8; 
-            sampling.var = val;
-            return sampling.var;
           }
           return sampling.adc[minor];
         }
@@ -5236,7 +5240,9 @@ HAL_ISR_FUNCTION(timer1Isr, T1_VECTOR)
 // takes about 165 us
 void interpreter_sampling(void)
 {
+#if defined(FEATURE_TRUE_RMS) || defined(FEATURE_SAMPLING)    
   static uint8 samplingCnt;
+#endif
   // check if bit 6&7 are set, make P0(6)-P0(7) differential measurement
   // for BlueBattery current measurement
   // no other ports can be used in this mode
@@ -5255,15 +5261,21 @@ void interpreter_sampling(void)
       a = adc_read(7);
     }
 #ifdef FEATURE_TRUE_RMS    
-    if (true_rms)
+    if (sampling_mode == 1)
     {
       a += 3;
       a /= 4;  // make it 14 bit
       sampling.adc[7 & samplingCnt++] = (long)a * (a < 0 ? -a : a); // result 28-bit signed 
+    } else
+    if (sampling_mode == 2)
+#else
+    if (sampling_mode)
+#endif
+    {
+      sampling.adc[7 & samplingCnt++] = a;      
     }
     else
-#endif
-      sampling.adc[7 & samplingCnt++] = a;
+      sampling.adc[0] = a;
   }
   else 
   {  
@@ -6415,6 +6427,7 @@ void ble_init_ccc( void )
   }
 } 
 
+#ifndef BLUEBATTERY
 //
 // BLE connection management. If the ONCONNECT event was specified when a service
 // was created, we forward any connection changes up to the user code.
@@ -6493,7 +6506,7 @@ void ble_connection_status(unsigned short connHandle, unsigned char changeType, 
     }
   }  
 }
-
+#endif
 
 #ifdef TARGET_CC254X
 #if ( HOST_CONFIG & OBSERVER_CFG )    
