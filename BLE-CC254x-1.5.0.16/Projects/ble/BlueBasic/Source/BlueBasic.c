@@ -794,12 +794,16 @@ static void blueBasic_HandleConnStatusCB(uint16 connHandle, uint8 changeType)
   done:;
   }
 #endif
+#ifndef BLUEBATTERY  
   ble_connection_status(connHandle, changeType, 0);
+#endif
 }
 
 static void blueBasic_RSSIUpdate(int8 rssi)
 {
+#ifndef BLUEBATTERY  
   ble_connection_status(0, LINKDB_STATUS_UPDATE_RSSI, rssi);
+#endif
 }
 
 static void bluebasic_ParamUpdateCB( uint16 connInterval,
