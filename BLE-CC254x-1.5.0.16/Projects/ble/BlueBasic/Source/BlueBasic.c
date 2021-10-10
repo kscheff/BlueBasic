@@ -105,9 +105,9 @@
 //#define  DEFAULT_ADVERTISING_INTERVAL          2056 // 1285 ms
 
 // initial connection interval in units of 1.25ms
-#define DEFAULT_CONNECTION_INTERVAL_MIN 12 // 20ms
-#define DEFAULT_CONNECTION_INTERVAL_MAX 24 // 35ms
-#define DEFAULT_CONNECTION_LATENCY 0
+#define DEFAULT_CONNECTION_INTERVAL_MIN 16 // 20ms
+#define DEFAULT_CONNECTION_INTERVAL_MAX 28 // 35ms
+#define DEFAULT_CONNECTION_LATENCY 7
 #define DEFAULT_CONNECTION_TIMEOUT 600
 
 // Minimum connection interval (units of 1.25ms, 80=100ms) if automatic parameter update request is enabled
