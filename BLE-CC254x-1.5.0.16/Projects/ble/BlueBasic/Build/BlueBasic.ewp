@@ -12073,7 +12073,7 @@
                     <state>ENABLE_SPI=0</state>
                     <state>ENABLE_WIRE=0</state>
                     <state>XOSC32K_INSTALLED=TRUE</state>
-                    <state>PLUS_BROADCASTER</state>
+                    <state>xPLUS_BROADCASTER</state>
                     <state>FEATURE_SAMPLING</state>
                     <state>FEATURE_CALIBRATION</state>
                     <state>xFEATURE_TRUE_RMS</state>
