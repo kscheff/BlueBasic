@@ -352,6 +352,7 @@ extern os_interrupt_t blueBasic_interrupts[OS_MAX_INTERRUPT];
 typedef struct
 {
   unsigned short linenum;
+  unsigned short timeout;
 } os_timer_t;
 extern os_timer_t blueBasic_timers[OS_MAX_TIMER];
 

@@ -720,14 +720,12 @@ static struct {
 #endif
 } sampling;
 
-#if defined(FEATURE_TRUE_RMS) || defined(FEATURE_SAMPLING) 
-uint8 sampling_mode = 0;  // aquistion mode in timer based sampling
-#endif
-
-unsigned short samplingPeriode;
-static unsigned short samplingDuty; 
-static unsigned short samplingStrobePin;
-static unsigned short samplingStrobePolarity;
+static uint8 sampling_mode = 0;  // aquistion mode in timer based sampling
+uint8 samplingTimer;
+static uint16 samplingDuty;
+static uint16 samplingTimeout;
+static uint8 samplingStrobePin;
+static uint8 samplingStrobePolarity;
 #endif
 
 //
@@ -4805,7 +4803,7 @@ cmd_analog:
     case KW_TIMER:
       {
         txtpos++;
-        samplingPeriode = (unsigned short) expression(EXPR_COMMA);
+        samplingTimer = (unsigned short) expression(EXPR_COMMA);
         unsigned char map = (unsigned char) expression(EXPR_COMMA);
         samplingStrobePin = pin_parse();
         ignore_blanks();
@@ -4830,37 +4828,9 @@ cmd_analog:
         samplingDuty = (unsigned short) expression(EXPR_NORMAL);
         if (error_num)
           GOTO_QWHAT;
-        samplingPortMap = map;
-        
-        CLKCONCMD |= 0x38; // TICKSPD set timer ticks to 250 kHz
-        // use Timer 1 for generating the right timing
-        T1CTL = 0x0c; // tick frequency / 128, stop
-        T1CCTL3 = 0x6c; // IRQ enable, compare mode 5, no capture
-                
-        // calculate timings
-        uint16 counter = 15625u * (uint32)samplingPeriode / 8000u;
-        uint16 duty = (uint32)samplingDuty * counter / 100u;
-        
-        // generate IRQ when Timer starts via Channel 0
-        T1CCTL0 = 0x44;
-                
-        // set periode
-        T1CC0L = counter;
-        T1CC0H = counter >> 8;
-
-        // set duty   
-        T1CC3L = duty;
-        T1CC3H = duty >> 8;
-
-        // enable IRQs
-        T1OVFIM = 1;
-        T1IE = 1;
-        
-        // start timer
-        T1CNTL = 0; // clear and init
-        T1CTL = 0x0e; // start modulo mode   
-                
-        P0DIR |= samplingStrobePin; // set output mode
+        samplingPortMap = map;                
+        P0DIR |= samplingStrobePin; // set output mode   
+        samplingTimeout = 0;
       }
       break;
 #endif     
@@ -5208,91 +5178,79 @@ static VAR_TYPE pin_read(unsigned char major, unsigned char minor)
 }
 
 #ifdef FEATURE_SAMPLING
-HAL_ISR_FUNCTION(timer1Isr, T1_VECTOR)
+void interpreter_sampling(void)
 {
-  unsigned char status;
-  HAL_ENTER_ISR();
+  static uint8 samplingCnt;
+  uint16 next;
+  static uint16 t1;
   
-  status = T1STAT;
-  if (status & BV(0)) // CH0IF
+  if (!samplingTimeout)
   {
-    T1STAT = ~BV(0);
-    if (samplingStrobePolarity)
-      P0 |= samplingStrobePin;
-    else
-      P0 &= ~samplingStrobePin;
+    samplingTimeout = blueBasic_timers[samplingTimer].timeout;
+    t1 = samplingTimeout * (uint32)samplingDuty / 100;
+    t1 = t1 ? t1: 1;
+  }
+  
+  if ( ((P0 & samplingStrobePin) > 0) != samplingStrobePolarity ) 
+  {
+    next = t1; // - time;
   }
   else
   {
-    if (status & BV(3)) // CH3IF
+    next = samplingTimeout - t1;
+    // check if bit 6&7 are set, make P0(6)-P0(7) differential measurement
+    // for BlueBattery current measurement
+    // no other ports can be used in this mode
+    if (samplingPortMap & 0xc0)
     {
-      T1STAT = ~BV(3);
-      // schedule ADC read 
-      // takes about 15 µs
-      osal_set_event(blueBasic_TaskID, BLUEBASIC_EVENT_INTERRUPT);
-    }
-  }
-  HAL_EXIT_ISR();  
-}
-#endif  // FEATURE_SAMPLING
-
-#ifdef FEATURE_SAMPLING
-// takes about 165 us
-void interpreter_sampling(void)
-{
-#if defined(FEATURE_TRUE_RMS) || defined(FEATURE_SAMPLING)    
-  static uint8 samplingCnt;
-#endif
-  // check if bit 6&7 are set, make P0(6)-P0(7) differential measurement
-  // for BlueBattery current measurement
-  // no other ports can be used in this mode
-  if (samplingPortMap & 0xc0)
-  {
-    int16 a;
-    switch (samplingPortMap)
-    {
-    case 0xc0:
-      a = adc_read(11); // read channel 11 (AIN6-AIN7)
-      break;
-    case 0x40:
-      a = adc_read(6);
-      break;
-    default:  // 0x80
-      a = adc_read(7);
-    }
-#ifdef FEATURE_TRUE_RMS    
-    if (sampling_mode == 1)
-    {
-      a += 3;
-      a /= 4;  // make it 14 bit
-      sampling.adc[7 & samplingCnt++] = (long)a * (a < 0 ? -a : a); // result 28-bit signed 
-    } else
-    if (sampling_mode == 2)
-#else
-    if (sampling_mode)
-#endif
-    {
-      sampling.adc[7 & samplingCnt++] = a;      
-    }
-    else
-      sampling.adc[0] = a;
-  }
-  else 
-  {  
-    unsigned char map = samplingPortMap;
-    unsigned char pin = 7;
-    while (map)
-    {
-      if (map & 0x80)
+      int16 a;
+      switch (samplingPortMap)
       {
-        int16 a = adc_read(pin);
-        sampling.adc[pin] = ((int32)sampling.adc[pin] * 7 + a) >> 3;
+      case 0xc0:
+        a = adc_read(11); // read channel 11 (AIN6-AIN7)
+        break;
+      case 0x40:
+        a = adc_read(6);
+        break;
+      default:  // 0x80
+        a = adc_read(7);
       }
-      map <<= 1;
-      pin--;
+  #ifdef FEATURE_TRUE_RMS    
+      if (sampling_mode == 1)
+      {
+        a += 3;
+        a /= 4;  // make it 14 bit
+        sampling.adc[7 & samplingCnt++] = (long)a * (a < 0 ? -a : a); // result 28-bit signed 
+      } else
+      if (sampling_mode == 2)
+  #else
+      if (sampling_mode)
+  #endif
+      {
+        sampling.adc[7 & samplingCnt++] = a;      
+      }
+      else
+        sampling.adc[0] = a;
     }
-  }  
+    else 
+    {  
+      unsigned char map = samplingPortMap;
+      unsigned char pin = 7;
+      while (map)
+      {
+        if (map & 0x80)
+        {
+          int16 a = adc_read(pin);
+          sampling.adc[pin] = ((int32)sampling.adc[pin] * 7 + a) >> 3;
+        }
+        map <<= 1;
+        pin--;
+      }
+    }  
+  }
   P0 ^= samplingStrobePin;
+  // reschedule timer with repeat in case timer interrupt gets lost
+  OS_timer_start(samplingTimer, next, 1, 0);
 }
 
 #endif  // FEATURE_SAMPLING

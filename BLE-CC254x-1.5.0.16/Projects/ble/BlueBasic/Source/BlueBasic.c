@@ -546,10 +546,10 @@ uint16 BlueBasic_ProcessEvent( uint8 task_id, uint16 events )
   
 #ifdef FEATURE_SAMPLING
   if ( samplingPortMap &&
-      events & BLUEBASIC_EVENT_INTERRUPT )
+      events & (BLUEBASIC_EVENT_TIMER << samplingTimer) )
   {
     interpreter_sampling();
-    return  events ^ (BLUEBASIC_EVENT_INTERRUPT );
+    return  events ^ (BLUEBASIC_EVENT_TIMER << samplingTimer);
   }
 #endif      
   

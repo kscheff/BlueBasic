@@ -231,6 +231,7 @@ char OS_timer_start(unsigned char id, unsigned long timeout, unsigned char repea
     return 0;
   }
   blueBasic_timers[id].linenum = linenum;
+  blueBasic_timers[id].timeout = timeout;
   if (repeat)
   {
     osal_start_reload_timer(blueBasic_TaskID, BLUEBASIC_EVENT_TIMER << id, timeout);
