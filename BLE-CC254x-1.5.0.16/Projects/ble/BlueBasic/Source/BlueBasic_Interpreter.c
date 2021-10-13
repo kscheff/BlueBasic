@@ -708,26 +708,6 @@ unsigned short BlueBasic_rawBattery;
 unsigned char BlueBasic_powerMode;
 #endif
 
-#ifdef FEATURE_SAMPLING
-// defines which ports to sample
-unsigned char samplingPortMap = 0; // port 0 map of pins to sample
-
-static struct {
-#ifdef FEATURE_TRUE_RMS
-  int32 adc[8];
-#else
-  int16 adc[8];
-#endif
-} sampling;
-
-static uint8 sampling_mode = 0;  // aquistion mode in timer based sampling
-uint8 samplingTimer;
-static uint16 samplingDuty;
-static uint16 samplingTimeout;
-static uint8 samplingStrobePin;
-static uint8 samplingStrobePolarity;
-#endif
-
 //
 // Skip whitespace
 //
@@ -1215,7 +1195,7 @@ static void clean_memory(void)
   }
   
 #ifdef FEATURE_SAMPLING
-  samplingPortMap = 0;
+  sampling.map = 0;
 #endif
   
 #if ENABLE_YIELD  
@@ -4780,14 +4760,15 @@ i2c_end:
 //  0: off (default)
 //  1: True RMS
 //  2: averaging
-// ANALOG TIMER periode, port map ,strobe port, strobe polarity LOW|HIGH, duty
+// ANALOG TIMER id, timeout, port map ,strobe port, strobe polarity LOW|HIGH, duty
 //  Background adc sampling via timer with strobe and delay
-//  periode: time in ms
+//  id: timer id to use as time base (TIMER id, periode)
+//  timeout: timer period in ms
 //  port map: P0 bit map of pins to sample
 //    special mode when bit 6,7 is set: calculate true rms of p0(7)-p0(6)
 //  strobe port: use P0(x) as strobe signal for sampling
 //  strobe polarity: LOW, HIGH, 0, or 1
-//  strobe duty: duty cycle in %
+//  strobe duty: duty active in ms (1..timeout)
 cmd_analog:
   switch (*txtpos)
   {
@@ -4798,39 +4779,41 @@ cmd_analog:
       break;
     case TI_STOP:
       txtpos++;
-      samplingPortMap = 0;
+      sampling.map = 0;
       break;
     case KW_TIMER:
       {
         txtpos++;
-        samplingTimer = (unsigned short) expression(EXPR_COMMA);
+        sampling.timer = (unsigned short) expression(EXPR_COMMA);
+        sampling.timeout = (unsigned short) expression(EXPR_COMMA);
         unsigned char map = (unsigned char) expression(EXPR_COMMA);
-        samplingStrobePin = pin_parse();
+        uint8 pin = pin_parse();
         ignore_blanks();
         if (*txtpos != ',' | error_num != ERROR_OK
-            | PIN_MAJOR(samplingStrobePin))
+            | PIN_MAJOR(pin))
           GOTO_QWHAT;
-        samplingStrobePin = 1 << PIN_MINOR(samplingStrobePin);
+        sampling.pin = 1 << PIN_MINOR(pin);
         txtpos++;
         switch (expression(EXPR_COMMA))
         {
         case 0:
         case CO_LOW:
-          samplingStrobePolarity = 0;
+          sampling.polarity = 0;
           break;
         case 1:
         case CO_HIGH:
-          samplingStrobePolarity = 1;
+          sampling.polarity = 1;
           break;
         default:
           GOTO_QWHAT;
         }
-        samplingDuty = (unsigned short) expression(EXPR_NORMAL);
-        if (error_num)
+        sampling.duty = (unsigned short) expression(EXPR_NORMAL);
+        if (error_num || sampling.duty < 1 || sampling.duty >= sampling.timeout)
           GOTO_QWHAT;
-        samplingPortMap = map;                
-        P0DIR |= samplingStrobePin; // set output mode   
-        samplingTimeout = 0;
+        sampling.map = map;
+        sampling.mode = 0;
+        P0DIR |= sampling.pin; // set output mode   
+        OS_timer_start(sampling.timer, sampling.timeout, 1, 0);
       }
       break;
 #endif     
@@ -4875,7 +4858,7 @@ cmd_analog:
 #if defined(FEATURE_TRUE_RMS) || defined(FEATURE_SAMPLING)
       case CO_TRUE:
         {
-          sampling_mode = expression(EXPR_NORMAL);
+          sampling.mode = expression(EXPR_NORMAL);
           if (error_num)
             GOTO_QWHAT;
           OS_memset(sampling.adc, 0, sizeof(sampling.adc));
@@ -5135,11 +5118,11 @@ static VAR_TYPE pin_read(unsigned char major, unsigned char minor)
       if (APCFG & (1 << minor))
       {
 #ifdef FEATURE_SAMPLING  
-        if (samplingPortMap & (1 << minor))
+        if (sampling.map & (1 << minor))
         {
-          if (samplingPortMap & 0xc0)
+          if (sampling.map & 0xc0)
           {
-            if (sampling_mode)
+            if (sampling.mode)
             {
               int32 val;
               val = sampling.adc[0];   
@@ -5151,7 +5134,7 @@ static VAR_TYPE pin_read(unsigned char major, unsigned char minor)
               val += sampling.adc[6];
               val += sampling.adc[7];
 #ifdef FEATURE_TRUE_RMS
-              if (sampling_mode == 1)
+              if (sampling.mode == 1)
                 val = (int32)sqrt((val > 0 ? 8.0 : -8.0) * val) * (val > 0 ? 1 : -1);
               else
 #endif
@@ -5182,29 +5165,21 @@ void interpreter_sampling(void)
 {
   static uint8 samplingCnt;
   uint16 next;
-  static uint16 t1;
-  
-  if (!samplingTimeout)
+    
+  if ( ((P0 & sampling.pin) > 0) != sampling.polarity ) 
   {
-    samplingTimeout = blueBasic_timers[samplingTimer].timeout;
-    t1 = samplingTimeout * (uint32)samplingDuty / 100;
-    t1 = t1 ? t1: 1;
-  }
-  
-  if ( ((P0 & samplingStrobePin) > 0) != samplingStrobePolarity ) 
-  {
-    next = t1; // - time;
+    next = sampling.duty;
   }
   else
   {
-    next = samplingTimeout - t1;
+    next = sampling.timeout - sampling.duty;
     // check if bit 6&7 are set, make P0(6)-P0(7) differential measurement
     // for BlueBattery current measurement
     // no other ports can be used in this mode
-    if (samplingPortMap & 0xc0)
+    if (sampling.map & 0xc0)
     {
       int16 a;
-      switch (samplingPortMap)
+      switch (sampling.map)
       {
       case 0xc0:
         a = adc_read(11); // read channel 11 (AIN6-AIN7)
@@ -5216,15 +5191,15 @@ void interpreter_sampling(void)
         a = adc_read(7);
       }
   #ifdef FEATURE_TRUE_RMS    
-      if (sampling_mode == 1)
+      if (sampling.mode == 1)
       {
         a += 3;
         a /= 4;  // make it 14 bit
         sampling.adc[7 & samplingCnt++] = (long)a * (a < 0 ? -a : a); // result 28-bit signed 
       } else
-      if (sampling_mode == 2)
+      if (sampling.mode == 2)
   #else
-      if (sampling_mode)
+      if (sampling.mode)
   #endif
       {
         sampling.adc[7 & samplingCnt++] = a;      
@@ -5234,7 +5209,7 @@ void interpreter_sampling(void)
     }
     else 
     {  
-      unsigned char map = samplingPortMap;
+      unsigned char map = sampling.map;
       unsigned char pin = 7;
       while (map)
       {
@@ -5248,9 +5223,9 @@ void interpreter_sampling(void)
       }
     }  
   }
-  P0 ^= samplingStrobePin;
+  P0 ^= sampling.pin;
   // reschedule timer with repeat in case timer interrupt gets lost
-  OS_timer_start(samplingTimer, next, 1, 0);
+  OS_timer_start(sampling.timer, next, 1, 0);
 }
 
 #endif  // FEATURE_SAMPLING
@@ -6385,7 +6360,6 @@ void ble_init_ccc( void )
   }
 } 
 
-#ifndef BLUEBATTERY
 //
 // BLE connection management. If the ONCONNECT event was specified when a service
 // was created, we forward any connection changes up to the user code.
@@ -6394,17 +6368,15 @@ void ble_connection_status(unsigned short connHandle, unsigned char changeType, 
 {
   unsigned char* ptr;
   service_frame* vframe;
-  unsigned char j;
-  unsigned char f;
 
   for (ptr = (unsigned char*)program_end; ptr < heap; ptr += ((frame_header*)ptr)->frame_size)
   {
     vframe = (service_frame*)ptr;
     if (vframe->header.frame_type == FRAME_SERVICE_FLAG)
     {
+#ifndef BLUEBATTERY
       if (vframe->connect)
       {
-#if !defined(BLUEBATTERY) && !BLUEBATTERY
        unsigned char vname;
        if (VARIABLE_IS_EXTENDED('H') || VARIABLE_IS_EXTENDED('S') || VARIABLE_IS_EXTENDED('V'))
         {
@@ -6412,59 +6384,32 @@ void ble_connection_status(unsigned short connHandle, unsigned char changeType, 
         }
         VARIABLE_INT_SET('H', connHandle);
         VARIABLE_INT_SET('S', changeType);
-#else
-        static uint16 data[3];
-        data[0] = connHandle;
-        data[1] = changeType;       
-#endif        
         if (changeType == LINKDB_STATUS_UPDATE_STATEFLAGS)
         {
-          f = 0;
-          for (j = 0x01; j < 0x20; j <<= 1) // No direct way to read flag bits!
+          unsigned char f = 0;
+          for (unsigned char j = 0x01; j < 0x20; j <<= 1) // No direct way to read flag bits!
           {
             if (linkDB_State(connHandle, j))
             {
               f |= j;
             }
           }
-#if !defined(BLUEBATTERY) && !BLUEBATTERY
           VARIABLE_INT_SET('V', f);
-#else
-          data[2] = f;
-#endif
         }
         else if (changeType == LINKDB_STATUS_UPDATE_RSSI)
         {
-#if !defined(BLUEBATTERY) && !BLUEBATTERY
           VARIABLE_INT_SET('V', rssi);
-#else
-          data[2] = rssi;
-#endif
         }
-#if defined(BLUEBATTERY) && BLUEBATTERY
-        create_dim('V',sizeof(data), (unsigned char*)data);
-#endif        
         interpreter_run(vframe->connect, INTERPRETER_CAN_RETURN);
       }
+#endif
       if (changeType == LINKDB_STATUS_UPDATE_REMOVED || (changeType == LINKDB_STATUS_UPDATE_STATEFLAGS && !linkDB_Up(connHandle)))
       {
-#if 0
-        for (short i = ((short*)vframe->attrs)[-1]; i; i--)
-        {
-          if (vframe->attrs[i].type.uuid == ble_client_characteristic_config_uuid)
-          {
-            gattCharCfg_t *conn = *(gattCharCfg_t **)vframe->attrs[i].pValue;
-            GATTServApp_InitCharCfg(connHandle, conn);
-          }
-        }
-#else
         ble_init_ccc();
-#endif        
       }
     }
   }  
 }
-#endif
 
 #ifdef TARGET_CC254X
 #if ( HOST_CONFIG & OBSERVER_CFG )    

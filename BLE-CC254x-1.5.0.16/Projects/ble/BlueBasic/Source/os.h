@@ -352,9 +352,26 @@ extern os_interrupt_t blueBasic_interrupts[OS_MAX_INTERRUPT];
 typedef struct
 {
   unsigned short linenum;
-  unsigned short timeout;
 } os_timer_t;
 extern os_timer_t blueBasic_timers[OS_MAX_TIMER];
+
+#ifdef FEATURE_SAMPLING
+typedef struct {
+#ifdef FEATURE_TRUE_RMS
+  int32 adc[8];
+#else
+  int16 adc[8];
+#endif
+  uint8 map;
+  uint8 timer;
+  uint16 timeout;
+  uint16 duty;
+  uint8 pin;
+  uint8 polarity;
+  uint8 mode;
+} os_sampling_t;
+extern os_sampling_t sampling;
+#endif
 
 extern unsigned short bluebasic_yield_linenum;
 extern unsigned char bluebasic_block_execution;
@@ -508,8 +525,6 @@ extern void interpreter_timer_event(unsigned short id);
 
 #ifdef FEATURE_SAMPLING
 extern void interpreter_sampling(void);
-extern unsigned char samplingTimer;
-extern unsigned char samplingPortMap;
 #endif
 
 #define PIN_MAKE(A,I) (((A) << 6) | ((I) << 3))

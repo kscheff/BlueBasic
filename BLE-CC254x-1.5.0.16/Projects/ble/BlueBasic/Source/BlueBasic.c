@@ -545,11 +545,11 @@ uint16 BlueBasic_ProcessEvent( uint8 task_id, uint16 events )
   }
   
 #ifdef FEATURE_SAMPLING
-  if ( samplingPortMap &&
-      events & (BLUEBASIC_EVENT_TIMER << samplingTimer) )
+  if ( sampling.map &&
+      events & (BLUEBASIC_EVENT_TIMER << sampling.timer) )
   {
     interpreter_sampling();
-    return  events ^ (BLUEBASIC_EVENT_TIMER << samplingTimer);
+    return  events ^ (BLUEBASIC_EVENT_TIMER << sampling.timer);
   }
 #endif      
   
@@ -794,16 +794,12 @@ static void blueBasic_HandleConnStatusCB(uint16 connHandle, uint8 changeType)
   done:;
   }
 #endif
-#if !defined(BLUEBATTERY) && !defined(BLUESOLAR)  
   ble_connection_status(connHandle, changeType, 0);
-#endif
 }
 
 static void blueBasic_RSSIUpdate(int8 rssi)
 {
-#if !defined(BLUEBATTERY) && !defined(BLUESOLAR)  
   ble_connection_status(0, LINKDB_STATUS_UPDATE_RSSI, rssi);
-#endif
 }
 
 static void bluebasic_ParamUpdateCB( uint16 connInterval,
