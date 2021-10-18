@@ -717,7 +717,7 @@ unsigned char OS_serial_available(unsigned char port, unsigned char ch)
 #endif
 }
 
-#ifdef HAL_I2C
+#if HAL_I2C_SLAVE
 uint8 _i2cCallback(uint8 cnt)
 {
   if (cnt) {

@@ -8516,6 +8516,10 @@
                     <state>HAL_UART_ISR=1</state>
                     <state>HAL_UART_ISR_RX_MAX=32</state>
                     <state>HAL_UART_ISR_TX_MAX=16</state>
+                    <state>HAL_I2C=TRUE</state>
+                    <state>xHAL_I2C_SLAVE</state>
+                    <state>xHAL_I2C_BUF_MAX=7</state>
+                    <state>HAL_I2C_MASTER=TRUE</state>
                     <state>xPOWER_SAVING</state>
                     <state>PLUS_BROADCASTER</state>
                     <state>HAL_LCD=FALSE</state>
@@ -8722,6 +8726,7 @@
                     <state>$PROJ_DIR$\..\..\include</state>
                     <state>$PROJ_DIR$\..\..\..\..\Components\hal\include</state>
                     <state>$PROJ_DIR$\..\..\..\..\Components\hal\target\CC2540EB</state>
+                    <state>$PROJ_DIR$\..\..\..\..\Components\hal\target\CC2541ARC</state>
                     <state>$PROJ_DIR$\..\..\..\..\Components\osal\include</state>
                     <state>$PROJ_DIR$\..\Source</state>
                     <state>$PROJ_DIR$\..\..\..\..\Components\services\saddr</state>
@@ -13215,7 +13220,7 @@
                         <name>$PROJ_DIR$\..\..\..\..\Components\hal\target\CC2540EB\hal_crc.h</name>
                     </file>
                     <file>
-                        <name>$PROJ_DIR$\..\..\..\..\Components\hal\target\CC2540EB\hal_dma.h</name>
+                        <name>$PROJ_DIR$\..\..\..\..\COMPONENTS\hal\target\CC2540EB\hal_dma.h</name>
                     </file>
                     <file>
                         <name>$PROJ_DIR$\..\..\..\..\Components\hal\target\CC2540EB\hal_mcu.h</name>
@@ -13238,7 +13243,6 @@
                             <configuration>BlueBattery-D1</configuration>
                             <configuration>BlueBattery-MPPT</configuration>
                             <configuration>BlueBattery-MPPT-CC-Debugger</configuration>
-                            <configuration>BBX</configuration>
                             <configuration>BBX-CC-Debugger</configuration>
                             <configuration>BlueBattery-D1-CC-Debugger</configuration>
                             <configuration>BlueBattery-Calibration</configuration>
@@ -13248,7 +13252,7 @@
                 <group>
                     <name>Includes</name>
                     <file>
-                        <name>$PROJ_DIR$\..\..\..\..\Components\hal\target\CC2541ARC\hal_i2c.h</name>
+                        <name>$PROJ_DIR$\..\..\..\..\COMPONENTS\hal\target\CC2541ARC\hal_i2c.h</name>
                     </file>
                 </group>
             </group>

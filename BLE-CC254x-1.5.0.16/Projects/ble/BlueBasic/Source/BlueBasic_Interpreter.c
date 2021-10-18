@@ -613,7 +613,7 @@ static unsigned char spiWordsize;
 #endif
 static unsigned char analogReference;
 static unsigned char analogResolution = 0x30; // 14-bits
-#if HAL_I2C
+#if HAL_I2C_SLAVE
 static unsigned char i2cScl;
 static unsigned char i2cSda;
 #endif
@@ -1177,7 +1177,7 @@ static void clean_memory(void)
   }
 #endif
 
-#ifdef HAL_I2C  
+#if HAL_I2C_SLAVE  
   // Stop i2c interface
   OS_i2c_close(0);
 #endif
@@ -1446,7 +1446,7 @@ static VAR_TYPE expression(unsigned char mode)
 #else   // HAL_UART
           goto expr_error;
 #endif  // HAL_UART
-#ifdef HAL_I2C
+#if HAL_I2C_SLAVE
         else if (ch == KW_I2C)
         {
           ch = txtpos[1];
@@ -2165,7 +2165,7 @@ run_next_statement:
     case KW_WIRE:
       goto cmd_wire;
 #endif      
-#if HAL_I2C      
+#if HAL_I2C     
     case KW_I2C:
       goto cmd_i2c;
 #endif
@@ -3675,7 +3675,7 @@ cmd_close:
       GOTO_QWHAT;
     }
 #endif // HAL_UART
-#ifdef HAL_I2C
+#if HAL_I2C_SLAVE
     else if (*txtpos == KW_I2C)
     {
       txtpos++;
@@ -3765,7 +3765,7 @@ cmd_read:
       GOTO_QWHAT;
     }
 #endif // HAL_UART
-#ifdef HAL_I2C
+#if HAL_I2C_SLAVE
     else if (*txtpos == KW_I2C)
     {
       txtpos++;
@@ -4486,6 +4486,7 @@ cmd_i2c:
   switch (*txtpos++)
   {
     case SPI_MASTER:
+#if HAL_I2C_SLAVE
     {
       unsigned char pullup = 0;
       unsigned char* ptr = heap;
@@ -4494,7 +4495,8 @@ cmd_i2c:
       i2cSda = pin_parse();
       if (error_num)
       {
-        GOTO_QWHAT;
+        OS_I2C_INIT;
+        break;
       }
       ignore_blanks();
       if (*txtpos == PM_PULLUP)
@@ -4521,8 +4523,14 @@ cmd_i2c:
       pin_wire(heap, ptr);
       break;
     }
-
-#ifdef HAL_I2C    
+#else  // HAL_I2C_SLAVE
+    {
+        OS_I2C_INIT;
+        break;
+    }
+#endif  // HAL_I2C_SLAVE
+    
+#if HAL_I2C_SLAVE    
   case SPI_SLAVE:
     {
       unsigned char addr = expression(EXPR_NORMAL);
@@ -4566,6 +4574,7 @@ cmd_i2c:
 
     case KW_WRITE:
     case KW_READ:
+#if HAL_I2C_SLAVE      
     {
       unsigned char* rdata = NULL;
       unsigned char* data;
@@ -4739,6 +4748,76 @@ i2c_end:
       }
       break;
     }
+#else // HAL_I2C_SLAVE
+    {
+    // hardware master read/write
+    // ... tbd
+      
+      // INA 226 Slave address 
+      // A1 / A0
+      // GND / GND : 1000000
+      unsigned char* rdata = NULL;
+      unsigned char len = 0;
+      unsigned char i = 0;
+      unsigned char* ptr = heap;
+      unsigned char rnw = (txtpos[-1] == KW_READ ? 1 : 0);
+      
+      // Encode data we want to write
+      for (;;)
+      {
+        unsigned char d;
+        if (*txtpos == NL)
+        {
+          break;
+        }
+        else
+        {
+          d = expression(EXPR_COMMA);
+          if (error_num)
+          {
+            GOTO_QWHAT;
+          }
+          *ptr++ = d;
+          len++;
+        }        
+        // If this is a read we have no more to write, so we go and read instead.
+        if (rnw)
+        {
+          break;
+        }
+      }
+      // if write we call the write command
+      if (!rnw)
+      {
+        if (len > 0)
+        {
+          OS_I2C_WRITE(heap[0], len - 1, heap + 1);
+        }
+        break;
+      }
+
+      variable_frame* vframe;
+      ignore_blanks();
+      i = *txtpos;
+      if (i < 'A' || i > 'Z')
+      {
+        GOTO_QWHAT;
+      }
+      txtpos++;
+      rdata = get_variable_frame(i, &vframe);
+      if (vframe->type == VAR_DIM_BYTE)
+      {
+        len = vframe->header.frame_size - sizeof(variable_frame);
+      }
+      else
+      {
+        len = 1;
+        *(VAR_TYPE*)rdata = 0;
+      }
+      OS_I2C_READ(((unsigned char*)heap)[0], len, rdata);
+      break;    
+    }
+#endif // HAL_I2C_SLAVE    
     default:
       txtpos--;
       GOTO_QWHAT;
@@ -4747,7 +4826,7 @@ i2c_end:
   {
     GOTO_QWHAT;
   }
-  goto run_next_statement;
+  goto run_next_statement;  
 #endif
   
 //
@@ -5600,7 +5679,7 @@ static void pin_wire(unsigned char* ptr, unsigned char* end)
               break;
           }
           break;
-#if !defined(ENABLE_WIRE) || ENABLE_WIRE        
+#if !defined(ENABLE_WIRE) || ENABLE_WIRE    
         case WIRE_CASE(WIRE_TIMEOUT):
 #define WIRE_USEC_TO_PULSE_COUNT(U) ((((U) - 24) * 82) >> 8) // Calibrated Aug 17, 2014
 #define WIRE_USEC_TO_WAIT_COUNT(U)  ((((U) - 21) * 179) >> 8) // Calibrated Aug 17, 2014

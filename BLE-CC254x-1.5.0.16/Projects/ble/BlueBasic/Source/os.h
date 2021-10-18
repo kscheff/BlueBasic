@@ -249,6 +249,13 @@ extern bStatus_t GAP_SetParamValue( gapParamIDs_t paramID, uint16 paramValue );
 #include "victron_mppt.h"
 #endif
 
+#if HAL_I2C_MASTER
+#include "hal_i2c.h"
+#define OS_I2C_INIT HalI2CInit(i2cClock_267KHZ)
+#define OS_I2C_READ(adr, len, pBuf) HalI2CRead(adr, len, pBuf)
+#define OS_I2C_WRITE(adr, len, pBuf) HalI2CWrite(adr, len, pBuf)
+#endif
+
 // Configurations
 #ifdef TARGET_PETRA
 
