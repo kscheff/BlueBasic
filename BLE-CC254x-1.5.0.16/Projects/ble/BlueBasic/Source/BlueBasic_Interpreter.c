@@ -1195,7 +1195,8 @@ static void clean_memory(void)
   }
   
 #ifdef FEATURE_SAMPLING
-  sampling.map = 0;
+  sampling.map = 0;  // switch sampling off
+  sampling.mode = 0;  // set default mode
 #endif
   
 #if ENABLE_YIELD  
@@ -4757,9 +4758,8 @@ i2c_end:
 //  Stop timer based sampling
 // ANALOG TRUE, 0|1
 //  in timer based sampling select processing
-//  0: off (default)
+//  0: averaging
 //  1: True RMS
-//  2: averaging
 // ANALOG TIMER id, timeout, port map ,strobe port, strobe polarity LOW|HIGH, duty
 //  Background adc sampling via timer with strobe and delay
 //  id: timer id to use as time base (TIMER id, periode)
@@ -4811,7 +4811,6 @@ cmd_analog:
         if (error_num || sampling.duty < 1 || sampling.duty >= sampling.timeout)
           GOTO_QWHAT;
         sampling.map = map;
-        sampling.mode = 0;
         P0DIR |= sampling.pin; // set output mode   
         OS_timer_start(sampling.timer, sampling.timeout, 1, 0);
       }
@@ -4855,7 +4854,7 @@ cmd_analog:
             GOTO_QWHAT;
         }
         break; 
-#if defined(FEATURE_TRUE_RMS) || defined(FEATURE_SAMPLING)
+#if defined(FEATURE_TRUE_RMS)
       case CO_TRUE:
         {
           sampling.mode = expression(EXPR_NORMAL);
@@ -5122,30 +5121,23 @@ static VAR_TYPE pin_read(unsigned char major, unsigned char minor)
         {
           if (sampling.map & 0xc0)
           {
-            if (sampling.mode)
-            {
-              int32 val;
-              val = sampling.adc[0];   
-              val += sampling.adc[1];  
-              val += sampling.adc[2];  
-              val += sampling.adc[3];
-              val += sampling.adc[4];
-              val += sampling.adc[5];
-              val += sampling.adc[6];
-              val += sampling.adc[7];
+            int32 val;
+            val = sampling.adc[0];   
+            val += sampling.adc[1];  
+            val += sampling.adc[2];  
+            val += sampling.adc[3];
+            val += sampling.adc[4];
+            val += sampling.adc[5];
+            val += sampling.adc[6];
+            val += sampling.adc[7];
 #ifdef FEATURE_TRUE_RMS
-              if (sampling.mode == 1)
-                val = (int32)sqrt((val > 0 ? 8.0 : -8.0) * val) * (val > 0 ? 1 : -1);
-              else
-#endif
-                // sampling_mode == 2 for averaging
-                val /= 4;
-              return val;
-            } 
+            if (sampling.mode == 1)
+              val = (int32)sqrt((val > 0 ? 8.0 : -8.0) * val) * (val > 0 ? 1 : -1);
             else
-            {
-              return sampling.adc[0] * 2;
-            }
+#endif
+              // sampling_mode == 2 for averaging
+              val /= 4;
+            return val;
           }
           return sampling.adc[minor];
         }
@@ -5197,15 +5189,10 @@ void interpreter_sampling(void)
         a /= 4;  // make it 14 bit
         sampling.adc[7 & samplingCnt++] = (long)a * (a < 0 ? -a : a); // result 28-bit signed 
       } else
-      if (sampling.mode == 2)
-  #else
-      if (sampling.mode)
   #endif
       {
         sampling.adc[7 & samplingCnt++] = a;      
       }
-      else
-        sampling.adc[0] = a;
     }
     else 
     {  
