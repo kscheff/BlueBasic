@@ -4493,11 +4493,6 @@ cmd_i2c:
 
       i2cScl = pin_parse();
       i2cSda = pin_parse();
-      if (error_num)
-      {
-        OS_I2C_INIT;
-        break;
-      }
       ignore_blanks();
       if (*txtpos == PM_PULLUP)
       {
@@ -4814,7 +4809,7 @@ i2c_end:
         len = 1;
         *(VAR_TYPE*)rdata = 0;
       }
-      OS_I2C_READ(((unsigned char*)heap)[0], len, rdata);
+      OS_I2C_READ(heap[0], len, rdata);
       break;    
     }
 #endif // HAL_I2C_SLAVE    
