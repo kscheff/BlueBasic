@@ -50,6 +50,10 @@
 #define kRamSize   (BLUEBASIC_MEM)
 #endif // BLUEBASIC_MEM
 
+#ifndef FEATURE_LAZY_INDEX
+#define FEATURE_LAZY_INDEX TRUE
+#endif
+
 ////////////////////////////////////////////////////////////////////////////////
 // ASCII Characters
 #define CR	'\r'
@@ -1117,11 +1121,25 @@ static unsigned char* parse_variable_address(variable_frame** vframe)
   unsigned char* ptr = get_variable_frame(name, vframe);
   if ((*vframe)->type == VAR_DIM_BYTE)
   {
+    VAR_TYPE index;   
+#if defined(FEATURE_LAZY_INDEX) && FEATURE_LAZY_INDEX
+    // check if we have an index without braces to save program space
     unsigned char* otxtpos = txtpos;
-    VAR_TYPE index = expression(EXPR_BRACES);
+    if (*txtpos >= '0' && *txtpos <= '9')
+    {
+      index = parse_int(255, 10);
+      error_num = ERROR_OK;
+    }
+    else
+#endif    
+    {
+      index = expression(EXPR_BRACES);
+    }
     if (error_num || index < 0 || index >= (*vframe)->header.frame_size - sizeof(variable_frame))
     {
+#if defined(FEATURE_LAZY_INDEX) && FEATURE_LAZY_INDEX
       txtpos = otxtpos;
+#endif
       return NULL;
     }      
     ptr += index;
@@ -1370,6 +1388,24 @@ static VAR_TYPE expression(unsigned char mode)
             {
               goto expr_oom;
             }
+#if defined(FEATURE_LAZY_INDEX) && FEATURE_LAZY_INDEX
+            if (*txtpos >= '0' && *txtpos <= '9')
+            {
+              unsigned char* otxtpos = txtpos;
+              VAR_TYPE index = parse_int(255, 10);
+              error_num = ERROR_OK;
+              if (index < 0 || index >= frame->header.frame_size - sizeof(variable_frame))
+              {
+                txtpos = otxtpos;
+                error_num = ERROR_EXPRESSION;
+                goto expr_error;
+              }
+              ptr += index;
+              *queueptr++ = *ptr;
+              lastop = 0;
+              break;
+            }
+#endif
             (stackptr++)->op = op;
             lastop = 1;
           }
