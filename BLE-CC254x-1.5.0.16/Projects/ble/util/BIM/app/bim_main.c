@@ -276,11 +276,14 @@ void main(void)
         break;
   }
   P0DIR = 0; // switch all to input
-  if (!pattern)
+  // check for valid pattern or if JumpToImageAorB is 5
+  if (!pattern || JumpToImageAorB == 5)
     goto run_image_a;
   }
-#endif // FORCE_OAD_IMAGE_A  
-  
+#else
+  if (JumpToImageAorB == 5)
+    goto run_image_a;
+#endif // FORCE_OAD_IMAGE_A_CHECK  
 
   // Prefer to run Image-B over Image-A so that Image-A does not have to invalidate itself.
   HalFlashRead(BIM_IMG_B_PAGE, BIM_CRC_OSET, (uint8 *)crc, 4);
@@ -289,7 +292,8 @@ void main(void)
   {
     if (crc[0] == crc[1])
     {
-      JumpToImageAorB = 1;
+      if (JumpToImageAorB++ > 5)
+        JumpToImageAorB = 1;
       // Simulate a reset for the Application code by an absolute jump to the expected INTVEC addr.
       asm("LJMP 0x4030");
       HAL_SYSTEM_RESET();  // Should not get here.
@@ -298,9 +302,7 @@ void main(void)
     crcCheck(BIM_IMG_B_PAGE, crc);
   }
 
-#ifdef FORCE_OAD_IMAGE_A_CHECK  
 run_image_a:
-#endif
   
   //HalFlashRead(BIM_IMG_A_PAGE, BIM_CRC_OSET, (uint8 *)crc, 4);
 

@@ -291,6 +291,8 @@ extern bStatus_t GAP_SetParamValue( gapParamIDs_t paramID, uint16 paramValue );
 
 extern unsigned char blueBasic_TaskID;
 
+__no_init __data uint8 JumpToImageAorB @ 0x09;
+
 // Task Events
 #define BLUEBASIC_START_DEVICE_EVT 0x0001
 #define BLUEBASIC_CONNECTION_EVENT 0x0002

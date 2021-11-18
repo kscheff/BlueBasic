@@ -306,8 +306,6 @@ void OS_set_millis(long timems)
   osal_setClock(timems / 1000);
 }
 
-__no_init __data uint8 JumpToImageAorB @ 0x09;
-
 void OS_reboot(char flash)
 {
   GAPRole_TerminateConnection();
