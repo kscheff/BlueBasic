@@ -1480,7 +1480,7 @@
                     <state>HAL_UART_DMA=1</state>
                     <state>HAL_UART_DMA_RX_MAX=32 </state>
                     <state>HAL_UART_DMA_TX_MAX=32</state>
-                    <state>HAL_UART_ISR=2</state>
+                    <state>xHAL_UART_ISR=2</state>
                     <state>POWER_SAVING</state>
                     <state>xPLUS_BROADCASTER</state>
                     <state>HAL_LCD=FALSE</state>
@@ -6182,6 +6182,7 @@
                     <state>PROCESS_SERIAL_DATA</state>
                     <state>PROCESS_MPPT</state>
                     <state>MPPT_AS_VOT=0</state>
+                    <state>MPPT_DEVICES=1</state>
                     <state>OSALMEM_METRICS=FALSE</state>
                     <state>ENABLE_SNV=1</state>
                     <state>ENABLE_SPI=0</state>
@@ -7359,6 +7360,7 @@
                     <state>PROCESS_SERIAL_DATA</state>
                     <state>PROCESS_MPPT</state>
                     <state>MPPT_AS_VOT=0</state>
+                    <state>MPPT_DEVICES=1</state>
                     <state>OSALMEM_METRICS=FALSE</state>
                     <state>ENABLE_SNV=1</state>
                     <state>ENABLE_SPI=0</state>
@@ -13252,7 +13254,7 @@
                 <group>
                     <name>Includes</name>
                     <file>
-                        <name>$PROJ_DIR$\..\..\..\..\COMPONENTS\hal\target\CC2541ARC\hal_i2c.h</name>
+                        <name>$PROJ_DIR$\..\..\..\..\Components\hal\target\CC2541ARC\hal_i2c.h</name>
                     </file>
                 </group>
             </group>

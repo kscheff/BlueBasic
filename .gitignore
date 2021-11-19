@@ -14,6 +14,9 @@
 *.dbgdt
 *.s51
 *.ewt
+*.pew
+Obj/
+List/
 
 xcode/BlueBasic/BlueBasic.xcodeproj/project.xcworkspace/xcuserdata/
 xcode/BlueBasic/BlueBasic.xcodeproj/project.xcworkspace/xcshareddata/
@@ -29,7 +32,6 @@ BLE-CC254x-1.5.0.16/Projects/ble/util/BIM/cc254x/settings/
 BLE-CC254x-1.5.0.16/Projects/ble/BlueBasic/Build/settings/
 BLE-CC254x-1.5.0.16/Projects/ble/BlueBasicLoader/Build/settings/
 
-BLE-CC254x-1.5.0.16/Projects/ble/util/BIM/cc254x/CC254xF256/Exe/
 BLE-CC254x-1.5.0.16/Projects/ble/util/BIM/cc254x/CC254xF256/Obj/
 BLE-CC254x-1.5.0.16/Projects/ble/util/BIM/cc254x/CC254xF256/List/
 

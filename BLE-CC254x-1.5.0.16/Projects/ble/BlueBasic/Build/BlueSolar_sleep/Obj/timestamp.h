@@ -1,1 +1,0 @@
-#define BUILD_TIMESTAMP "BlueSola/20211013190240" 
