@@ -257,32 +257,31 @@ void main(void)
   
 #ifdef FORCE_OAD_IMAGE_A_CHECK      
   {
-  // new Version for board with 74LVC2G17 level shifter
-  // check input Ports to force running Image A for OAD
-  // external short between P02 (UART0_RX) and P03 (UART0_TX)
-  // switch RX as input, TX as output
-  P0SEL = 0; // switch P0 as GPIO
-  P0INP = 4; // input mode pull up/down on
-  P2INP = 0; // witch P0 to pullup
-  P0DIR = 0x08; // switch P03 to output (should have series resitor of 1K)
-  unsigned char pattern;
-  for (pattern = 0xaa; pattern; pattern >>= 1)
-  {
-    for (unsigned cnt = 10; --cnt ; )  // runs with ca. 37 kHz
+    // new Version for board with 74LVC2G17 level shifter
+    // check input Ports to force running Image A for OAD
+    // external short between P02 (UART0_RX) and P03 (UART0_TX)
+    // switch RX as input, TX as output
+    P0SEL = 0; // switch P0 as GPIO
+    P0INP = 4; // input mode pull up/down on
+    P2INP = 0; // witch P0 to pullup
+    P0DIR = 0x08; // switch P03 to output (should have series resitor of 1K)
+    unsigned char pattern;
+    for (pattern = 0xaa; pattern; pattern >>= 1)
     {
-      P0 = (pattern & 1) << 3;
+      for (unsigned cnt = 10; --cnt ; )  // runs with ca. 37 kHz
+      {
+        P0 = (pattern & 1) << 3;
+      }
+      if ( ((P0 & 0x04) >> 2) != (pattern & 1) )
+          break;
     }
-    if ( ((P0 & 0x04) >> 2) != (pattern & 1) )
-        break;
+    P0DIR = 0; // switch all to input
+    // check for valid pattern
+    if (!pattern)
+    {
+      goto run_image_a;
+    }
   }
-  P0DIR = 0; // switch all to input
-  // check for valid pattern or if JumpToImageAorB is 5
-  if (!pattern || JumpToImageAorB == 5)
-    goto run_image_a;
-  }
-#else
-  if (JumpToImageAorB == 5)
-    goto run_image_a;
 #endif // FORCE_OAD_IMAGE_A_CHECK  
 
   // Prefer to run Image-B over Image-A so that Image-A does not have to invalidate itself.
@@ -292,17 +291,17 @@ void main(void)
   {
     if (crc[0] == crc[1])
     {
-      if (JumpToImageAorB++ > 5)
-        JumpToImageAorB = 1;
+      JumpToImageAorB = 1;
       // Simulate a reset for the Application code by an absolute jump to the expected INTVEC addr.
       asm("LJMP 0x4030");
       HAL_SYSTEM_RESET();  // Should not get here.
-    }
-    
+    }  
     crcCheck(BIM_IMG_B_PAGE, crc);
   }
 
+#ifdef FORCE_OAD_IMAGE_A_CHECK  
 run_image_a:
+#endif
   
   //HalFlashRead(BIM_IMG_A_PAGE, BIM_CRC_OSET, (uint8 *)crc, 4);
 

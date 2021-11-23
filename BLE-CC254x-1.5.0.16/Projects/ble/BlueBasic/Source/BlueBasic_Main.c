@@ -149,6 +149,9 @@ inline static void measure_periode_xosc32k()
 #define MEASURE_PERIODE_XOSC32K()
 #endif
 
+__data __no_init uint8 boot_counter;
+__data extern uint8 JumpToImageAorB;
+
 /**************************************************************************************************
  * @fn          main
  *
@@ -161,6 +164,16 @@ inline static void measure_periode_xosc32k()
  */
 int main(void)
 {
+  if (boot_counter == 0xa5)
+  {
+    boot_counter = 0;
+    JumpToImageAorB = 0;
+    // Simulate a reset for the Application code by an absolute jump to the expected INTVEC addr.
+    asm("LJMP 0x0830");
+  }
+  boot_counter |= 0xa0;
+  boot_counter++;
+  
   /* Initialize hardware */
   HAL_BOARD_INIT();
   

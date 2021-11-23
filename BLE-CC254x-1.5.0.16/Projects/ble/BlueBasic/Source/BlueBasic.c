@@ -640,8 +640,9 @@ uint16 BlueBasic_ProcessEvent( uint8 task_id, uint16 events )
   if ( events & BLUEBASIC_EVENT_TIMERS )
   {
     // when autorun is enabled, the BlueBasic program starts with the DELAY_TIMER
-    // we clear the reset counter JumpToImageAorB (works only as Image B is valid (> 0)
-    JumpToImageAorB = JumpToImageAorB > 0; 
+    // we clear the boot counter
+    __data extern uint8 boot_counter;
+    boot_counter = 0;
     
     uint16 done = 0;
     for (i = 0; i < OS_MAX_TIMER; i++)
