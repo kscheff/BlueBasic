@@ -355,6 +355,7 @@ static uartDMACfg_t dmaCfg;
 
 void HalUART_DMAIsrDMA(void);
 
+
 /* ------------------------------------------------------------------------------------------------
  *                                           Local Functions
  * ------------------------------------------------------------------------------------------------
@@ -363,6 +364,7 @@ void HalUART_DMAIsrDMA(void);
 // Invoked by functions in hal_uart.c when this file is included.
 static void HalUARTInitDMA(void);
 static void HalUARTOpenDMA(halUARTCfg_t *config);
+static void HalUARTCloseDMA( void );
 static uint16 HalUARTReadDMA(uint8 *buf, uint16 len);
 static uint16 HalUARTWriteDMA(uint8 *buf, uint16 len);
 static void HalUARTPollDMA(void);
@@ -491,6 +493,7 @@ static void HalUARTInitDMA(void)
   HAL_DMA_CLEAR_IRQ(HAL_DMA_CH_RX);
   HAL_DMA_ARM_CH(HAL_DMA_CH_RX);
   (void)memset(dmaCfg.rxBuf, (DMA_PAD ^ 0xFF), HAL_UART_DMA_RX_MAX * sizeof(uint16));
+  dmaCfg.rxHead = dmaCfg.rxTail = 0; // ###KS
 }
 
 /******************************************************************************
@@ -504,6 +507,9 @@ static void HalUARTInitDMA(void)
  *****************************************************************************/
 static void HalUARTOpenDMA(halUARTCfg_t *config)
 {
+  // in case of re-open we stop the DMA channel
+  HalUARTCloseDMA(); // ###KS
+  
   dmaCfg.uartCB = config->callBackFunc;
 
   // Only supporting subset of baudrate for code size - other is possible.
@@ -517,6 +523,9 @@ static void HalUARTOpenDMA(halUARTCfg_t *config)
   // baudRate encodes the settings for matissa and exponent
   UxGCR = HAL_BR_GCR(config->baudRate);
   UxBAUD = HAL_BR_BAUD(config->baudRate);
+  
+  // after selecting the baud rate, reset the rx buffer
+  HalUARTInitDMA();  // ###KS
   
   if (DMA_PM || config->flowControl)
   {
@@ -549,13 +558,15 @@ static void HalUARTOpenDMA(halUARTCfg_t *config)
 #endif
 }
 
-void HalUARTCloseDMA( void )
+static void HalUARTCloseDMA( void )
 {
   HAL_DMA_ABORT_CH(HAL_DMA_CH_RX);
   IENx &= ~IEN_BIT;    // disable interrupt
   while (UxCSR & 1);   // wait until ACTIVE clears
   UxCSR &= ~CSR_RE;    // disable receiver  
   UxUCR |= UCR_FLUSH;  // flush TX
+  (void)memset(dmaCfg.rxBuf, (DMA_PAD ^ 0xFF), HAL_UART_DMA_RX_MAX * sizeof(uint16)); // ###KS
+  dmaCfg.rxTail = dmaCfg.rxHead = 0; // ###KS reset 
 }
 
 /*****************************************************************************

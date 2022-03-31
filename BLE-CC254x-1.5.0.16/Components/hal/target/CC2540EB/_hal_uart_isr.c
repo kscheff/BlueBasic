@@ -254,6 +254,7 @@ static uartISRCfg_t isrCfg;
 
 static void HalUARTInitISR(void);
 static void HalUARTOpenISR(halUARTCfg_t *config);
+static void HalUARTCloseISR();
 static uint16 HalUARTReadISR(uint8 *buf, uint16 len);
 static uint16 HalUARTWriteISR(uint8 *buf, uint16 len);
 static void HalUARTPollISR(void);
@@ -299,6 +300,9 @@ static void HalUARTInitISR(void)
  *****************************************************************************/
 static void HalUARTOpenISR(halUARTCfg_t *config)
 {
+  // in case of re-open we stop it
+  HalUARTCloseISR(); // ###KS
+
   isrCfg.uartCB = config->callBackFunc;
   // Only supporting subset of baudrate for code size - other is possible.
   HAL_UART_ASSERT((config->baudRate == HAL_UART_BR_9600) ||
@@ -330,11 +334,12 @@ static void HalUARTOpenISR(halUARTCfg_t *config)
   UxCSR = (CSR_MODE | CSR_RE);
 }
 
-void HalUARTCloseISR()
+static void HalUARTCloseISR()
 {
   URXxIE = 0;          // disable interrupt
   UxUCR |= UCR_FLUSH;  // flush TX
   UxCSR &= ~CSR_RE;    // disable receiver
+  isrCfg.rxHead = isrCfg.rxTail = 0; // ###KS
 }
 
 /*****************************************************************************
