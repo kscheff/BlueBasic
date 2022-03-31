@@ -58,7 +58,7 @@ uint16 test_read(void* ptr, uint16 len);
 
 #if !MPPT_AS_VOT
 // send MPPT data
-#define SEND_MPPT(a) send_app(a,(void*)&mppt,sizeof(mppt))
+#define SEND_MPPT(a) send_app(a)
 #define SCAN_INTERVAL 2000
 #else
 // send data like Votroic
@@ -93,7 +93,7 @@ typedef struct
   uint8  status;
 } mppt_t;
 
-static mppt_t mppt[MPPT_DEVICES] = { sizeof(mppt[0]) - sizeof(mppt[0].size),0,0,0,0,0 };
+static mppt_t mppt[MPPT_DEVICES]; // = { sizeof(mppt[0]) - sizeof(mppt[0].size),0,0,0,0,0 };
 
 #if 0
 // report UART input buffer size high level as solar voltage 1V = 1 byte 
@@ -204,10 +204,16 @@ static void request_mppt(uint8 port)
 
 #if !MPPT_AS_VOT
 // send data to application
-static void send_app(uint8 port, uint8 *buf, uint8 len)
+static void send_app(uint8 port)
 {
+#if MPPT_DEVICES > 1  
+  mppt_t* pmppt = &mppt[port];
+#else
+  mppt_t* pmppt = &mppt[0];
+#endif  
+  pmppt->size = sizeof(mppt[0]) - sizeof(mppt[0].size);
   serial[port].sbuf_read_pos = 0;
-  OS_memcpy(serial[port].sbuf, buf, len);
+  OS_memcpy(serial[port].sbuf, pmppt, sizeof(mppt_t));
 }
 #endif
 
@@ -461,7 +467,10 @@ static void receive_text(uint8 port, uint8 len)
   static const uint8 sequence[] = { 'c','k','s','u','m' };
   uint8 in_buf[16];
 #if MPPT_DEVICES > 1
-  static mppt_device_t mppt_devices[MPPT_DEVICES] = {LABEL_NONE,0,0,MPPT_IDLE};
+  static mppt_device_t mppt_devices[MPPT_DEVICES] = {
+    {LABEL_NONE,0,0,MPPT_IDLE},
+    {LABEL_NONE,0,0,MPPT_IDLE}
+  };
   mppt_device_t text = mppt_devices[port]; 
 #else
   static mppt_device_t text = {LABEL_NONE,0,0,MPPT_IDLE};
