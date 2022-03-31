@@ -549,11 +549,11 @@ unsigned char OS_serial_open(unsigned char port, unsigned long baud, unsigned ch
   
   if (port == 0)
   {
-    // P0(5) RX    
-    // P0(4) TX
-    // P0(3) RT
-    // P0(2) CT
-    P0SEL |= (flow == 'H') ? 0x3c : 0xc0;  // select peripheral mode
+    // P0(5) RT 
+    // P0(4) CT
+    // P0(3) TX
+    // P0(2) RX    
+    P0SEL |= (flow == 'H') ? 0x3c : 0x0c;  // select peripheral mode
   }
   else
   {
