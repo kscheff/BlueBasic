@@ -16,7 +16,7 @@ set hour=%time:~0,2%
 if %hour% lss 10 (set hour=0%time:~1,1%)
 set timestamp=%yy%%mm%%dd%%hour%%time:~3,2%%time:~6,2%
 set prefix=%2
-set prefix=%prefix:~0,8%
+set prefix=%prefix:~0,16%
 echo #define BUILD_TIMESTAMP "%prefix%/%timestamp%" > "%3/timestamp.h"
 if "%4"=="" (SET VERSION_FILE_NAME=BlueBasic-%2.version) else (SET VERSION_FILE_NAME=%4)
 echo %timestamp% > "%1\..\..\..\..\..\hex\%VERSION_FILE_NAME%"
