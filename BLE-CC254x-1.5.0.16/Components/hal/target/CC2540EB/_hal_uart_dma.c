@@ -493,7 +493,6 @@ static void HalUARTInitDMA(void)
   HAL_DMA_CLEAR_IRQ(HAL_DMA_CH_RX);
   HAL_DMA_ARM_CH(HAL_DMA_CH_RX);
   (void)memset(dmaCfg.rxBuf, (DMA_PAD ^ 0xFF), HAL_UART_DMA_RX_MAX * sizeof(uint16));
-  dmaCfg.rxHead = dmaCfg.rxTail = 0; // ###KS
 }
 
 /******************************************************************************
@@ -507,9 +506,6 @@ static void HalUARTInitDMA(void)
  *****************************************************************************/
 static void HalUARTOpenDMA(halUARTCfg_t *config)
 {
-  // in case of re-open we stop the DMA channel
-  HalUARTCloseDMA(); // ###KS
-  
   dmaCfg.uartCB = config->callBackFunc;
 
   // Only supporting subset of baudrate for code size - other is possible.
@@ -525,7 +521,8 @@ static void HalUARTOpenDMA(halUARTCfg_t *config)
   UxBAUD = HAL_BR_BAUD(config->baudRate);
   
   // after selecting the baud rate, reset the rx buffer
-  HalUARTInitDMA();  // ###KS
+  HalUARTInitDMA(); //###KS
+//  HalUARTCloseDMA(); // ###KS
   
   if (DMA_PM || config->flowControl)
   {

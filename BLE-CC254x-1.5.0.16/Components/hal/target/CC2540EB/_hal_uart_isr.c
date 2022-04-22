@@ -300,9 +300,6 @@ static void HalUARTInitISR(void)
  *****************************************************************************/
 static void HalUARTOpenISR(halUARTCfg_t *config)
 {
-  // in case of re-open we stop it
-  HalUARTCloseISR(); // ###KS
-
   isrCfg.uartCB = config->callBackFunc;
   // Only supporting subset of baudrate for code size - other is possible.
   HAL_UART_ASSERT((config->baudRate == HAL_UART_BR_9600) ||
