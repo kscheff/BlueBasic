@@ -2903,6 +2903,9 @@ cmd_pinmode:
     {
       GOTO_QWHAT;
     }
+#ifdef FEATURE_CALIBRATION
+    PMUX = 0; // disable 32KHz clock
+#endif      
   }
   goto run_next_statement;
 
