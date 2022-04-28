@@ -2264,7 +2264,7 @@ qtoobig:
   error_num = ERROR_TOOBIG;
   goto print_error_or_ok;
 
-#if !BLUEBATTERY  
+#if !defined(ENABLE_INTERRUPT) || (ENABLE_INTERRUPT)  
 qbadpin:
   error_num = ERROR_BADPIN;
   goto print_error_or_ok;
@@ -2965,8 +2965,8 @@ cmd_pinmode:
 // INTERRUPT DETACH <pin>
 //
 cmd_interrupt:
+#if !defined(ENABLE_INTERRUPT) || (ENABLE_INTERRUPT)
   {
-#if !BLUEBATTERY   // currently we don't need INTERRUPT support
     unsigned short pin;
     unsigned char i;
 
@@ -3085,9 +3085,11 @@ cmd_interrupt:
     {
       GOTO_QWHAT;
     }
-#endif    
-    goto run_next_statement;
+    goto run_next_statement; 
   }
+#else
+  GOTO_QWHAT;
+#endif
   
 //
 // SERIAL <baud>,<parity:N|P>,<bits>,<stop>,<flow> [ONREAD GOSUB <linenum>] [ONWRITE GOSUB <linenum>]

@@ -640,7 +640,8 @@ uint16 BlueBasic_ProcessEvent( uint8 task_id, uint16 events )
     return (events & ~BLUEBASIC_EVENT_YIELD);
   }
 #endif // ENABLE_YIELD
-  
+
+#if !defined(ENABLE_INTERRUPT) || (ENABLE_INTERRUPT) 
   if ( events & BLUEBASIC_EVENT_INTERRUPTS )
   {
     for (i = 0; i < OS_MAX_INTERRUPT; i++)
@@ -653,7 +654,8 @@ uint16 BlueBasic_ProcessEvent( uint8 task_id, uint16 events )
     SEMAPHORE_YIELD_SIGNAL();
     return (events ^ (events & BLUEBASIC_EVENT_INTERRUPTS));
   }
-
+#endif
+  
   if ( events & BLUEBASIC_EVENT_TIMERS )
   {
     // when autorun is enabled, the BlueBasic program starts with the DELAY_TIMER
@@ -1085,7 +1087,6 @@ done:
 HAL_ISR_FUNCTION(port0Isr, P0INT_VECTOR)
 {
   unsigned char status;
-  unsigned char i;
 
   HAL_ENTER_ISR();
 
@@ -1113,23 +1114,22 @@ HAL_ISR_FUNCTION(port0Isr, P0INT_VECTOR)
     }
 #endif
 #endif // HAL_UART_DMA
-
-    for (i = 0; i < OS_MAX_INTERRUPT; i++)
+#if !defined(ENABLE_INTERRUPT) || (ENABLE_INTERRUPT)
+    for (unsigned char i = 0; i < OS_MAX_INTERRUPT; i++)
     {
       if (PIN_MAJOR(blueBasic_interrupts[i].pin) == 0 && (status & (1 << PIN_MINOR(blueBasic_interrupts[i].pin))))
       {
         osal_set_event(blueBasic_TaskID, BLUEBASIC_EVENT_INTERRUPT << i);
       }
     }
+#endif
   }
-
   HAL_EXIT_ISR();
 }
 
 HAL_ISR_FUNCTION(port1Isr, P1INT_VECTOR)
 {
   unsigned char status;
-  unsigned char i;
 
   HAL_ENTER_ISR();
 
@@ -1139,16 +1139,16 @@ HAL_ISR_FUNCTION(port1Isr, P1INT_VECTOR)
   {
     P1IFG = ~status;
     P1IF = 0;
-
-    for (i = 0; i < OS_MAX_INTERRUPT; i++)
+#if !defined(ENABLE_INTERRUPT) || (ENABLE_INTERRUPT)
+    for (unsigned char i = 0; i < OS_MAX_INTERRUPT; i++)
     {
       if (PIN_MAJOR(blueBasic_interrupts[i].pin) == 1 && (status & (1 << PIN_MINOR(blueBasic_interrupts[i].pin))))
       {
         osal_set_event(blueBasic_TaskID, BLUEBASIC_EVENT_INTERRUPT << i);
       }
     }
+#endif
   }
-
   HAL_EXIT_ISR();
 }
 
@@ -1162,7 +1162,6 @@ HAL_ISR_FUNCTION(port2Isr, P2INT_VECTOR)
 #endif
 {
   unsigned char status;
-  unsigned char i;
 
 #ifndef HAL_I2C
   HAL_ENTER_ISR();
@@ -1173,14 +1172,15 @@ HAL_ISR_FUNCTION(port2Isr, P2INT_VECTOR)
   {
     P2IFG = ~status;
     P2IF = 0;
-
-    for (i = 0; i < OS_MAX_INTERRUPT; i++)
+#if !defined(ENABLE_INTERRUPT) || (ENABLE_INTERRUPT)
+    for (unsigned char i = 0; i < OS_MAX_INTERRUPT; i++)
     {
       if (PIN_MAJOR(blueBasic_interrupts[i].pin) == 2 && (status & (1 << PIN_MINOR(blueBasic_interrupts[i].pin))))
       {
         osal_set_event(blueBasic_TaskID, BLUEBASIC_EVENT_INTERRUPT << i);
       }
     }
+#endif    
   }
 #ifndef HAL_I2C
   HAL_EXIT_ISR();
