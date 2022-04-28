@@ -214,9 +214,6 @@ void* OS_rmemcpy(void *dst, const void GENERIC *src, unsigned int len)
 
 void OS_init(void)
 {
-#ifndef ENABLE_BLE_CONSOLE
-  OS_openserial();
-#endif
 #if ENABLE_SNV  
   osal_snv_init();
 #endif
