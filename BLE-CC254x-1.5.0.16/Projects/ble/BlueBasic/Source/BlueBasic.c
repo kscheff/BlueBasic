@@ -188,27 +188,39 @@ static struct
 static CONST unsigned char consoleInputDesc[] = "Console in";
 static CONST unsigned char consoleOutputDesc[] = "Console out";
 
-#define GATT_PERMIT_RW GATT_PERMIT_READ|GATT_PERMIT_WRITE
+#if GAP_BOND_MGR
+#define MY_ATHENTICATION_READ GATT_PERMIT_AUTHEN_READ
+#define MY_ATHENTICATION_WRITE GATT_PERMIT_AUTHEN_WRITE
+#else
+#define MY_ATHENTICATION_READ 0
+#define MY_ATHENTICATION_WRITE 0
+#endif
+
+#define MY_GATT_PERMIT_READ (GATT_PERMIT_READ | MY_ATHENTICATION_READ)
+#define MY_GATT_PERMIT_WRITE (GATT_PERMIT_WRITE | MY_ATHENTICATION_WRITE)
+#define MY_GATT_PERMIT_RW (GATT_PERMIT_READ | GATT_PERMIT_WRITE | MY_ATHENTICATION_READ | MY_ATHENTICATION_WRITE)
+
+//#define GATT_PERMIT_RW GATT_PERMIT_READ|GATT_PERMIT_WRITE
 
 static gattAttribute_t consoleProfile[] =
 {
   // Primary Service
-  { { ATT_BT_UUID_SIZE, primaryServiceUUID },   GATT_PERMIT_READ,   0, (uint8*)&consoleProfileService },
+  { { ATT_BT_UUID_SIZE, primaryServiceUUID },   MY_GATT_PERMIT_READ,   0, (uint8*)&consoleProfileService },
   // Console Input Characteristics
-  { { ATT_BT_UUID_SIZE, characterUUID },        GATT_PERMIT_READ,   0, (uint8*)&inputProps },
-  { { ATT_UUID_SIZE, inputUUID },               GATT_PERMIT_RW,     0, io.write },
-  { { ATT_BT_UUID_SIZE, clientCharCfgUUID },    GATT_PERMIT_RW,     0, (uint8*)&consoleProfileCharCfg1 },
-  { { ATT_BT_UUID_SIZE, charUserDescUUID },     GATT_PERMIT_READ,   0, (uint8*)consoleInputDesc },
+  { { ATT_BT_UUID_SIZE, characterUUID },        MY_GATT_PERMIT_READ,   0, (uint8*)&inputProps },
+  { { ATT_UUID_SIZE, inputUUID },               MY_GATT_PERMIT_RW,     0, io.write },
+  { { ATT_BT_UUID_SIZE, clientCharCfgUUID },    MY_GATT_PERMIT_RW,     0, (uint8*)&consoleProfileCharCfg1 },
+  { { ATT_BT_UUID_SIZE, charUserDescUUID },     MY_GATT_PERMIT_READ,   0, (uint8*)consoleInputDesc },
   // Console Output Charactersitics
-  { { ATT_BT_UUID_SIZE, characterUUID },        GATT_PERMIT_READ,   0, (uint8*)&outputProps },
-  { { ATT_UUID_SIZE, outputUUID },              GATT_PERMIT_WRITE,  0, NULL },
-  { { ATT_BT_UUID_SIZE, clientCharCfgUUID },    GATT_PERMIT_RW,     0, (uint8*) &consoleProfileCharCfg2 },
-  { { ATT_BT_UUID_SIZE, charUserDescUUID },     GATT_PERMIT_READ,   0, (uint8*)consoleOutputDesc },
+  { { ATT_BT_UUID_SIZE, characterUUID },        MY_GATT_PERMIT_READ,   0, (uint8*)&outputProps },
+  { { ATT_UUID_SIZE, outputUUID },              MY_GATT_PERMIT_WRITE,  0, NULL },
+  { { ATT_BT_UUID_SIZE, clientCharCfgUUID },    MY_GATT_PERMIT_RW,     0, (uint8*) &consoleProfileCharCfg2 },
+  { { ATT_BT_UUID_SIZE, charUserDescUUID },     MY_GATT_PERMIT_READ,   0, (uint8*)consoleOutputDesc },
 #if SERVICE_CHANGE  
   // Generic Attribute Service
-  { { ATT_BT_UUID_SIZE, gattServiceUUID},       GATT_PERMIT_READ,   0, (uint8*)&serviceProps },
-  { { ATT_BT_UUID_SIZE, serviceChangedUUID},    GATT_PERMIT_READ,   0, (uint8*)&serviceHandles },
-  { { ATT_BT_UUID_SIZE, clientCharCfgUUID},     GATT_PERMIT_RW,     0, (uint8*)&serviceChanged }
+  { { ATT_BT_UUID_SIZE, gattServiceUUID},       MY_GATT_PERMIT_READ,   0, (uint8*)&serviceProps },
+  { { ATT_BT_UUID_SIZE, serviceChangedUUID},    MY_GATT_PERMIT_READ,   0, (uint8*)&serviceHandles },
+  { { ATT_BT_UUID_SIZE, clientCharCfgUUID},     MY_GATT_PERMIT_RW,     0, (uint8*)&serviceChanged }
 #endif
 };
 
@@ -254,15 +266,15 @@ static CONST unsigned char oadBlockDesc[] = "Img Block";
 
 static gattAttribute_t oadProfile[] =
 {
-  { { ATT_BT_UUID_SIZE, primaryServiceUUID },   GATT_PERMIT_READ,                       0, (uint8*)&oadProfileService },
-  { { ATT_BT_UUID_SIZE, characterUUID },        GATT_PERMIT_READ,                       0, (uint8*)&oadCharProps },
-  { { ATT_UUID_SIZE, oadIdentUUID },            GATT_PERMIT_WRITE,                      0, NULL },
-  { { ATT_BT_UUID_SIZE, clientCharCfgUUID },    GATT_PERMIT_READ|GATT_PERMIT_WRITE,     0, (uint8*)&oadConfig },
-  { { ATT_BT_UUID_SIZE, charUserDescUUID },     GATT_PERMIT_READ,                       0, (uint8*)oadIdentDesc },
-  { { ATT_BT_UUID_SIZE, characterUUID },        GATT_PERMIT_READ,                       0, (uint8*)&oadCharProps },
-  { { ATT_UUID_SIZE, oadBlockUUID },            GATT_PERMIT_WRITE,                      0, NULL },
-  { { ATT_BT_UUID_SIZE, clientCharCfgUUID },    GATT_PERMIT_READ|GATT_PERMIT_WRITE,     0, (uint8*)&oadConfig },
-  { { ATT_BT_UUID_SIZE, charUserDescUUID },     GATT_PERMIT_READ,                       0, (uint8*)oadBlockDesc }
+  { { ATT_BT_UUID_SIZE, primaryServiceUUID }, MY_GATT_PERMIT_READ,  0, (uint8*)&oadProfileService },
+  { { ATT_BT_UUID_SIZE, characterUUID },      MY_GATT_PERMIT_READ,  0, (uint8*)&oadCharProps },
+  { { ATT_UUID_SIZE, oadIdentUUID },          MY_GATT_PERMIT_WRITE, 0, NULL },
+  { { ATT_BT_UUID_SIZE, clientCharCfgUUID },  MY_GATT_PERMIT_RW,    0, (uint8*)&oadConfig },
+  { { ATT_BT_UUID_SIZE, charUserDescUUID },   MY_GATT_PERMIT_READ,  0, (uint8*)oadIdentDesc },
+  { { ATT_BT_UUID_SIZE, characterUUID },      MY_GATT_PERMIT_READ,  0, (uint8*)&oadCharProps },
+  { { ATT_UUID_SIZE, oadBlockUUID },          MY_GATT_PERMIT_WRITE, 0, NULL },
+  { { ATT_BT_UUID_SIZE, clientCharCfgUUID },  MY_GATT_PERMIT_RW,    0, (uint8*)&oadConfig },
+  { { ATT_BT_UUID_SIZE, charUserDescUUID },   MY_GATT_PERMIT_READ,  0, (uint8*)oadBlockDesc }
 };
 
 #endif
@@ -304,7 +316,7 @@ void setupGAPandHCI()
   // Enable clock divide on halt
   // This reduces active current while radio is active and CC254x MCU
   // is halted
-#if ENABLE_BLE_CONSOLE
+#if 1 //ENABLE_BLE_CONSOLE
   // do not devide the clock when DMA is configured
 #if !HAL_UART_DMA
   // See: http://e2e.ti.com/support/wireless_connectivity/f/538/p/169944/668822.aspx#664740
@@ -351,9 +363,11 @@ static CONST gapObserverRoleCB_t blueBasic_ObserverCBs =
 static void blueBasic_HandleConnStatusCB(uint16 connHandle, uint8 changeType);
 static void blueBasic_RSSIUpdate(int8 rssi);
 
+#if ENABLE_BLE_CONSOLE
 static void bluebasic_ParamUpdateCB( uint16 connInterval,
                                          uint16 connSlaveLatency,
                                          uint16 connTimeout );
+#endif
 static void bluebasic_StateNotificationCB( gaprole_States_t newState );
 
 
@@ -427,8 +441,10 @@ void BlueBasic_Init( uint8 task_id )
   {
     uint32 passkey = 0; // passkey "000000"
     uint8 pairMode = GAPBOND_PAIRING_MODE_WAIT_FOR_REQ;
+//    uint8 pairMode = GAPBOND_PAIRING_MODE_INITIATE;
     uint8 mitm = TRUE;
     uint8 ioCap = GAPBOND_IO_CAP_DISPLAY_ONLY;
+//    uint8 ioCap = GAPBOND_IO_CAP_NO_INPUT_NO_OUTPUT;    
     uint8 bonding = TRUE;
     
     GAPBondMgr_SetParameter( GAPBOND_DEFAULT_PASSCODE, sizeof ( uint32 ), &passkey );
@@ -572,7 +588,6 @@ uint16 BlueBasic_ProcessEvent( uint8 task_id, uint16 events )
     // when empty clear the event
     return ( events ^ BLUEBASIC_CONNECTION_EVENT );
   }
-#endif
 
   if ( events & BLUEBASIC_INPUT_AVAILABLE )
   {
@@ -580,7 +595,9 @@ uint16 BlueBasic_ProcessEvent( uint8 task_id, uint16 events )
     SEMAPHORE_INPUT_SIGNAL();
     return (events ^ BLUEBASIC_INPUT_AVAILABLE);
   }
+#endif
 
+  
 #if defined ENABLE_YIELD && ENABLE_YIELD  
   // fix for Android to successfully read the GATT table
   // this event inidcates that the initial connection
@@ -807,6 +824,7 @@ static void blueBasic_RSSIUpdate(int8 rssi)
   ble_connection_status(0, LINKDB_STATUS_UPDATE_RSSI, rssi);
 }
 
+#if ENABLE_BLE_CONSOLE
 static void bluebasic_ParamUpdateCB( uint16 connInterval,
                                          uint16 connSlaveLatency,
                                          uint16 connTimeout )
@@ -815,6 +833,7 @@ static void bluebasic_ParamUpdateCB( uint16 connInterval,
   //timeSlice = ((connInterval == 0) ? 20 : ((connInterval < 24) ? 0 : connInterval));
 #endif// ENABLE_YIELD
 }
+#endif
 
 static void bluebasic_StateNotificationCB( gaprole_States_t newState )
 {
@@ -1061,7 +1080,7 @@ done:
   return status;
 }
 
-#endif
+#endif //ENABLE_BLE_CONSOLE
 
 HAL_ISR_FUNCTION(port0Isr, P0INT_VECTOR)
 {

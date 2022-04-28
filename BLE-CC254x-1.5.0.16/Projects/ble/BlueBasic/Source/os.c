@@ -95,7 +95,7 @@ static struct {
   char quote;
 } input;
 
-#ifdef ENABLE_BLE_CONSOLE
+#if ENABLE_BLE_CONSOLE
 
 extern unsigned char ble_console_write(unsigned char ch);
 extern unsigned char ble_console_enabled;
@@ -113,6 +113,7 @@ extern unsigned char ble_console_enabled;
 
 void OS_type(char c)
 {
+#if ENABLE_BLE_CONSOLE  
   switch (c)
   {
     case 0xff:
@@ -167,8 +168,10 @@ void OS_type(char c)
       }
       break;
   }
+#endif //ENABLE_BLE_CONSOLE  
 }
 
+#if ENABLE_BLE_CONSOLE
 void OS_prompt_buffer(unsigned char* start, unsigned char* end)
 {
   input.mode = MODE_NEED_INPUT;
@@ -177,6 +180,7 @@ void OS_prompt_buffer(unsigned char* start, unsigned char* end)
   input.ptr = (char*)start;
   input.quote = 0;
 }
+#endif
 
 char OS_prompt_available(void)
 {

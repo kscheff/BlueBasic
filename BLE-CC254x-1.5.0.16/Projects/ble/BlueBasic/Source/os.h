@@ -270,7 +270,11 @@ extern bStatus_t GAP_SetParamValue( gapParamIDs_t paramID, uint16 paramValue );
 
 #else // TARGET_PETRA
 
+#ifndef RUNTIME_ONLY
 #define ENABLE_BLE_CONSOLE      1
+#else
+#define ENABLE_BLE_CONSOLE      0
+#endif
 #define ENABLE_FAKE_OAD_PROFILE 0
 #define ENABLE_PORT0            1
 #define ENABLE_PORT1            1

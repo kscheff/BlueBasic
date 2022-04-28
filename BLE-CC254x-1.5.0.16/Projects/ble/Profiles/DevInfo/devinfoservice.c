@@ -233,12 +233,25 @@ static const uint8 devInfoPnpId[DEVINFO_PNP_ID_LEN] =
  * Profile Attributes - Table
  */
 
+#if GAP_BOND_MGR
+#define MY_AUTH_READ GATT_PERMIT_AUTHEN_READ
+#define MY_AUTH_WRITE GATT_PERMIT_AUTHEN_WRITE
+#else
+#define MY_AUTH_READ 0
+#define MY_AUTH_WRITE 0
+#endif
+
+#define MY_GATT_PERMIT_READ (GATT_PERMIT_READ | MY_AUTH_READ)
+#define MY_GATT_PERMIT_WRITE (GATT_PERMIT_WRITE | MY_AUTH_WRITE)
+
+
+
 static gattAttribute_t devInfoAttrTbl[] =
 {
   // Device Information Service
   {
     { ATT_BT_UUID_SIZE, primaryServiceUUID }, /* type */
-    GATT_PERMIT_READ,                         /* permissions */
+    MY_GATT_PERMIT_READ,                         /* permissions */
     0,                                        /* handle */
     (uint8 *)&devInfoService                /* pValue */
   },
@@ -247,7 +260,7 @@ static gattAttribute_t devInfoAttrTbl[] =
     // System ID Declaration
     {
       { ATT_BT_UUID_SIZE, characterUUID },
-      GATT_PERMIT_READ,
+      MY_GATT_PERMIT_READ,
       0,
       (uint8 *)&devInfoSystemIdProps
     },
@@ -255,7 +268,7 @@ static gattAttribute_t devInfoAttrTbl[] =
       // System ID Value
       {
         { ATT_BT_UUID_SIZE, devInfoSystemIdUUID },
-        GATT_PERMIT_READ,
+        MY_GATT_PERMIT_READ,
         0,
         (uint8 *)&devInfoSystemId
       },
@@ -264,7 +277,7 @@ static gattAttribute_t devInfoAttrTbl[] =
     // Model Number String Declaration
     {
       { ATT_BT_UUID_SIZE, characterUUID },
-      GATT_PERMIT_READ,
+      MY_GATT_PERMIT_READ,
       0,
       (uint8 *) &devInfoModelNumberProps
     },
@@ -272,7 +285,7 @@ static gattAttribute_t devInfoAttrTbl[] =
       // Model Number Value
       {
         { ATT_BT_UUID_SIZE, devInfoModelNumberUUID },
-        GATT_PERMIT_READ,
+        MY_GATT_PERMIT_READ,
         0,
         (uint8 *) devInfoModelNumber
       },
@@ -281,7 +294,7 @@ static gattAttribute_t devInfoAttrTbl[] =
     // Serial Number String Declaration
     {
       { ATT_BT_UUID_SIZE, characterUUID },
-      GATT_PERMIT_READ,
+      MY_GATT_PERMIT_READ,
       0,
       (uint8 *) &devInfoSerialNumberProps
     },
@@ -291,7 +304,7 @@ static gattAttribute_t devInfoAttrTbl[] =
       // Serial Number Value
       {
         { ATT_BT_UUID_SIZE, devInfoSerialNumberUUID },
-        GATT_PERMIT_READ,
+        MY_GATT_PERMIT_READ,
         0,
         (uint8 *) devInfoSerialNumber
       },
@@ -300,7 +313,7 @@ static gattAttribute_t devInfoAttrTbl[] =
     // Firmware Revision String Declaration
     {
       { ATT_BT_UUID_SIZE, characterUUID },
-      GATT_PERMIT_READ,
+      MY_GATT_PERMIT_READ,
       0,
       (uint8 *) &devInfoFirmwareRevProps
     },
@@ -308,7 +321,7 @@ static gattAttribute_t devInfoAttrTbl[] =
       // Firmware Revision Value
       {
         { ATT_BT_UUID_SIZE, devInfoFirmwareRevUUID },
-        GATT_PERMIT_READ,
+        MY_GATT_PERMIT_READ,
         0,
         (uint8 *) devInfoFirmwareRev
       },
@@ -317,7 +330,7 @@ static gattAttribute_t devInfoAttrTbl[] =
     // Hardware Revision String Declaration
     {
       { ATT_BT_UUID_SIZE, characterUUID },
-      GATT_PERMIT_READ,
+      MY_GATT_PERMIT_READ,
       0,
       (uint8 *) &devInfoHardwareRevProps
     },
@@ -327,7 +340,7 @@ static gattAttribute_t devInfoAttrTbl[] =
       // Hardware Revision Value
       {
         { ATT_BT_UUID_SIZE, devInfoHardwareRevUUID },
-        GATT_PERMIT_READ,
+        MY_GATT_PERMIT_READ,
         0,
         (uint8 *) devInfoHardwareRev
       },
@@ -337,7 +350,7 @@ static gattAttribute_t devInfoAttrTbl[] =
     // Software Revision String Declaration
     {
       { ATT_BT_UUID_SIZE, characterUUID },
-      GATT_PERMIT_READ,
+      MY_GATT_PERMIT_READ,
       0,
       (uint8 *) &devInfoSoftwareRevProps
     },
@@ -345,7 +358,7 @@ static gattAttribute_t devInfoAttrTbl[] =
       // Software Revision Value
       {
         { ATT_BT_UUID_SIZE, devInfoSoftwareRevUUID },
-        GATT_PERMIT_READ,
+        MY_GATT_PERMIT_READ,
         0,
         (uint8 *) devInfoSoftwareRev
       },
@@ -354,7 +367,7 @@ static gattAttribute_t devInfoAttrTbl[] =
     // Manufacturer Name String Declaration
     {
       { ATT_BT_UUID_SIZE, characterUUID },
-      GATT_PERMIT_READ,
+      MY_GATT_PERMIT_READ,
       0,
       (uint8 *) &devInfoMfrNameProps
     },
@@ -362,7 +375,7 @@ static gattAttribute_t devInfoAttrTbl[] =
       // Manufacturer Name Value
       {
         { ATT_BT_UUID_SIZE, devInfoMfrNameUUID },
-        GATT_PERMIT_READ,
+        MY_GATT_PERMIT_READ,
         0,
         (uint8 *) devInfoMfrName
       },
@@ -371,7 +384,7 @@ static gattAttribute_t devInfoAttrTbl[] =
     // IEEE 11073-20601 Regulatory Certification Data List Declaration
     {
       { ATT_BT_UUID_SIZE, characterUUID },
-      GATT_PERMIT_READ,
+      MY_GATT_PERMIT_READ,
       0,
       (uint8 *) &devInfo11073CertProps
     },
@@ -381,7 +394,7 @@ static gattAttribute_t devInfoAttrTbl[] =
       // IEEE 11073-20601 Regulatory Certification Data List Value
       {
         { ATT_BT_UUID_SIZE, devInfo11073CertUUID },
-        GATT_PERMIT_READ,
+        MY_GATT_PERMIT_READ,
         0,
         (uint8 *) devInfo11073Cert
       },
@@ -390,7 +403,7 @@ static gattAttribute_t devInfoAttrTbl[] =
     // PnP ID Declaration
     {
       { ATT_BT_UUID_SIZE, characterUUID },
-      GATT_PERMIT_READ,
+      MY_GATT_PERMIT_READ,
       0,
       &devInfoPnpIdProps
     },
@@ -398,7 +411,7 @@ static gattAttribute_t devInfoAttrTbl[] =
       // PnP ID Value
       {
         { ATT_BT_UUID_SIZE, devInfoPnpIdUUID },
-        GATT_PERMIT_READ,
+        MY_GATT_PERMIT_READ,
         0,
         (uint8 *) devInfoPnpId
       }

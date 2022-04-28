@@ -80,6 +80,7 @@ enum
   ERROR_EOF,
 };
 
+#if ENABLE_BLE_CONSOLE
 static const char* const error_msgs[] =
 {
   "OK",
@@ -92,7 +93,7 @@ static const char* const error_msgs[] =
   "Not in direct",
   "End of file",
 };
-
+#endif
 
 #if defined(MPPT_AS_VOT) && MPPT_AS_VOT
 #define MPPT_EMU_MSG " as Vot"
@@ -119,6 +120,7 @@ static const char* const error_msgs[] =
 #define MSG_EXT MPPT_MODE_MSG MPPT_EMU_MSG "\nno UART"
 #endif
 
+#if ENABLE_BLE_CONSOLE
 #ifdef BUILD_TIMESTAMP
 #ifdef FEATURE_OAD_HEADER
 static const char initmsg[]           = "BlueBasic " BUILD_TIMESTAMP "/OAD " kVersion MSG_EXT;
@@ -131,7 +133,7 @@ static const char initmsg[]           = "BlueBasic " kVersion MSG_EXT;
 //static const char urlmsg[]            = "http://blog.xojs.org/bluebasic";
 static const char urlmsg[]            = kMfrName;
 static const char memorymsg[]         = " bytes free.";
-
+#endif
 
 #define VAR_TYPE    long int
 #define VAR_SIZE    (sizeof(VAR_TYPE))
@@ -533,8 +535,9 @@ static __data unsigned char* variables_begin;
 __data unsigned char* sp;   // 
 __data unsigned char* heap; // Access in flashstore
 
-
+#if ENABLE_BLE_CONSOLE
 static unsigned char* list_line;
+#endif
 static unsigned char** program_start;
 static LINENUM linenum;
 
@@ -723,6 +726,8 @@ static inline void ignore_blanks(void)
   }
 }
 
+#if ENABLE_BLE_CONSOLE
+
 //
 // Tokenize the human readable command line into something easier, smaller and faster.
 //  Note. The tokenized form must always be smaller than the human form otherwise this
@@ -843,10 +848,14 @@ static void tokenize(void)
     }
   }
 }
+#endif
 
 //
 // Print a number (base 10)
 //
+#if !ENABLE_BLE_CONSOLE
+#define printnum(a,b)
+#else
 void printnum(signed char fieldsize, VAR_TYPE num)
 {
   VAR_TYPE size = 1;
@@ -871,7 +880,9 @@ void printnum(signed char fieldsize, VAR_TYPE num)
     num -= num/size*size;
   }
 }
+#endif
 
+#if ENABLE_BLE_CONSOLE
 static void testlinenum(void)
 {
   unsigned char ch;
@@ -890,6 +901,7 @@ static void testlinenum(void)
     linenum = linenum * 10 + ch - '0';
   }
 }
+#endif
 
 //
 // Find the beginning and limit of a quoted string.
@@ -917,6 +929,8 @@ static short find_quoted_string(void)
 //
 // Print the string between quotation marks.
 //
+#if ENABLE_BLE_CONSOLE  
+
 static unsigned char print_quoted_string(void)
 {
   short i = find_quoted_string();
@@ -936,10 +950,14 @@ static unsigned char print_quoted_string(void)
     return 1;
   }
 }
+#endif
 
 //
 // Print a message + newline
 //
+#if !ENABLE_BLE_CONSOLE
+#define printmsg(a)
+#else
 void printmsg(const char *msg)
 {
   while (*msg != 0)
@@ -948,6 +966,7 @@ void printmsg(const char *msg)
   }
   OS_putchar(NL);
 }
+#endif
 
 //
 // Find pointer in the lineref for the given linenum.
@@ -957,6 +976,9 @@ static unsigned char** findlineptr(void)
   return (unsigned char**)flashstore_findclosest(linenum);
 }
 
+#if !ENABLE_BLE_CONSOLE
+#define printline(a,b)
+#else
 //
 // Print the current BASIC line. The line is tokenized so
 // it is expanded as it's printed, including the addition of whitespace
@@ -1040,6 +1062,7 @@ found:
   }
   OS_putchar(NL);
 }
+#endif
 
 //
 // Parse a string into an integer.
@@ -1894,6 +1917,7 @@ void interpreter_init()
   //interpreter_banner();
 }
 
+#if ENABLE_BLE_CONSOLE
 void interpreter_banner(void)
 {
   printmsg(initmsg);
@@ -1908,7 +1932,7 @@ void interpreter_banner(void)
 #endif  
   printmsg(error_msgs[ERROR_OK]);
 }
-
+#endif
 
 //
 // Setup the interpreter.
@@ -1919,8 +1943,9 @@ bool interpreter_setup(void)
 {
   OS_init();
   interpreter_init();
+#if ENABLE_BLE_CONSOLE  
   OS_prompt_buffer(heap + sizeof(LINENUM), sp);
-  
+#endif  
   if (flashstore_findspecial(FLASHSPECIAL_AUTORUN))
   {
     if (program_end > program_start)
@@ -1932,6 +1957,7 @@ bool interpreter_setup(void)
   return FALSE;
 }
 
+#if ENABLE_BLE_CONSOLE
 //
 // Run the main interpreter while we have new commands to execute
 //
@@ -1943,6 +1969,7 @@ void interpreter_loop(void)
     OS_prompt_buffer(heap + sizeof(LINENUM), sp);
   }
 }
+#endif
 
 //
 // The main interpreter engine
@@ -1977,7 +2004,9 @@ unsigned char interpreter_run(LINENUM gofrom, unsigned char canreturn)
     }
     goto interperate;
   }
-
+  
+#if ENABLE_BLE_CONSOLE  
+  
 #if !defined(ENABLE_WIRE) || ENABLE_WIRE  
   // Remove any pending WIRE parsing.
   pinParsePtr = NULL;
@@ -2047,13 +2076,18 @@ unsigned char interpreter_run(LINENUM gofrom, unsigned char canreturn)
     }
     heap = (unsigned char*)program_end;
   }
+#endif
 
+  
 prompt:
+#if ENABLE_BLE_CONSOLE  
   OS_prompt_buffer(heap + sizeof(LINENUM), sp);
+#endif  
   return IX_PROMPT;
 
 // -- Commands ---------------------------------------------------------------
 
+#if ENABLE_BLE_CONSOLE
 direct:
   txtpos = heap + sizeof(LINENUM);
   if (*txtpos == NL)
@@ -2064,9 +2098,11 @@ direct:
   {
     goto interperate;
   }
-
+#endif
+  
 // ---------------------------------------------------------------------------
 
+  
 run_next_statement:
   txtpos = *++lineptr + sizeof(LINENUM) + sizeof(char);
   if (lineptr >= program_end) // Out of lines to run
@@ -2097,8 +2133,10 @@ run_next_statement:
       break;
     case KW_CONSTANT:
       GOTO_QWHAT;
+#if ENABLE_BLE_CONSOLE      
     case KW_LIST:
       goto list;
+#endif
     case KW_MEM:
       goto mem;
     case KW_NEW:
@@ -2225,11 +2263,13 @@ qoom:
 qtoobig:
   error_num = ERROR_TOOBIG;
   goto print_error_or_ok;
-  
+
+#if !BLUEBATTERY  
 qbadpin:
   error_num = ERROR_BADPIN;
   goto print_error_or_ok;
-
+#endif
+  
 qdirect:
   error_num = ERROR_DIRECT;
   goto print_error_or_ok;
@@ -2257,7 +2297,9 @@ print_error_or_ok:
   printmsg(error_msgs[error_num]);
   if (lineptr < program_end && error_num != ERROR_OK)
   {
+#if ENABLE_BLE_CONSOLE    
     list_line = *lineptr;
+#endif    
     OS_putchar('>');
     OS_putchar('>');
     OS_putchar(WS_SPACE);
@@ -2571,6 +2613,7 @@ assignment:
     goto run_next_statement;
   }
 
+#if ENABLE_BLE_CONSOLE  
 //
 // LIST [<linenr>]
 // List the current program starting at the optional line number.
@@ -2618,8 +2661,10 @@ list:
     }
   }
   goto run_next_statement;
+#endif  
 
 print:
+#if ENABLE_BLE_CONSOLE
   for (;;)
   {
     if (*txtpos == NL)
@@ -2649,6 +2694,7 @@ print:
     }
   }
   OS_putchar(NL);
+#endif  
   goto run_next_statement;
 
 //
@@ -2820,6 +2866,7 @@ cmd_delay:
 // When on, will load the save program at boot time and execute it.
 //
 cmd_autorun:
+#if ENABLE_BLE_CONSOLE  
   {
     VAR_TYPE v = expression(EXPR_NORMAL);
     if (error_num)
@@ -2838,6 +2885,7 @@ cmd_autorun:
       flashstore_deletespecial(FLASHSPECIAL_AUTORUN);
     }
   }
+#endif  
   goto run_next_statement;
 
 cmd_pinmode:
@@ -2918,6 +2966,7 @@ cmd_pinmode:
 //
 cmd_interrupt:
   {
+#if !BLUEBATTERY   // currently we don't need INTERRUPT support
     unsigned short pin;
     unsigned char i;
 
@@ -3036,6 +3085,7 @@ cmd_interrupt:
     {
       GOTO_QWHAT;
     }
+#endif    
     goto run_next_statement;
   }
   
