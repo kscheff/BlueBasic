@@ -620,6 +620,7 @@ static void receive_text(uint8 port, uint8 len)
           text.sign = -1;
           break;
         }
+        // fallthrough
       case MPPT_DATA_1:
       case MPPT_DATA_2:
       case MPPT_DATA_3:
