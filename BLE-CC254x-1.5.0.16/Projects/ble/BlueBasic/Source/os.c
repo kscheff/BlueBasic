@@ -111,9 +111,9 @@ extern unsigned char ble_console_enabled;
 #define CTRLH	0x08
 
 
+#if ENABLE_BLE_CONSOLE  
 void OS_type(char c)
 {
-#if ENABLE_BLE_CONSOLE  
   switch (c)
   {
     case 0xff:
@@ -168,8 +168,8 @@ void OS_type(char c)
       }
       break;
   }
-#endif //ENABLE_BLE_CONSOLE  
 }
+#endif //ENABLE_BLE_CONSOLE  
 
 #if ENABLE_BLE_CONSOLE
 void OS_prompt_buffer(unsigned char* start, unsigned char* end)
@@ -195,12 +195,12 @@ char OS_prompt_available(void)
   }
 }
 
+#if ENABLE_BLE_CONSOLE  
 void OS_putchar(char ch)
 {
-#if ENABLE_BLE_CONSOLE  
   ble_console_write(ch);
-#endif
 }
+#endif
 
 void* OS_rmemcpy(void *dst, const void GENERIC *src, unsigned int len)
 {

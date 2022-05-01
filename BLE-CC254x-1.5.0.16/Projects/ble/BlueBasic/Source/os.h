@@ -272,10 +272,11 @@ extern bStatus_t GAP_SetParamValue( gapParamIDs_t paramID, uint16 paramValue );
 
 #ifndef RUNTIME_ONLY
 #define ENABLE_BLE_CONSOLE      1
+#define ENABLE_FAKE_CONSOLE_PROFILE 1
 #else
 #define ENABLE_BLE_CONSOLE      0
-#define ENABLE_INTERRUPT        0
 #endif
+#define ENABLE_INTERRUPT        0
 #define ENABLE_FAKE_OAD_PROFILE 0
 #define ENABLE_PORT0            1
 #define ENABLE_PORT1            1
@@ -287,6 +288,14 @@ extern bStatus_t GAP_SetParamValue( gapParamIDs_t paramID, uint16 paramValue );
 #define YIELD_TIMEOUT_MS_FAST 5
 
 #endif // TARGET_PETRA
+
+#ifndef ENABLE_FAKE_CONSOLE_PROFILE
+#define ENABLE_FAKE_CONSOLE_PROFILE 0
+#endif
+
+#ifndef ENABLE_INTERRUPT
+#define ENABLE_INTERRUPT 1
+#endif
 
 #if TARGET_CC2540 || TARGET_CC2541
 #define TARGET_CC254X   1
@@ -427,12 +436,18 @@ extern unsigned char bluebasic_block_execution;
 #define SEMAPHORE_INPUT_WAIT()   BLUEBASIC_BLOCK_SET(0x10)
 #define SEMAPHORE_INPUT_SIGNAL() BLUEBASIC_BLOCK_CLR(0x10)
 
-
+#if ENABLE_BLE_CONSOLE
+#define OS_PUTCHAR(c) OS_putchar(c)
+#define OS_TYPE(c) OS_type(c)
+extern void OS_putchar(char ch);
+extern void OS_type(char ch);
+#else
+#define OS_PUTCHAR(c)
+#define OS_TYPE(c)
+#endif
 
 extern void OS_init(void);
 extern void OS_openserial(void);
-extern void OS_putchar(char ch);
-extern void OS_type(char ch);
 extern void OS_prompt_buffer(unsigned char* start, unsigned char* end);
 extern char OS_prompt_available(void);
 extern void* OS_rmemcpy(void *dst, const void *src, unsigned int len);

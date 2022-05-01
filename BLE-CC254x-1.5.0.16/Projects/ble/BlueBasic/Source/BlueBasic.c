@@ -128,6 +128,18 @@
 
 #define INVALID_CONNHANDLE                    0xFFFF
 
+#if GAP_BOND_MGR
+#define MY_ATHENTICATION_READ GATT_PERMIT_AUTHEN_READ
+#define MY_ATHENTICATION_WRITE GATT_PERMIT_AUTHEN_WRITE
+#else
+#define MY_ATHENTICATION_READ 0
+#define MY_ATHENTICATION_WRITE 0
+#endif
+
+#define MY_GATT_PERMIT_READ (GATT_PERMIT_READ | MY_ATHENTICATION_READ)
+#define MY_GATT_PERMIT_WRITE (GATT_PERMIT_WRITE | MY_ATHENTICATION_WRITE)
+#define MY_GATT_PERMIT_RW (GATT_PERMIT_READ | GATT_PERMIT_WRITE | MY_ATHENTICATION_READ | MY_ATHENTICATION_WRITE)
+
 /*********************************************************************
  * TYPEDEFS
  */
@@ -150,12 +162,11 @@ extern void ble_init_ccc(void);
 /*********************************************************************
  * LOCAL VARIABLES
  */
-
-#if ENABLE_BLE_CONSOLE
-
 #include "gatt_uuid.h"
 #include "gap.h"
 
+
+#if ENABLE_FAKE_CONSOLE_PROFILE || ENABLE_BLE_CONSOLE
 #define CONSOLE_PROFILE_SERV_UUID 0x3A, 0xA7, 0xBD, 0x64, 0x0a, 0xF7, 0xA3, 0xB5, 0x8D, 0x44, 0x16, 0x16, 0x91, 0x9E, 0xFB, 0x25
 static CONST uint8 consoleProfileServUUID[] = { CONSOLE_PROFILE_SERV_UUID };
 static CONST gattAttrType_t consoleProfileService = { ATT_UUID_SIZE, consoleProfileServUUID };
@@ -175,6 +186,7 @@ static CONST uint8 serviceHandles[] = {1, 0, 0xff, 0xff};
 static gattCharCfg_t *serviceChangedCharCfg = &serviceChanged;
 #endif
 
+#if ENABLE_BLE_CONSOLE
 unsigned char ble_console_enabled;
 
 static struct
@@ -184,21 +196,13 @@ static struct
   uint8* writein;
   uint8* writeout;
 } io;
+#define IO_WRITE io.write
+#else
+#define IO_WRITE NULL
+#endif
 
 static CONST unsigned char consoleInputDesc[] = "Console in";
 static CONST unsigned char consoleOutputDesc[] = "Console out";
-
-#if GAP_BOND_MGR
-#define MY_ATHENTICATION_READ GATT_PERMIT_AUTHEN_READ
-#define MY_ATHENTICATION_WRITE GATT_PERMIT_AUTHEN_WRITE
-#else
-#define MY_ATHENTICATION_READ 0
-#define MY_ATHENTICATION_WRITE 0
-#endif
-
-#define MY_GATT_PERMIT_READ (GATT_PERMIT_READ | MY_ATHENTICATION_READ)
-#define MY_GATT_PERMIT_WRITE (GATT_PERMIT_WRITE | MY_ATHENTICATION_WRITE)
-#define MY_GATT_PERMIT_RW (GATT_PERMIT_READ | GATT_PERMIT_WRITE | MY_ATHENTICATION_READ | MY_ATHENTICATION_WRITE)
 
 //#define GATT_PERMIT_RW GATT_PERMIT_READ|GATT_PERMIT_WRITE
 
@@ -208,7 +212,7 @@ static gattAttribute_t consoleProfile[] =
   { { ATT_BT_UUID_SIZE, primaryServiceUUID },   MY_GATT_PERMIT_READ,   0, (uint8*)&consoleProfileService },
   // Console Input Characteristics
   { { ATT_BT_UUID_SIZE, characterUUID },        MY_GATT_PERMIT_READ,   0, (uint8*)&inputProps },
-  { { ATT_UUID_SIZE, inputUUID },               MY_GATT_PERMIT_RW,     0, io.write },
+  { { ATT_UUID_SIZE, inputUUID },               MY_GATT_PERMIT_RW,     0, IO_WRITE },
   { { ATT_BT_UUID_SIZE, clientCharCfgUUID },    MY_GATT_PERMIT_RW,     0, (uint8*)&consoleProfileCharCfg1 },
   { { ATT_BT_UUID_SIZE, charUserDescUUID },     MY_GATT_PERMIT_READ,   0, (uint8*)consoleInputDesc },
   // Console Output Charactersitics
@@ -224,9 +228,9 @@ static gattAttribute_t consoleProfile[] =
 #endif
 };
 
+#if ENABLE_BLE_CONSOLE
 static bStatus_t consoleProfile_ReadAttrCB(uint16 connHandle, gattAttribute_t *pAttr, uint8 *pValue, uint8 *pLen, uint16 offset, uint8 maxLen, uint8 method);
 static bStatus_t consoleProfile_WriteAttrCB(uint16 connHandle, gattAttribute_t *pAttr, uint8 *pValue, uint8 len, uint16 offset, uint8 method);
-
 static CONST gattServiceCBs_t consoleProfileCB =
 {
   consoleProfile_ReadAttrCB,
@@ -250,6 +254,7 @@ static CONST uint8 consoleAdvert[] =
 #endif    
   0x09, GAP_ADTYPE_LOCAL_NAME_COMPLETE, 'B', 'A', 'S', 'I', 'C', '#', '?', '?'
 };
+#endif
 
 #endif
 
@@ -439,19 +444,19 @@ void BlueBasic_Init( uint8 task_id )
 #if GAP_BOND_MGR  
   // Setup the GAP Bond Manager to require pairing with pin code
   {
-    uint32 passkey = 0; // passkey "000000"
-    uint8 pairMode = GAPBOND_PAIRING_MODE_WAIT_FOR_REQ;
+//    uint32 passkey = 0; // passkey "000000"
 //    uint8 pairMode = GAPBOND_PAIRING_MODE_INITIATE;
     uint8 mitm = TRUE;
-    uint8 ioCap = GAPBOND_IO_CAP_DISPLAY_ONLY;
-//    uint8 ioCap = GAPBOND_IO_CAP_NO_INPUT_NO_OUTPUT;    
+//    uint8 ioCap = GAPBOND_IO_CAP_NO_INPUT_NO_OUTPUT;   
     uint8 bonding = TRUE;
+    uint8 bondFail = GAPBOND_FAIL_INITIATE_PAIRING; 
     
-    GAPBondMgr_SetParameter( GAPBOND_DEFAULT_PASSCODE, sizeof ( uint32 ), &passkey );
-    GAPBondMgr_SetParameter( GAPBOND_PAIRING_MODE, sizeof ( uint8 ), &pairMode );
-    GAPBondMgr_SetParameter( GAPBOND_MITM_PROTECTION, sizeof ( uint8 ), &mitm );
-    GAPBondMgr_SetParameter( GAPBOND_IO_CAPABILITIES, sizeof ( uint8 ), &ioCap );
-    GAPBondMgr_SetParameter( GAPBOND_BONDING_ENABLED, sizeof ( uint8 ), &bonding );
+//    GAPBondMgr_SetParameter( GAPBOND_DEFAULT_PASSCODE, sizeof ( uint32 ), &passkey ); // deafult is 0 --> "000000"
+//    GAPBondMgr_SetParameter( GAPBOND_PAIRING_MODE, sizeof ( uint8 ), &pairMode ); // default is GAPBOND_PAIRING_MODE_WAIT_FOR_REQ
+    GAPBondMgr_SetParameter( GAPBOND_MITM_PROTECTION, sizeof ( uint8 ), &mitm ); // defaults is FALSE
+//    GAPBondMgr_SetParameter( GAPBOND_IO_CAPABILITIES, sizeof ( uint8 ), &ioCap ); // default is GAPBOND_IO_CAP_DISPLAY_ONLY
+    GAPBondMgr_SetParameter( GAPBOND_BONDING_ENABLED, sizeof ( uint8 ), &bonding ); // default is FALSE
+    GAPBondMgr_SetParameter( GAPBOND_BOND_FAIL_ACTION, sizeof (uint8 ), &bondFail ); // default is GAPBOND_FAIL_TERMINATE_LINK
   }
 #endif   
   
@@ -529,8 +534,7 @@ uint16 BlueBasic_ProcessEvent( uint8 task_id, uint16 events )
     VOID linkDB_Register( blueBasic_HandleConnStatusCB );
 
 #if ENABLE_BLE_CONSOLE
-    
-    // Start monitoring parameters updates
+    // Start monitoring parameters updates    
     GAPRole_RegisterAppCBs( bluebasic_ParamUpdateCB);
     
     // Allocate Client Characteristic Configuration table
@@ -545,6 +549,9 @@ uint16 BlueBasic_ProcessEvent( uint8 task_id, uint16 events )
       GATTServApp_RegisterService(consoleProfile, GATT_NUM_ATTRS(consoleProfile),
                                   GATT_MAX_ENCRYPT_KEY_SIZE, &consoleProfileCB);
     }
+#elif ENABLE_FAKE_CONSOLE_PROFILE
+      GATTServApp_RegisterService(consoleProfile, GATT_NUM_ATTRS(consoleProfile),
+                                  GATT_MAX_ENCRYPT_KEY_SIZE, NULL);    
 #endif
 
     // Start Interpreter

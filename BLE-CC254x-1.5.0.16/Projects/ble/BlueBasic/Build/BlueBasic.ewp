@@ -2664,10 +2664,10 @@
                     <state>HAL_IMAGE_B</state>
                     <state>OAD_IMAGE_VERSION=2</state>
                     <state>FEATURE_OAD_HEADER=TRUE</state>
-                    <state>FEATURE_BOOST_CONVERTER=P2_0</state>
+                    <state>xFEATURE_BOOST_CONVERTER=P2_0</state>
                     <state>FEATURE_SAMPLING</state>
-                    <state>UART_USE_CALLBACK=0</state>
-                    <state>PROCESS_SERIAL_DATA</state>
+                    <state>xUART_USE_CALLBACK=0</state>
+                    <state>xPROCESS_SERIAL_DATA</state>
                     <state>OSALMEM_METRICS=FALSE</state>
                     <state>ENABLE_SNV=1</state>
                     <state>ENABLE_SPI=0</state>
@@ -5005,7 +5005,7 @@
                     <state>OAD_IMAGE_VERSION=2</state>
                     <state>FEATURE_OAD_HEADER=TRUE</state>
                     <state>xFEATURE_BOOST_CONVERTER=P2_0</state>
-                    <state>UART_USE_CALLBACK=0</state>
+                    <state>UART_USE_CALLBACK=1</state>
                     <state>PROCESS_SERIAL_DATA</state>
                     <state>OSALMEM_METRICS=FALSE</state>
                     <state>ENABLE_SNV=1</state>
@@ -15606,7 +15606,7 @@
                     <state>kProduct="BlueBattery"</state>
                     <state>kMfrName="blue-battery.com"</state>
                     <state>BLUEBATTERY=TRUE</state>
-                    <state>INT_HEAP_LEN=4656</state>
+                    <state>INT_HEAP_LEN=4600</state>
                     <state>BLUEBASIC_MEM=3328</state>
                     <state>BLUEBASIC=TRUE</state>
                     <state>RUNTIME_ONLY</state>
@@ -16959,7 +16959,7 @@
             <name>$PROJ_DIR$\..\..\..\..\COMPONENTS\osal\common\OSAL_ClockBLE.c</name>
         </file>
         <file>
-            <name>$PROJ_DIR$\..\..\..\..\COMPONENTS\osal\common\OSAL_Memory.c</name>
+            <name>$PROJ_DIR$\..\..\..\..\components\osal\common\OSAL_Memory.c</name>
         </file>
         <file>
             <name>$PROJ_DIR$\..\..\..\..\COMPONENTS\osal\common\OSAL_PwrMgr.c</name>
@@ -16987,7 +16987,6 @@
             <excluded>
                 <configuration>BlueSolar</configuration>
                 <configuration>BlueSolar_sleep</configuration>
-                <configuration>BlueBattery</configuration>
                 <configuration>BlueSteca</configuration>
                 <configuration>BlueBattery-D1</configuration>
                 <configuration>BlueBattery-MPPT</configuration>

@@ -2294,18 +2294,18 @@ print_error_or_ok:
     err_line = 0;
   }
 #endif  
+#if ENABLE_BLE_CONSOLE    
   printmsg(error_msgs[error_num]);
   if (lineptr < program_end && error_num != ERROR_OK)
   {
-#if ENABLE_BLE_CONSOLE    
     list_line = *lineptr;
-#endif    
     OS_putchar('>');
     OS_putchar('>');
     OS_putchar(WS_SPACE);
     printline(0, 1);
     OS_putchar(NL);
   }
+#endif    
   if (error_num == ERROR_OOM)
   {
     printmsg("rebooting...");
