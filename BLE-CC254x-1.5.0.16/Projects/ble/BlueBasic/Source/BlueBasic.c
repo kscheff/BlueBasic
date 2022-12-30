@@ -78,6 +78,10 @@
   #include "victron_mppt.h"
 #endif
 
+#if defined PROCESS_RAPID
+  #include "rapid.h"
+#endif
+
 /*********************************************************************
  * MACROS
  */
@@ -741,6 +745,15 @@ uint16 BlueBasic_ProcessEvent( uint8 task_id, uint16 events )
             interpreter_run(serial[i].onread, INTERPRETER_CAN_RETURN);
           break;
 #endif
+#if defined(PROCESS_RAPID)
+        case 'R':
+#if !UART_USE_CALLBACK          
+          process_rapid(i, len);
+#endif
+          if (serial[i].sbuf_read_pos == 0 && serial[i].onread)
+            interpreter_run(serial[i].onread, INTERPRETER_CAN_RETURN);
+          break;
+#endif          
 #if defined(PROCESS_SERIAL_DATA) || defined(PROCESS_MPPT)          
         default:
 #endif

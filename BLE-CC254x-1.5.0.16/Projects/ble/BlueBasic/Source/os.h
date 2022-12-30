@@ -249,6 +249,10 @@ extern bStatus_t GAP_SetParamValue( gapParamIDs_t paramID, uint16 paramValue );
 #include "victron_mppt.h"
 #endif
 
+#ifdef PROCESS_RAPID
+#include "rapid.h"
+#endif
+
 #if HAL_I2C_MASTER
 #include "hal_i2c.h"
 #define OS_I2C_INIT HalI2CInit(i2cClock_267KHZ)

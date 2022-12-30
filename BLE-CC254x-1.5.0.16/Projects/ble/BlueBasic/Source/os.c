@@ -420,6 +420,13 @@ static void _uartCallback(uint8 port, uint8 event)
   }
   else
 #endif
+#if PROCESS_RAPID
+  if ((serial[port].sflow == 'R') && len)
+  {
+    process_rapid(port, Hal_UART_RxBufLen(port));
+  }
+  else
+#endif    
   {
     if ( len && ( serial[port].sbuf_read_pos != 0 ) )
     {
@@ -499,22 +506,41 @@ unsigned char OS_serial_open(unsigned char port, unsigned long baud, unsigned ch
       return 2;
   }
 #undef SHIFT9
+  
+#if PROCESS_SERIAL_DATA
+#define FLOW_VOT (flow != 'V') 
+#else
+#define FLOW_VOT (1)
+#endif
+
+#if PROCESS_MPPT
+#define FLOW_MPPT (flow != 'M')
+#else
+#define FLOW_MPPT (1)
+#endif  
+
+#if PROCESS_RAPID
+#define FLOW_RAPID (flow != 'R')
+#else
+#define FLOW_RAPID (1)
+#endif
+    
   // Only support port 0-1, no-parity, 8-bits, 1 stop bit
 #ifndef PROCESS_SERIAL_DATA 
   if (port > (OS_MAX_SERIAL - 1) || parity != 'N' || bits != 8 || stop != 1 || (flow != 'H' && flow != 'N'))
 #else
   // additional option 'V' means preprocessing needs to be enabled
   serial[port].sflow = flow;
-#ifndef PROCESS_MPPT
-  if (port > (OS_MAX_SERIAL - 1) || parity != 'N' || bits != 8 || stop != 1 || (flow != 'H' && flow != 'N' && flow != 'V'))
-#else
-  // option 'M' means Victron MPPT preprocessing
-  if (port > (OS_MAX_SERIAL - 1) || parity != 'N' || bits != 8 || stop != 1 || (flow != 'H' && flow != 'N' && flow != 'V' && flow != 'M'))
-#endif    
+  if (port > (OS_MAX_SERIAL - 1) || parity != 'N' || bits != 8 || stop != 1 || (flow != 'H' && flow != 'N' && FLOW_VOT && FLOW_MPPT && FLOW_RAPID))
 #endif
   {
     return 3;
   }
+  
+#ifdef PROCESS_RAPID
+  if (!FLOW_RAPID && !open_rapid())
+    return 4;
+#endif    
 
   config.configured = 1;
   config.baudRate = cbaud;
@@ -607,6 +633,9 @@ unsigned char OS_serial_close(unsigned char port)
 #endif
 #ifdef PROCESS_SERIAL_DATA
   serial[port].sbuf_read_pos = 16;
+#endif 
+#ifdef PROCESS_RAPID
+  close_rapid();
 #endif  
   unsigned char stop = 1;
   for (unsigned char i = 0; i < OS_MAX_SERIAL; i++)
