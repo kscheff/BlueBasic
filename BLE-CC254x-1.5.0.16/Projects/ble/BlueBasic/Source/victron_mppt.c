@@ -258,7 +258,8 @@ typedef struct
   uint8 u_panel_msb;
   uint8 i_batt_lsb;  // 0.1A per bit
   uint8 i_batt_msb;
-  uint8 res[6];
+  uint8 res[5];
+  uint8 phase; // charging phase: bit 0:bulk, 1:u1, 2:u2; 3:u3
   uint8 status;
   uint8 parity;
 } sol_frame_t;
@@ -300,22 +301,28 @@ static void send_as_vot(uint8 port)
   // 7 equalize (voltage limit)
   // 252 ESS (voltage controlled from external)
   // 255 unavailable  
-  sol_frame->status = VOT_STATUS_MPP_FLAG;
+
+  uint8 phase = 1;
+  uint8 status = VOT_STATUS_ACTIVE | VOT_STATUS_MPP_FLAG;
   switch (pmppt->status)
   {
-  case 3:
-    sol_frame->status |= VOT_STATUS_ACTIVE;
-    break;
-  case 4:
-  case 5:
-  case 6:
   case 7:
-  case 252:
-    sol_frame->status |= VOT_STATUS_LIMIT | VOT_STATUS_ACTIVE;
+    phase <<= 1;
+  case 5:
+    phase <<= 1;
+  case 4:
+    phase <<= 1;
+    status = VOT_STATUS_LIMIT | VOT_STATUS_ACTIVE | VOT_STATUS_MPP_FLAG;
+    break;
+  case 3:
     break;
   default:
+    phase = 0;
+    status = VOT_STATUS_MPP_FLAG;
     break;
   }
+  sol_frame->status = status;
+  sol_frame->phase = phase;
   serial[port].sbuf_read_pos = 0;
 }
 #endif
