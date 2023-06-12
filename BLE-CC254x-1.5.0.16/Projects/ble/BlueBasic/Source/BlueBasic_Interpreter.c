@@ -2625,7 +2625,9 @@ assignment:
       // Array assignment
       ptr = ((unsigned char*)frame) + sizeof(variable_frame);
       unsigned short len = frame->header.frame_size - sizeof(variable_frame);
-      while (len--)
+      // allow for assignment with less bytes to fill, so we clear the Array first
+      OS_memset(ptr,0,len);
+      while (len-- && *txtpos != NL)
       {
         val = expression(EXPR_COMMA);
         if (error_num)
