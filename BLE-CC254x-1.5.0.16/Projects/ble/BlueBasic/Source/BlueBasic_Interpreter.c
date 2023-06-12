@@ -1171,6 +1171,36 @@ static unsigned char* parse_variable_address(variable_frame** vframe)
 }
 
 //
+// copy variable content to dst and return its size
+//
+static unsigned char copy_dim(unsigned char *dst)
+{
+  variable_frame* vframe = NULL;
+  unsigned char* otxtpos = txtpos;
+  unsigned char* ptr = parse_variable_address(&vframe);
+  unsigned char len = 0;
+  if (ptr)
+  {
+    // only interested in variables without index
+    txtpos = otxtpos;
+    return 0;
+  }
+  else if (vframe)
+  {
+    // No address, but we have a vframe - this is a full array
+    if (error_num == ERROR_EXPRESSION)
+      error_num = ERROR_OK; // clear parsing error due to missing index braces
+    len = vframe->header.frame_size - sizeof(variable_frame);
+    CHECK_HEAP_OOM(len, qoom);
+    OS_memcpy(dst, ((unsigned char*)vframe) + sizeof(variable_frame), len);
+  }	
+  return len;
+qoom:
+  error_num = ERROR_OOM;
+  return 0;	  
+}
+
+//
 // Create an array
 //
 static void create_dim(unsigned char name, VAR_TYPE size, unsigned char* data)
@@ -4846,21 +4876,37 @@ i2c_end:
       unsigned char len = 0;
       unsigned char i = 0;
       unsigned char* ptr = heap;
+      unsigned char* saved_heap = heap;
       unsigned char rnw = (txtpos[-1] == KW_READ ? 1 : 0);
-      
       // Encode data we want to write
       for (;;)
       {
         unsigned char d;
+        ignore_blanks();
         if (*txtpos == NL)
         {
           break;
         }
-        else
+        d = copy_dim(ptr);
+        if (error_num)
+        {
+           heap = saved_heap;
+           GOTO_QWHAT;
+        }
+        if (d)
+        {
+          len += d;
+          ptr += d;
+          ignore_blanks();
+          if (*txtpos == ',')
+            txtpos++;
+        }
+        else 
         {
           d = expression(EXPR_COMMA);
           if (error_num)
           {
+            heap = saved_heap;
             GOTO_QWHAT;
           }
           *ptr++ = d;
@@ -4877,16 +4923,17 @@ i2c_end:
       {
         if (len > 0)
         {
-          OS_I2C_WRITE(heap[0], len - 1, heap + 1);
+          OS_I2C_WRITE(saved_heap[0], len - 1, saved_heap + 1);
         }
+        heap = saved_heap;
         break;
       }
-
       variable_frame* vframe;
       ignore_blanks();
       i = *txtpos;
       if (i < 'A' || i > 'Z')
       {
+        heap = saved_heap;
         GOTO_QWHAT;
       }
       txtpos++;
@@ -4901,6 +4948,7 @@ i2c_end:
         *(VAR_TYPE*)rdata = 0;
       }
       OS_I2C_READ(heap[0], len, rdata);
+      heap = saved_heap;
       break;    
     }
 #endif // HAL_I2C_SLAVE    
