@@ -16828,8 +16828,8 @@
                     <state>OAD_IMAGE_VERSION=2</state>
                     <state>FEATURE_OAD_HEADER=FALSE</state>
                     <state>xFEATURE_BOOST_CONVERTER=P2_0</state>
-                    <state>FEATURE_SAMPLING</state>
-                    <state>FEATURE_TRUE_RMS</state>
+                    <state>xFEATURE_SAMPLING</state>
+                    <state>xFEATURE_TRUE_RMS</state>
                     <state>UART_USE_CALLBACK=1</state>
                     <state>PROCESS_SERIAL_DATA</state>
                     <state>PROCESS_MPPT</state>
@@ -17732,6 +17732,10 @@
         </file>
         <file>
             <name>$PROJ_DIR$\..\Source\rapid.c</name>
+            <excluded>
+                <configuration>BlueBattery-MPPT</configuration>
+                <configuration>BBX</configuration>
+            </excluded>
         </file>
         <file>
             <name>$PROJ_DIR$\..\Source\victron_mppt.c</name>
@@ -18059,7 +18063,7 @@
                         <name>$PROJ_DIR$\..\..\..\..\Components\hal\target\CC2540EB\hal_crc.h</name>
                     </file>
                     <file>
-                        <name>$PROJ_DIR$\..\..\..\..\COMPONENTS\hal\target\CC2540EB\hal_dma.h</name>
+                        <name>$PROJ_DIR$\..\..\..\..\Components\hal\target\CC2540EB\hal_dma.h</name>
                     </file>
                     <file>
                         <name>$PROJ_DIR$\..\..\..\..\Components\hal\target\CC2540EB\hal_mcu.h</name>

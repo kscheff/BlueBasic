@@ -71,8 +71,8 @@ typedef struct
 } TypMesswerte;
 
 // prototypes
-bool open_rapid();
-void close_rapid();
+//bool open_rapid();
+//void close_rapid();
 void process_rapid(uint8 port, uint8 len);
 
 #ifdef __cplusplus

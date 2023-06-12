@@ -508,40 +508,35 @@ unsigned char OS_serial_open(unsigned char port, unsigned long baud, unsigned ch
 #undef SHIFT9
   
 #if PROCESS_SERIAL_DATA
-#define FLOW_VOT (flow != 'V') 
+#define FLOW_VOT (flow == 'V') 
 #else
-#define FLOW_VOT (1)
+#define FLOW_VOT (0)
 #endif
 
 #if PROCESS_MPPT
-#define FLOW_MPPT (flow != 'M')
+#define FLOW_MPPT (flow == 'M')
 #else
-#define FLOW_MPPT (1)
+#define FLOW_MPPT (0)
 #endif  
 
 #if PROCESS_RAPID
-#define FLOW_RAPID (flow != 'R')
+#define FLOW_RAPID (flow == 'R')
 #else
-#define FLOW_RAPID (1)
+#define FLOW_RAPID (0)
 #endif
     
   // Only support port 0-1, no-parity, 8-bits, 1 stop bit
 #ifndef PROCESS_SERIAL_DATA 
   if (port > (OS_MAX_SERIAL - 1) || parity != 'N' || bits != 8 || stop != 1 || (flow != 'H' && flow != 'N'))
 #else
-  // additional option 'V' means preprocessing needs to be enabled
+  // additional options 'V' 'M' 'R' means preprocessing needs to be enabled
   serial[port].sflow = flow;
-  if (port > (OS_MAX_SERIAL - 1) || parity != 'N' || bits != 8 || stop != 1 || (flow != 'H' && flow != 'N' && FLOW_VOT && FLOW_MPPT && FLOW_RAPID))
+  if (port > (OS_MAX_SERIAL - 1) || parity != 'N' || bits != 8 || stop != 1 || (flow != 'H' && flow != 'N' && !FLOW_VOT && !FLOW_MPPT && !FLOW_RAPID))
 #endif
   {
     return 3;
   }
   
-#ifdef PROCESS_RAPID
-  if (!FLOW_RAPID && !open_rapid())
-    return 4;
-#endif    
-
   config.configured = 1;
   config.baudRate = cbaud;
   config.flowControl = flow == 'H' ? HAL_UART_FLOW_ON : HAL_UART_FLOW_OFF;
@@ -634,9 +629,6 @@ unsigned char OS_serial_close(unsigned char port)
 #ifdef PROCESS_SERIAL_DATA
   serial[port].sbuf_read_pos = 16;
 #endif 
-#ifdef PROCESS_RAPID
-  close_rapid();
-#endif  
   unsigned char stop = 1;
   for (unsigned char i = 0; i < OS_MAX_SERIAL; i++)
   {

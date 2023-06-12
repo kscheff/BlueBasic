@@ -6,7 +6,11 @@
  
 #include "os.h"
 #include "hal_uart.h"
-
+#include <stddef.h>
+#include <math.h>
+   
+#define RAPID_BUFFER 0
+   
 #define CRC16Polynom    0x1021
 #define CRC16Startwert  0xFFFF
 #define byte uint8
@@ -59,47 +63,41 @@ typedef struct
   uint8 u_input_msb;
   uint8 i_out_lsb;  // 0.1A per bit
   uint8 i_out_msb;
-  uint8 res[6];
+  uint8 error; // bit 7:error, 0..6 code
+  uint8 res[4];
+  uint8 phase; // bit 0:bulk, 1:Absorb, 2:Float; 3:Care
   uint8 status;
   uint8 parity;
 } booster_frame_t;
 
-static union Data {
-  TypMesswerte messwerte;
-  uint8 buffer[sizeof(TypMesswerte)];
-} *data = NULL;
+static uint8 CRC16H;
+static uint8 CRC16L;
 
-uint8 count = 0;
-
-uint16 BerechneCRC16(byte* dataPTR, int size)
+static void BerechneCRC16(byte* dataPTR, int size)
 {
   byte uIndex;
-  byte CRC16H = HI_UINT16(CRC16Startwert);
-  byte CRC16L = LO_UINT16(CRC16Startwert);
-  
   for (int i = 0; i < size; i++)
   {
     uIndex = (byte)(CRC16H ^ *(dataPTR + i));
     CRC16H = (byte)(CRC16L ^ crc16_Hi[uIndex]);
     CRC16L = crc16_Lo[uIndex];
   }
-  return (CRC16H << 8) | CRC16L;
 }
 
-
-bool PruefeCRC16(byte* dataPTR, int size)
-{
-  uint16 crc = BerechneCRC16(dataPTR, size - 2);
-  byte* bytePTR = dataPTR + size - 2;
-  if (*bytePTR != LO_UINT16(crc))
-    return false;
-  bytePTR++;
-  if (*bytePTR != HI_UINT16(crc))
-    return false;
-  return true;
-}
-
-
+//static bool PruefeCRC16(byte* dataPTR, int size)
+//{
+//  CRC16H = HI_UINT16(CRC16Startwert);
+//  CRC16L = LO_UINT16(CRC16Startwert);
+//  BerechneCRC16(dataPTR, size - 2);
+//  byte* bytePTR = dataPTR + size - 2;
+//  if (*bytePTR != CRC16L)
+//    return false;
+//  bytePTR++;
+//  if (*bytePTR != CRC16H)
+//    return false;
+//  return true;
+//}
+//
 //void SetzeCRC16(byte* dataPTR, int size)
 //{
 //  BerechneCRC16(dataPTR, size - 2);
@@ -110,6 +108,38 @@ bool PruefeCRC16(byte* dataPTR, int size)
 //  *bytePTR = CRC16L;
 //}
 
+ 
+typedef enum  __attribute__ ((__packed__))
+{
+  RAPID_IDLE,
+  RAPID_SKIP,
+  RAPID_FLOAT,
+  RAPID_CRCL,
+  RAPID_CRCH
+} state_rapid_t;
+
+static state_rapid_t state;
+
+typedef union
+{
+  float f;
+  uint8 b[4];
+} convert_float_t;
+
+typedef struct
+{
+  convert_float_t i_slave;
+  convert_float_t u_in;
+  convert_float_t u_out;
+  convert_float_t i_out;
+} messwerte_t;
+
+static union
+{
+  messwerte_t messwerte;
+  convert_float_t f[sizeof(messwerte_t) / sizeof(float)];
+} data;
+
 static void send_as_vot(uint8 port)
 {
   // directly copy data to serial buffer
@@ -117,13 +147,13 @@ static void send_as_vot(uint8 port)
   booster_frame->start = 0xAA;
   booster_frame->id = 0x7A;
   
-  uint16 input = (uint16)(data->messwerte.SpannungStartbatterieMessleitung * 100);
-  uint16 output = (uint16)(data->messwerte.SpannungAufbaubatterieMessleitung * 100);
-  int16 current = (int16)(data->messwerte.StromAufbaubatterie * 10);
-
-//  uint16 input = (uint16)(data->messwerte.ReferenzUeberspannungsschutzAufbaubatterie * 100);
-//  uint16 output = (uint16)(data->messwerte.ReferenzUeberspannungsschutzStartbatterie * 1000);
-//  int16 current = (int16)(data->messwerte.TemperaturIntern * 10);
+  // messwerte alread limited to positive numbers
+  uint16 input = (uint16)(data.messwerte.u_in.f * 100); // should always be >= 0
+  uint16 output = (uint16)(data.messwerte.u_out.f * 100); // should always be >= 0
+  int16 current = (int16)((data.messwerte.i_out.f + data.messwerte.i_slave.f) * 10);
+  // current could be negative when Rapid reverse charges the starter battery
+  // so we clip negative values 
+  //current = current > 0 ? current : 0;
   
   booster_frame->u_input_lsb = LO_UINT16(input);
   booster_frame->u_input_msb = HI_UINT16(input);
@@ -143,50 +173,75 @@ static void send_as_vot(uint8 port)
   // 255 unavailable  
   
   serial[port].sbuf_read_pos = 0;
-}
-
-
-// returns true if successful
-bool open_rapid()
-{
-  if (data != NULL)
-    return TRUE;
-  if ( (data = OS_malloc(sizeof(data->buffer))) == NULL)
-    return FALSE;
-  data->buffer[0] = count = 0;
-  return TRUE;
-}
-
-void close_rapid()
-{
-  OS_free(data);
-  data = NULL;
+#if UART_USE_CALLBACK   
+  osal_set_event(blueBasic_TaskID, BLUEBASIC_EVENT_SERIAL<<(port == HAL_UART_PORT_1));
+#endif
 }
 
 void process_rapid(uint8 port, uint8 len)
 {
-  if (data == NULL)
-    return;
-  if (count >= sizeof(data->buffer))
-    count = 0;
-  len = (uint8)HalUARTRead(port, data->buffer + count, sizeof(data->buffer) - count);
-  // check for command 'S' as first byte
-  if (data->buffer[0] != 'S')
-     return;
-  count += len;
-  if (count < sizeof(data->buffer))
-    return;
-  if (!PruefeCRC16(data->buffer, sizeof(data->buffer)))
+  static uint8 cnt;
+  static uint8 fcnt;
+  static uint8 bcnt;
+  uint8 c;
+  while ( HalUARTRead(port, &c, sizeof(c)) )
   {
-    data->buffer[0] = count = 0;
-    return;
+    cnt += 1;
+    switch (state)
+    {
+    case RAPID_IDLE:
+      if (c == 'S')
+      {
+        state = RAPID_SKIP;
+        cnt = 0;
+        CRC16H = 0xff;
+        CRC16L = 0xff;
+        fcnt = 0;
+      }
+      break;
+    case RAPID_SKIP:
+      if ( cnt == offsetof(TypMesswerte, SlaveStromAufbaubatterie) ||
+           cnt == offsetof(TypMesswerte, SpannungStartbatterieMessleitung) ||
+           cnt == offsetof(TypMesswerte, SpannungAufbaubatterieMessleitung) ||
+           cnt == offsetof(TypMesswerte, StromAufbaubatterie) )
+      {
+        state = RAPID_FLOAT;
+        bcnt = 0;
+        data.f[fcnt].b[bcnt] = c;
+      }
+      if ( cnt == offsetof(TypMesswerte, CRC16) - 1 )
+      {
+        state = RAPID_CRCL;
+      }
+      break;
+    case RAPID_FLOAT:
+      {
+        data.f[fcnt].b[++bcnt] = c;
+        if (bcnt >= sizeof(float) - 1)
+        {
+          state = RAPID_SKIP;
+          fcnt++;
+          // limit to positive numbers to save later the compares
+          //*pmesswert = pnumber->f > 0 ? pnumber->f : 0;
+        }
+      }
+      break;
+    case RAPID_CRCL:
+      state = (c == CRC16L) ? RAPID_CRCH : RAPID_IDLE;
+      break;
+    case RAPID_CRCH:
+      if ( c == CRC16H )
+      {
+        send_as_vot(port);
+      }
+      state = RAPID_IDLE;
+      break;
+    }
+    if ( state != RAPID_CRCH )
+    {
+      BerechneCRC16(&c, sizeof(c));
+    }
   }
-  // now we should have all data ready...
-  send_as_vot(port);
-  data->buffer[0] = count = 0;
-#if UART_USE_CALLBACK   
-  osal_set_event(blueBasic_TaskID, BLUEBASIC_EVENT_SERIAL<<(port == HAL_UART_PORT_1));
-#endif
 }
 
 //Daten vom LBR anfordern mit 0x53 (1 Byte)
