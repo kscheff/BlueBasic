@@ -165,22 +165,25 @@ class MasterViewController: UITableViewController {
 
   override func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
     let cell = tableView.dequeueReusableCell(withIdentifier: "Cell", for: indexPath) as UITableViewCell
-    cell.textLabel?.text = names[indexPath.row].name
-    switch names[indexPath.row].rssi {
-    case -41...0:
-      cell.imageView?.image = UIImage(named: "5bars")
-    case -53...(-42):
-      cell.imageView?.image = UIImage(named: "4bars")
-    case -65...(-54):
-      cell.imageView?.image = UIImage(named: "3bars")
-    case -75...(-66):
-      cell.imageView?.image = UIImage(named: "2bars")
-    case -97...(-76):
-      cell.imageView?.image = UIImage(named: "1bars")
-    default:
-      cell.imageView?.image = UIImage(named: "0bars")
+    cell.backgroundColor = names[indexPath.row].isConnected ? UIColor.lightGray : nil
+    if (indexPath.row < names.endIndex) {
+      cell.textLabel?.text = names[indexPath.row].name
+      switch names[indexPath.row].rssi {
+      case -41...0:
+        cell.imageView?.image = UIImage(named: "5bars")
+      case -53...(-42):
+        cell.imageView?.image = UIImage(named: "4bars")
+      case -65...(-54):
+        cell.imageView?.image = UIImage(named: "3bars")
+      case -75...(-66):
+        cell.imageView?.image = UIImage(named: "2bars")
+      case -97...(-76):
+        cell.imageView?.image = UIImage(named: "1bars")
+      default:
+        cell.imageView?.image = UIImage(named: "0bars")
+      }
+      cell.imageView?.sizeToFit()
     }
-    cell.imageView?.sizeToFit()
     return cell
   }
 }
