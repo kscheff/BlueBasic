@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>Blue Basic.ipa</key>
+	<array>
+		<dict>
+			<key>architectures</key>
+			<array>
+				<string>armv7</string>
+				<string>arm64</string>
+			</array>
+			<key>buildNumber</key>
+			<string>Testflight.2.0.248</string>
+			<key>certificate</key>
+			<dict>
+				<key>SHA1</key>
+				<string>4BFCE90734BF569175112D09996AA394473A370B</string>
+				<key>dateExpires</key>
+				<string>21.05.24</string>
+				<key>type</key>
+				<string>Apple Distribution</string>
+			</dict>
+			<key>entitlements</key>
+			<dict>
+				<key>application-identifier</key>
+				<string>9V8SY527DR.com.blue-battery.bluebasic</string>
+				<key>com.apple.developer.team-identifier</key>
+				<string>9V8SY527DR</string>
+				<key>get-task-allow</key>
+				<false/>
+			</dict>
+			<key>name</key>
+			<string>BlueBasicIOS.app</string>
+			<key>profile</key>
+			<dict>
+				<key>UUID</key>
+				<string>c8d213cb-3d27-40d0-82fa-345e9ae8669e</string>
+				<key>dateExpires</key>
+				<string>21.05.24</string>
+				<key>name</key>
+				<string>iOS Team Ad Hoc Provisioning Profile: com.blue-battery.bluebasic</string>
+			</dict>
+			<key>team</key>
+			<dict>
+				<key>id</key>
+				<string>9V8SY527DR</string>
+				<key>name</key>
+				<string>Kai Scheffer</string>
+			</dict>
+			<key>versionNumber</key>
+			<string>Testflight.2.0.248</string>
+		</dict>
+	</array>
+</dict>
+</plist>

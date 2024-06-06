@@ -12,7 +12,6 @@
 *.wsdt
 *.dni
 *.dbgdt
-*.s51
 *.ewt
 *.pew
 Obj/

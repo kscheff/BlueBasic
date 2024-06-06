@@ -18105,7 +18105,7 @@
                 <group>
                     <name>Includes</name>
                     <file>
-                        <name>$PROJ_DIR$\..\..\..\..\Components\hal\target\CC2541ARC\hal_i2c.h</name>
+                        <name>$PROJ_DIR$\..\..\..\..\COMPONENTS\hal\target\CC2541ARC\hal_i2c.h</name>
                     </file>
                 </group>
             </group>
@@ -18194,7 +18194,7 @@
             <name>$PROJ_DIR$\..\..\..\..\COMPONENTS\osal\common\OSAL_ClockBLE.c</name>
         </file>
         <file>
-            <name>$PROJ_DIR$\..\..\..\..\components\osal\common\OSAL_Memory.c</name>
+            <name>$PROJ_DIR$\..\..\..\..\COMPONENTS\osal\common\OSAL_Memory.c</name>
         </file>
         <file>
             <name>$PROJ_DIR$\..\..\..\..\COMPONENTS\osal\common\OSAL_PwrMgr.c</name>

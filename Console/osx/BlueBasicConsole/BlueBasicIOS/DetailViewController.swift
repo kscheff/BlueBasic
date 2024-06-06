@@ -98,11 +98,11 @@ class DetailViewController: UIViewController, UITextViewDelegate, DeviceDelegate
   
   // MARK: - Short cuts
   
-  let buttonUpgrade = UIBarButtonItem(title: "Upgrade", style: .plain, target: self, action: #selector(DetailViewController.upgrade))
+  let buttonUpgrade = UIBarButtonItem(title: "Upgrade", style: .plain, target: DetailViewController.self, action: #selector(DetailViewController.upgrade))
   
-  let buttonRun = UIBarButtonItem(title: "Run", style: .plain, target: self, action: #selector(DetailViewController.run))
+  let buttonRun = UIBarButtonItem(title: "Run", style: .plain, target: nil, action: #selector(DetailViewController.run))
   
-  let buttonStop = UIBarButtonItem(title: "Stop", style: .plain, target: self, action: #selector(DetailViewController.stop))
+  let buttonStop = UIBarButtonItem(title: "Stop", style: .plain, target: nil, action: #selector(DetailViewController.stop))
   
   @objc func run() {
     _ = write("run\n")
