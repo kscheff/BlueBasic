@@ -302,22 +302,21 @@ static void send_as_vot(uint8 port)
   // 252 ESS (voltage controlled from external)
   // 255 unavailable  
 
-  uint8 phase = 1;
+  uint8 phase = 0;
   uint8 status = VOT_STATUS_ACTIVE | VOT_STATUS_MPP_FLAG;
   switch (pmppt->status)
   {
   case 7:
-    phase <<= 1;
+    phase += 1;
   case 5:
-    phase <<= 1;
+    phase += 1;
   case 4:
-    phase <<= 1;
+    phase += 1;
     status = VOT_STATUS_LIMIT | VOT_STATUS_ACTIVE | VOT_STATUS_MPP_FLAG;
     break;
   case 3:
     break;
   default:
-    phase = 0;
     status = VOT_STATUS_MPP_FLAG;
     break;
   }

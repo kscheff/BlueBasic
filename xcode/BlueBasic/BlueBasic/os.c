@@ -341,3 +341,8 @@ void OS_init(void) {
   // initialize start time
   OS_get_millis();
 }
+
+int8 OS_get_vdd_7(void) {
+  //  mV * 127 / 3720
+  return (3300 * 127 / 3720);
+}

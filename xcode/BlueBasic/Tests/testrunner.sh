@@ -6,7 +6,7 @@
 #  Created by tim on 7/15/14.
 #  Copyright (c) 2014 tim. All rights reserved.
 
-BLUEBASIC="$HOME/Library/Developer/Xcode/DerivedData/BlueBasic-*/Build/Products/Debug/BlueBasic"
+BLUEBASIC="$HOME/Library/Developer/Xcode/DerivedData/BlueBasic-d*/Build/Products/Release/BlueBasic"
 
 for test in $(cat tests)
 do
@@ -27,7 +27,7 @@ $line"
     done
     expected=${expected:1} # remove first newline
     rm -f /tmp/flashstore
-    result=$(echo "${input:1}" | $BLUEBASIC | sed '1,3d') # remove startup header
+    result=$(echo "${input:1}" | $BLUEBASIC | sed '1,4d') # remove startup header
     if [ "$result" = "$expected" ]
     then
       echo "** $test: SUCCESS"

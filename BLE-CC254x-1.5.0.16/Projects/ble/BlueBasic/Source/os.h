@@ -224,6 +224,7 @@ extern bStatus_t GAP_SetParamValue( gapParamIDs_t paramID, uint16 paramValue );
 #define SEMAPHORE_INPUT_SIGNAL()
 
 #define OS_MAX_SERIAL 2
+#define ENABLE_BLE_CONSOLE      1
 
 #else /* __APPLE__ --------------------------------------------------------------------------- */
 
@@ -618,3 +619,4 @@ unsigned char OS_i2c_available(unsigned char port, unsigned char ch);
 int16 OS_get_temperature(uint8 wait);
 extern unsigned char get_snv_length(unsigned char id);
 int8 OS_get_vdd_7(void);
+

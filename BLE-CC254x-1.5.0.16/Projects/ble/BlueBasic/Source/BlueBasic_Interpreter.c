@@ -1173,6 +1173,7 @@ static unsigned char* parse_variable_address(variable_frame** vframe)
 //
 // copy variable content to dst and return its size
 //
+#if (HAL_I2C) && !(HAL_I2C_SLAVE)
 static unsigned char copy_dim(unsigned char *dst)
 {
   variable_frame* vframe = NULL;
@@ -1199,6 +1200,7 @@ qoom:
   error_num = ERROR_OOM;
   return 0;	  
 }
+#endif
 
 //
 // Create an array

@@ -17733,8 +17733,19 @@
         <file>
             <name>$PROJ_DIR$\..\Source\rapid.c</name>
             <excluded>
+                <configuration>BlueSolar</configuration>
+                <configuration>BlueSolar_sleep</configuration>
+                <configuration>BlueBattery</configuration>
+                <configuration>BlueSteca</configuration>
+                <configuration>BlueBattery-D1</configuration>
                 <configuration>BlueBattery-MPPT</configuration>
+                <configuration>BlueBattery-MPPT-CC-Debugger</configuration>
                 <configuration>BBX</configuration>
+                <configuration>BBX-CC-Debugger</configuration>
+                <configuration>BlueBattery-Calibration</configuration>
+                <configuration>2MPPT</configuration>
+                <configuration>BlueSun-X1</configuration>
+                <configuration>BBX-Runtime</configuration>
             </excluded>
         </file>
         <file>
