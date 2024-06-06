@@ -70,6 +70,10 @@
  */
 int main(void)
 {
+  /* fix reboot from image B issue */
+  T2CTRL = 0x2;  // set to default
+  CLKCONCMD = 0xc9; // set default clocks
+  
   /* Initialize hardware */
   HAL_BOARD_INIT();
 
