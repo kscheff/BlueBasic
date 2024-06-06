@@ -46,6 +46,10 @@
                 <project>BlueBasic</project>
                 <configuration>BlueSun-X1</configuration>
             </member>
+            <member>
+                <project>BlueBasic</project>
+                <configuration>BBX-Rapid</configuration>
+            </member>
         </batchDefinition>
         <batchDefinition>
             <name>BlueBattery &amp; BlueSolar &amp; BlueSteca</name>
@@ -85,6 +89,10 @@
                 <project>BlueBasic</project>
                 <configuration>2MPPT</configuration>
             </member>
+            <member>
+                <project>BlueBasic</project>
+                <configuration>BBX-Rapid</configuration>
+            </member>
         </batchDefinition>
         <batchDefinition>
             <name>BlueBattery &amp; BlueSolar</name>
@@ -119,6 +127,10 @@
             <member>
                 <project>BlueBasic</project>
                 <configuration>BBX-Runtime</configuration>
+            </member>
+            <member>
+                <project>BlueBasic</project>
+                <configuration>BBX-Rapid</configuration>
             </member>
         </batchDefinition>
     </batchBuild>
