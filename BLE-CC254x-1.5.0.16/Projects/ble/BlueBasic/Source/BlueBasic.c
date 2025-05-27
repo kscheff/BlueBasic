@@ -97,8 +97,9 @@
 // - If not discovered after 30 seconds, you may change to one of the following longer intervals:
 //   152.5 ms, 211.25 ms, 318.75 ms, 417.5 ms, 546.25 ms, 760 ms, 852.5 ms, 1022.5 ms, 1285 ms
 
-//#define  DEFAULT_ADVERTISING_INTERVAL          160  // 100 ms
-#define  DEFAULT_ADVERTISING_INTERVAL          244  // 152.5 ms
+
+#define  DEFAULT_ADVERTISING_INTERVAL          160  // 100 ms
+//#define  DEFAULT_ADVERTISING_INTERVAL          244  // 152.5 ms
 //#define  DEFAULT_ADVERTISING_INTERVAL          338  // 211.25 ms
 //#define  DEFAULT_ADVERTISING_INTERVAL          510  // 318.75 ms
 //#define  DEFAULT_ADVERTISING_INTERVAL          668  // 417.5 ms
