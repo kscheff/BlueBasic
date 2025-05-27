@@ -126,10 +126,6 @@
             </member>
             <member>
                 <project>BlueBasic</project>
-                <configuration>BBX-Runtime</configuration>
-            </member>
-            <member>
-                <project>BlueBasic</project>
                 <configuration>BBX-Rapid</configuration>
             </member>
         </batchDefinition>
