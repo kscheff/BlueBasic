@@ -126,7 +126,7 @@
 // Whether to enable automatic parameter update request when a connection is formed
 #define DEFAULT_ENABLE_UPDATE_REQUEST         TRUE
 // Advertising Off Time for Limited advertisements (in milliseconds). Read/Write. Size is uint16. Default is 30 seconds.
-#define DEFAULT_DESIRED_ADVERT_OFF_TIME               8000
+#define DEFAULT_DESIRED_ADVERT_OFF_TIME               2000
 
 // Connection Pause Peripheral time value (in seconds)
 #define DEFAULT_CONN_PAUSE_PERIPHERAL         8
